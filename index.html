@@ -544,10 +544,12 @@
             admin: async function(div) {
                 div.innerHTML = `<div class="card"><input id="an" class="inp inp-group" placeholder="Name"><input id="ap" class="inp inp-group" placeholder="Phone"><button onclick="app.gen()" class="btn btn-prim">Generate</button></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`;
                 const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(20).get();
-                let h='<tr><th>Code</th><th>Client</th><th>St</th><th>Act</th></tr>', b='';
+                let h='<tr><th>Date</th><th>Code</th><th>Client</th><th>St</th><th>Act</th></tr>', b='';
                 s.forEach(d=>{
                     const v=d.data();
-                    b+=`<tr><td>${v.code}</td><td>${v.targetCompanyName||v.actualName}</td><td>${v.status}</td>
+                    // FORMAT DATE
+                    const date = v.createdAt ? new Date(v.createdAt).toLocaleDateString() : '-';
+                    b+=`<tr><td>${date}</td><td>${v.code}</td><td>${v.targetCompanyName||v.actualName}</td><td>${v.status}</td>
                     <td><button onclick="app.tst('${d.id}','${v.status}')">${v.status==='active'?'Stop':'Start'}</button></td></tr>`;
                 });
                 document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b;
