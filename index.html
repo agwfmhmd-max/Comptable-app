@@ -246,7 +246,7 @@
                 err_login:"بيانات الدخول غير صحيحة", err_sus:"هذا الحساب معطل حالياً",
                 empty:"السلة فارغة", max_qty:"الكمية المتاحة فقط: ",
                 prompt_name:"الاسم / البيان", prompt_buy:"سعر الشراء", prompt_sell:"سعر البيع", prompt_qty:"الكمية",
-                prompt_note:"ملاحظة", prompt_amount:"المبلغ", confirm_del:"هل أنت متأكد من الحذف؟", sys_active:"النظام يعمل بنجاح",
+                prompt_note:"ملاحظة", prompt_amount:"المبلغ", confirm_del:"هل أنت متأكد من الحذف؟ سيتم حذف المصروف المرتبط أيضاً.", sys_active:"النظام يعمل بنجاح",
                 err_price_logic: "خطأ: سعر البيع يجب أن يكون أكبر من سعر الشراء",
                 prompt_new_price: "أدخل سعر البيع الجديد"
             },
@@ -265,7 +265,7 @@
                 err_login:"Identifiants invalides", err_sus:"Compte suspendu",
                 empty:"Panier vide", max_qty:"Max disponible: ",
                 prompt_name:"Nom / Article", prompt_buy:"Prix d'achat", prompt_sell:"Prix de vente", prompt_qty:"Quantité",
-                prompt_note:"Note", prompt_amount:"Montant", confirm_del:"Confirmer la suppression ?", sys_active:"Système Actif",
+                prompt_note:"Note", prompt_amount:"Montant", confirm_del:"Confirmer la suppression ? La dépense associée sera également supprimée.", sys_active:"Système Actif",
                 err_price_logic: "Erreur: Le prix de vente doit être supérieur au prix d'achat",
                 prompt_new_price: "Entrez le nouveau prix de vente"
             }
@@ -285,6 +285,16 @@
                         deferredPrompt = null;
                     });
                 }
+            },
+
+            // --- HELPER FOR RANDOM STRING ---
+            randomStr: function(length) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
             },
 
             toggleLang: function() {
@@ -468,8 +478,9 @@
                     const n=prompt(this.t('prompt_name')), b=Number(prompt(this.t('prompt_buy'))), s=Number(prompt(this.t('prompt_sell'))), q=Number(prompt(this.t('prompt_qty')));
                     if(n&&b) {
                         if (s <= b) { return alert(this.t('err_price_logic')); }
-                        await db.collection('products').add({companyId:this.state.cid, name:n, buyPrice:b, sellPrice:s, stock:q, createdAt:new Date().toISOString()});
-                        await db.collection('expenses').add({companyId:this.state.cid, type:'purchase', val1:'Buy '+n, val2:'Stock', val3:b*q, createdAt:new Date().toISOString()});
+                        
+                        const pRef = await db.collection('products').add({companyId:this.state.cid, name:n, buyPrice:b, sellPrice:s, stock:q, createdAt:new Date().toISOString()});
+                        await db.collection('expenses').add({companyId:this.state.cid, type:'purchase', val1:'Buy '+n, val2:'Stock', val3:b*q, createdAt:new Date().toISOString(), relatedId: pRef.id});
                         this.nav('inventory');
                     }
                 } else {
@@ -485,18 +496,24 @@
                 let newSell = prompt(this.t('prompt_new_price'), oldSell);
                 if (!newSell) return;
                 newSell = Number(newSell);
-                
-                // Strict Logic: New Sell Price MUST be > Buy Price
                 if (newSell <= buy) {
                     alert(this.t('err_price_logic'));
                     return;
                 }
-                
                 await db.collection('products').doc(id).update({sellPrice: newSell});
                 this.nav('inventory');
             },
 
-            del: async function(id,c) { if(confirm(this.t('confirm_del'))) { await db.collection(c).doc(id).delete(); this.nav(c==='products'?'inventory':c); } },
+            del: async function(id, col) { 
+                if(confirm(this.t('confirm_del'))) { 
+                    if (col === 'products') {
+                        const expSnap = await db.collection('expenses').where('relatedId', '==', id).get();
+                        expSnap.forEach(doc => { db.collection('expenses').doc(doc.id).delete(); });
+                    }
+                    await db.collection(col).doc(id).delete(); 
+                    this.nav(col==='products'?'inventory':col); 
+                } 
+            },
 
             reports: async function(div) {
                 div.innerHTML='Loading...';
@@ -547,16 +564,20 @@
                 let h='<tr><th>Date</th><th>Code</th><th>Client</th><th>St</th><th>Act</th></tr>', b='';
                 s.forEach(d=>{
                     const v=d.data();
-                    // FORMAT DATE
                     const date = v.createdAt ? new Date(v.createdAt).toLocaleDateString() : '-';
-                    b+=`<tr><td>${date}</td><td>${v.code}</td><td>${v.targetCompanyName||v.actualName}</td><td>${v.status}</td>
+                    b+=`<tr><td>${date}</td><td style="font-family:monospace; font-weight:bold; letter-spacing:1px;">${v.code}</td><td>${v.targetCompanyName||v.actualName}</td><td>${v.status}</td>
                     <td><button onclick="app.tst('${d.id}','${v.status}')">${v.status==='active'?'Stop':'Start'}</button></td></tr>`;
                 });
                 document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b;
             },
             gen: async function() {
                 const n=document.getElementById('an').value, p=document.getElementById('ap').value;
-                if(n&&p) { await db.collection('activation_codes').add({code:Math.floor(100000+Math.random()*900000).toString(), targetCompanyName:n, targetPhone:p, status:'active', used:false, createdAt:new Date().toISOString()}); this.nav('admin'); }
+                if(n&&p) { 
+                    // GENERATE 10-CHAR RANDOM STRING
+                    const code = this.randomStr(10);
+                    await db.collection('activation_codes').add({code:code, targetCompanyName:n, targetPhone:p, status:'active', used:false, createdAt:new Date().toISOString()}); 
+                    this.nav('admin'); 
+                }
             },
             tst: async function(id,st) { await db.collection('activation_codes').doc(id).update({status:st==='active'?'suspended':'active'}); this.nav('admin'); }
         };
