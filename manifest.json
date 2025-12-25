@@ -1,19 +1,19 @@
 {
-  "name": "ERP System MDA",
-  "short_name": "MDA ERP",
+  "name": "ERP System",
+  "short_name": "ERP",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#f4f7fa",
-  "theme_color": "#1e3a8a",
+  "background_color": "#ffffff",
+  "theme_color": "#1a4585",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135679.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135679.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
