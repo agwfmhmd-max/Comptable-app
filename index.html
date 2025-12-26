@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- الألوان --- */
+        /* --- الألوان (فاتحة ونظيفة) --- */
         :root { 
             --primary: #1a4585; /* أزرق ملكي */
             --accent: #dcb14a;  /* ذهبي */
@@ -45,7 +45,7 @@
             position: fixed; top: 20px; z-index: 20000;
             width: 45px; height: 45px;
             background-color: var(--lang-green); 
-            color: white; border: none; border-radius: 10px; font-size: 20px; cursor: pointer;
+            color: white; border: none; border-radius: 12px; font-size: 20px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.2s;
         }
@@ -63,7 +63,7 @@
         .block-title { font-size: 28px; color: var(--danger); margin-bottom: 15px; font-weight: bold; }
         .block-msg { font-size: 18px; color: #555; margin-bottom: 30px; line-height: 1.6; max-width: 500px; }
 
-        /* شاشة الترحيب (Welcome Modal) */
+        /* شاشة الترحيب */
         .welcome-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 30000; justify-content: center; align-items: center;
@@ -89,6 +89,7 @@
         .btn-dan { background: var(--danger); color: var(--white); }
         
         .wa-link { display: flex; align-items: center; justify-content: center; gap: 10px; background: #25D366; color: white; text-decoration: none; padding: 12px; border-radius: 50px; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2); }
+        
         #installBtn { display: none; width: 100%; background: var(--primary); color: white; margin-bottom: 20px; padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(26, 69, 133, 0.3); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
@@ -106,31 +107,36 @@
         .nav-item.active { background: #eef2ff; color: var(--primary); border-color: var(--primary); }
         .main-content { flex: 1; padding: 25px; overflow-y: auto; }
 
-        /* Components */
+        /* Cards */
         .card { background: var(--white); padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid var(--border); }
         .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 16px; text-align: start; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-dark); }
         th { background: #f9fafb; white-space: nowrap; font-weight: bold; color: var(--primary); }
+        
+        /* POS Styles */
         .pos-container { display: grid; gap: 20px; }
         @media(min-width: 768px) { .pos-container { height: calc(100vh - 120px); grid-template-columns: 1.6fr 1fr; } .sidebar { position: fixed; top: var(--header-h); bottom: 0; width: 250px; transform: none !important; box-shadow: none; border-inline-end: 1px solid var(--border); z-index: 900; } html[dir="rtl"] .main-content { margin-right: 250px; } html[dir="ltr"] .main-content { margin-left: 250px; } .menu-btn, .sidebar-overlay { display: none !important; } }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; overflow-y: auto; max-height: 60vh; padding: 5px; }
         .prod-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between; height: 120px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .prod-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(26, 69, 133, 0.15); }
         .prod-card h4 { margin: 0; font-size: 14px; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .prod-card .price { color: var(--primary); font-weight: bold; font-size: 16px; margin: 5px 0; }
         .prod-card .stock { font-size: 12px; color: var(--text-light); background: #f3f4f6; padding: 3px 8px; border-radius: 10px; display: inline-block; }
         .selected-product-panel { background: #eef2ff; border: 1px solid var(--primary); border-radius: 12px; padding: 20px; margin-top: 15px; display: none; animation: slideUp 0.3s ease; box-shadow: 0 10px 30px rgba(26, 69, 133, 0.1); }
-        @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
         .selected-info { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(26, 69, 133, 0.1); padding-bottom: 10px; font-weight: bold; color: var(--primary); font-size: 16px; }
         .action-row { display: flex; gap: 15px; }
         .big-qty-input { flex: 1; height: 55px; font-size: 24px; text-align: center; border: 2px solid #d1d5db; border-radius: 12px; font-weight: bold; background: var(--white); color: var(--text-dark); }
         .add-btn-large { flex: 2; height: 55px; background: var(--primary); color: var(--white); border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(26, 69, 133, 0.2); }
         .cart-items { max-height: 45vh; overflow-y: auto; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: var(--text-dark); }
+
+        /* Admin & Status */
         #adminLink { display: none; }
         .status-active { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .status-suspended { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .pay-history { font-size: 10px; color: #666; margin-top: 5px; max-height: 40px; overflow-y: auto; background: #fff; padding: 2px; border: 1px solid #eee; }
+        
         .expiry-warning { background: #fffbeb; color: #92400e; padding: 10px; text-align: center; font-size: 13px; font-weight: bold; border-bottom: 1px solid #fcd34d; display: none; }
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
 
@@ -141,84 +147,62 @@
 </head>
 <body>
 
-    <!-- زر اللغة (ثابت في الأعلى) -->
+    <!-- زر اللغة (أخضر وعائم) -->
     <button onclick="app.toggleLang()" class="lang-btn-style">
         <i class="fa-solid fa-language"></i>
     </button>
 
-    <!-- تنبيه انتهاء الاشتراك (يظهر عند الضرورة) -->
     <div id="expiryWarning" class="expiry-warning"></div>
 
-    <!-- نافذة الترحيب (تظهر مرة واحدة فقط) -->
+    <!-- نافذة الترحيب -->
     <div id="welcomeModal" class="welcome-modal">
         <div class="welcome-content">
             <img src="logo.png" style="width:80px; margin-bottom:15px; border-radius:15px;">
-            <h2 style="color:var(--primary); margin-top:0;">مرحباً بك في نظام ERP</h2>
-            <p class="welcome-text">
-                النظام المتكامل لإدارة المبيعات والمخزون.<br>
-                للبدء، يجب عليك الحصول على <b>رمز تفعيل</b> خاص بشركتك.
+            <h2 style="color:var(--primary); margin-top:0;" data-key="title">ERP System</h2>
+            <p class="welcome-text" style="color:#666; margin-bottom:20px;">
+                النظام المتكامل لإدارة الأعمال.<br>للبدء، تحتاج لرمز تفعيل.
             </p>
-            
-            <div style="background:#f4f6f9; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #eee;">
-                <p style="margin:0; font-size:14px; color:#555;">للتفعيل تواصل مع المطور:</p>
-                <h3 style="margin:5px 0; color:var(--primary);">Mohamed Dah Agove</h3>
-                <a href="https://wa.me/22220479962" class="wa-link" style="margin-top:10px; width:100%; justify-content:center;">
-                    <i class="fa-brands fa-whatsapp"></i> واتساب: 22220479962
-                </a>
-            </div>
-
-            <button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;">فهمت، الدخول للنظام</button>
+            <a href="https://wa.me/22220479962" class="wa-link" style="margin-bottom:20px; justify-content:center;">
+                <i class="fa-brands fa-whatsapp"></i> تواصل مع المطور
+            </a>
+            <button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;">فهمت</button>
         </div>
     </div>
 
-    <!-- شاشة الحظر (بيضاء بالكامل) -->
+    <!-- شاشة الحظر -->
     <div id="blockScreen" class="block-screen">
         <i class="fa-solid fa-triangle-exclamation block-icon"></i>
         <h2 id="blockTitle" class="block-title">الحساب معلق</h2>
-        <p id="blockMsg" class="block-msg">انتهت فترة الاشتراك. يرجى التواصل لتجديد الخدمة.</p>
-        
-        <div style="background:#f9f9f9; padding:20px; border-radius:15px; border:1px solid #eee; margin-bottom:20px; width:100%; max-width:400px;">
-            <p style="margin:0 0 10px; color:#555;">للتجديد تواصل مع المطور:</p>
-            <a href="https://wa.me/22220479962" class="wa-link" style="width:auto; padding:12px 40px; font-size: 16px;">
-                <i class="fa-brands fa-whatsapp"></i> واتساب
-            </a>
-        </div>
-        
-        <!-- زر خروج (متاح فقط هنا) -->
-        <button onclick="app.logout()" class="btn btn-dan" style="width:auto; margin-top:10px;">
+        <p id="blockMsg" class="block-msg">انتهت فترة الاشتراك.</p>
+        <a href="https://wa.me/22220479962" class="wa-link" style="width:auto; padding:12px 40px; font-size: 16px;">
+            <i class="fa-brands fa-whatsapp"></i> تواصل للدفع
+        </a>
+        <button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;">
             <i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج
         </button>
-    </div>
-
-    <!-- نافذة تعليمات الآيفون -->
-    <div id="iosInstallModal" style="display:none; position:fixed; bottom:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:flex-end;">
-        <div style="background:white; width:100%; max-width:500px; border-radius:20px 20px 0 0; padding:30px; text-align:center;">
-            <img src="logo.png" style="width:50px; border-radius:10px; margin-bottom:15px;">
-            <h3 style="margin-top:0; color:var(--primary);">تثبيت التطبيق</h3>
-            <p style="color:#666; font-size:14px; margin-bottom:20px;">اضغط على زر المشاركة ثم "إضافة إلى الصفحة الرئيسية"</p>
-            <button onclick="document.getElementById('iosInstallModal').style.display='none'" class="btn btn-prim" style="width:100%;">حسناً</button>
-        </div>
     </div>
 
     <!-- Auth -->
     <div id="authScreen" class="auth-wrap">
         <div class="auth-card">
             <img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-            <h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" id="t_title">ERP System</h2>
+            <h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">ERP System</h2>
             
             <div id="installBtn" onclick="app.installPWA()">
-                <i class="fa-solid fa-download"></i> <span id="t_install">تثبيت التطبيق</span>
+                <i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span>
             </div>
             
             <form onsubmit="app.login(event)">
-                <input id="logName" class="inp" placeholder="اسم الشركة" required>
-                <input id="logPhone" type="tel" class="inp" placeholder="رقم الهاتف" required>
-                <input id="logCode" type="password" class="inp" placeholder="رمز التفعيل" required>
-                <button type="submit" id="logBtn" class="btn btn-prim">دخول</button>
+                <input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required>
+                <input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required>
+                <input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل" required>
+                <button type="submit" id="logBtn" class="btn btn-prim" data-key="btn">دخول</button>
             </form>
             <div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;">
-                <p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" id="t_getcode">للحصول على الرمز:</p>
-                <a href="https://wa.me/22220479962" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span id="t_contact">تواصل مع المطور</span></a>
+                <p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p>
+                <a href="https://wa.me/22220479962" class="wa-link">
+                    <i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span>
+                </a>
             </div>
         </div>
     </div>
@@ -231,7 +215,7 @@
                 <div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div>
                 <div><div id="h_name" style="font-weight:bold; color:var(--primary); font-size:1.1em;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div></div>
             </div>
-            <!-- تم حذف زر الخروج من هنا -->
+            <!-- زر الخروج محذوف من هنا نهائياً -->
         </header>
         <aside class="sidebar" id="sidebar">
             <div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);">
@@ -258,11 +242,6 @@
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; const btn=document.getElementById('installBtn'); if(btn) btn.style.display = 'block'; });
 
-        // iOS Check
-        const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-        const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
-        if (isIos() && !isInStandaloneMode()) { document.getElementById('iosInstallModal').style.display='flex'; }
-
         const firebaseConfig = {
             apiKey: "AIzaSyA6glwj94Onm0r6gRtxtoyqEISpPChDcHo",
             authDomain: "comptabilite-e35ed.firebaseapp.com",
@@ -278,13 +257,12 @@
         let selectedProduct = null;
         let sessionListener = null;
 
-        // ... Dictionary same as before ...
         const dict = {
             ar: {
                 title: "نظام ERP", comp:"اسم الشركة", phone:"رقم الهاتف", code:"رمز التفعيل",
                 btn:"تسجيل الدخول", wait:"جاري التحقق...", get:"للحصول على رمز التفعيل:", cont:"تواصل مع المطور",
                 home:"الرئيسية", pos:"نقطة البيع", inv:"أرشيف الفواتير", stock:"المخزون",
-                exp:"المصروفات", sal:"الرواتب", rep:"التقارير المالية", logout:"خروج",
+                exp:"المصروفات", sal:"الرواتب", rep:"التقارير المالية",
                 p_sel:"اختر منتجاً للبيع", p_pr:"السعر", p_qt:"العدد", p_add:"إضافة للفاتورة",
                 p_cl:"اسم العميل", p_save:"حفظ وطباعة", p_tot:"الإجمالي", t_install: "تثبيت التطبيق",
                 tbl_prod:"المنتج", tbl_qty:"الكمية", tbl_tot:"المجموع", tbl_act:"حذف",
@@ -301,10 +279,10 @@
                 err_price_logic: "خطأ: سعر البيع يجب أن يكون أكبر من سعر الشراء",
                 prompt_new_price: "أدخل سعر البيع الجديد",
                 
-                // Admin & Subscription
+                // Admin
                 adm_time: "التاريخ", adm_comp: "الشركة", adm_phone: "الهاتف", adm_code: "الرمز", adm_stat: "الحالة", adm_act: "التحكم",
                 adm_gen: "توليد رمز جديد", adm_renew: "تجديد ($)", adm_pay_hist: "سجل الدفعات",
-                msg_sus: "تم تعطيل الحساب من الإدارة.",
+                msg_sus: "تم تعطيل الحساب من الإدارة. يرجى التواصل للدفع.",
                 msg_exp: "انتهت فترة الاشتراك. يرجى الدفع لتجديد الخدمة.",
                 msg_warn: "تحذير: اشتراكك ينتهي قريباً (يوم واحد متبقي). يرجى التجديد.",
                 sub_day: "يومي", sub_week: "أسبوعي", sub_month: "شهري", sub_year: "سنوي",
@@ -314,7 +292,7 @@
                 title: "Système ERP", comp:"Nom de Société", phone:"Téléphone", code:"Code d'activation",
                 btn:"Connexion", wait:"Vérification...", get:"Pour obtenir le code:", cont:"Contacter le développeur",
                 home:"Accueil", pos:"Point de Vente", inv:"Factures", stock:"Stock",
-                exp:"Dépenses", sal:"Salaires", rep:"Rapports", logout:"Déconnexion",
+                exp:"Dépenses", sal:"Salaires", rep:"Rapports",
                 p_sel:"Choisir un produit", p_pr:"Prix", p_qt:"Qté", p_add:"Ajouter",
                 p_cl:"Nom du Client", p_save:"Enregistrer & Imprimer", p_tot:"Total", t_install: "Installer l'app",
                 tbl_prod:"Produit", tbl_qty:"Qté", tbl_tot:"Total", tbl_act:"Suppr",
@@ -334,8 +312,8 @@
                 // Admin
                 adm_time: "Date", adm_comp: "Société", adm_phone: "Tél", adm_code: "Code", adm_stat: "Statut", adm_act: "Action",
                 adm_gen: "Générer Code", adm_renew: "Renouveler ($)", adm_pay_hist: "Historique",
-                msg_sus: "Compte suspendu par l'admin.",
-                msg_exp: "Abonnement expiré.",
+                msg_sus: "Compte suspendu par l'admin. Contactez pour payer.",
+                msg_exp: "Abonnement expiré. Veuillez payer pour renouveler.",
                 msg_warn: "Attention: Votre abonnement expire bientôt (1 jour).",
                 sub_day: "Journalier", sub_week: "Hebdomadaire", sub_month: "Mensuel", sub_year: "Annuel",
                 adm_stop: "Suspendre", adm_start: "Activer", adm_del: "Supprimer"
@@ -347,7 +325,7 @@
             cart: [],
 
             init: function() {
-                // Check Welcome
+                // Welcome Screen Check
                 if (!localStorage.getItem('welcomeSeen')) {
                     document.getElementById('welcomeModal').style.display = 'flex';
                 }
@@ -393,7 +371,7 @@
                                 document.getElementById('expiryWarning').innerText = this.t('msg_warn');
                                 document.getElementById('expiryWarning').style.display = 'block';
                             }
-                            this.monitorSession(doc.docs[0].id, s); // Start Realtime
+                            this.monitorSession(doc.docs[0].id, s);
                         } else {
                             this.showBlockScreen(statusCheck.reason);
                         }
@@ -473,9 +451,11 @@
 
             toggleLang: function() {
                 this.state.lang = this.state.lang==='ar'?'fr':'ar'; const l = this.state.lang; const d = dict[l];
-                document.documentElement.dir = l==='ar'?'rtl':'ltr'; 
-                document.getElementById('t_title').innerText = d.title; document.getElementById('logName').placeholder = d.comp; document.getElementById('logPhone').placeholder = d.phone; document.getElementById('logCode').placeholder = d.code; document.getElementById('logBtn').innerText = d.btn; document.getElementById('t_getcode').innerText = d.get; document.getElementById('t_contact').innerText = d.cont; document.getElementById('t_install').innerText = d.t_install;
+                document.documentElement.dir = l==='ar'?'rtl':'ltr'; document.getElementById('langBtn').innerText = l==='ar'?'Français':'العربية';
+                // Update Text with data-key and data-ph
                 document.querySelectorAll('[data-key]').forEach(el => el.innerText = d[el.getAttribute('data-key')]);
+                document.querySelectorAll('[data-ph]').forEach(el => el.placeholder = d[el.getAttribute('data-ph')]);
+                
                 if(this.state.cid) this.nav(document.querySelector('.nav-item.active') ? document.querySelector('.nav-item.active').getAttribute('onclick').split("'")[1] : 'home');
             },
             t: function(k) { return dict[this.state.lang][k] || k; },
@@ -555,9 +535,7 @@
                 }, 50);
             },
 
-            // ... (Other functions: home, pos, selectProduct, addToCart, renderCart, ps, list, add, editProd, del, reports, reprint, print, admin, gen, renewCompany, tst, delCode - keep same as before) ...
-            
-            // --- POS ---
+            // ... (POS, LIST, REPORTS, ADMIN Functions remain same as previous version)
             home: function(div) { div.innerHTML = `<div class="card" style="text-align:center; padding:40px;"><img src="logo.png" style="width:80px; margin-bottom:15px; border-radius:10px;"><h3>${this.state.name}</h3><p>${this.t('sys_active')}</p></div>`; },
             pos: async function(div) {
                 this.cart=[]; selectedProduct=null; const s = await db.collection('products').where('companyId','==',this.state.cid).get();
