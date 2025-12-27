@@ -70,11 +70,9 @@
 
         /* Layout */
         .app-container { display: none; flex-direction: column; min-height: 100vh; }
-        /* HEADER MODIFIED FOR CENTERING */
         .top-header { height: var(--header-h); background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; padding: 0 20px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-        .menu-btn { font-size: 24px; cursor: pointer; color: var(--primary); padding: 5px; position: absolute; right: 20px; } /* Right in RTL */
+        .menu-btn { font-size: 24px; cursor: pointer; color: var(--primary); padding: 5px; position: absolute; right: 20px; }
         html[dir="ltr"] .menu-btn { left: 20px; right: auto; }
-        
         .header-title { font-weight:800; color:var(--primary); font-size:1.3em; text-align: center; width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .sidebar { position: fixed; top: 0; bottom: 0; width: 280px; background: var(--white); z-index: 1500; padding-top: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.05); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-inline-end: 1px solid var(--border); overflow-y: auto; }
@@ -105,15 +103,12 @@
 
         /* POS Responsive Design */
         .pos-layout { display: flex; flex-direction: column; gap: 15px; height: auto; }
-        
         .search-container { position: relative; }
         .search-results { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid var(--border); border-radius: 10px; max-height: 250px; overflow-y: auto; z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
         .search-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; }
         .search-item:hover { background: #f0f4ff; }
-        
         .pos-left { display: flex; flex-direction: column; gap: 10px; }
         .pos-right { background: white; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: visible; }
-        
         .cart-list { max-height: 250px; overflow-y: auto; padding: 5px; background: #fff; border: 1px solid var(--border); border-radius: 10px; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; background: #fff; }
         .checkout-area { background: #f9fafb; padding: 15px; border-top: 1px solid var(--border); border-radius: 0 0 16px 16px; }
@@ -204,7 +199,8 @@
             <div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div>
             <form onsubmit="app.login(event)">
                 <input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required>
-                <input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required>
+                <!-- Enforce 8 digits -->
+                <input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);">
                 <input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل" required>
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                      <button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button>
@@ -289,7 +285,7 @@
                 th_name:"الاسم", th_buy:"شراء", th_sell:"بيع", th_stock:"المخزون", th_del:"حذف", th_edit:"تعديل",
                 th_item:"البند", th_note:"ملاحظات", th_cost:"التكلفة", th_emp:"الموظف", th_job:"الوظيفة", th_sal:"الراتب",
                 income:"إجمالي المبيعات", expense:"إجمالي المصروفات", profit:"صافي الربح", cogs:"تكلفة البضاعة المباعة", unsold:"قيمة المخزون الحالي",
-                err_login:"البيانات غير صحيحة", err_sus:"الحساب معطل",
+                err_login:"البيانات غير صحيحة", err_sus:"الحساب معطل", err_phone_len: "رقم الهاتف يجب أن يكون 8 أرقام",
                 empty:"السلة فارغة", max_qty:"الكمية المتاحة: ",
                 prompt_name:"الاسم", prompt_buy:"سعر الشراء", prompt_sell:"سعر البيع", prompt_qty:"الكمية",
                 prompt_note:"ملاحظة", prompt_amount:"المبلغ", 
@@ -315,7 +311,7 @@
                 adm_gen: "توليد رمز جديد", adm_renew: "تجديد ($)", adm_pay_hist: "سجل الدفعات",
                 msg_sus: "تم تعطيل الحساب من الإدارة.",
                 msg_exp: "انتهت فترة الاشتراك.",
-                msg_warn: "تحذير: اشتراكك ينتهي قريباً.",
+                msg_warn: "تحذير: اشتراكك ينتهي قريباً (أقل من 24 ساعة).",
                 sub_day: "يومي", sub_week: "أسبوعي", sub_month: "شهري", sub_year: "سنوي",
                 adm_stop: "تجميد", adm_start: "تفعيل", adm_del: "حذف"
             },
@@ -332,7 +328,7 @@
                 th_name:"Nom", th_buy:"Achat", th_sell:"Vente", th_stock:"Stock", th_del:"Suppr", th_edit:"Modif",
                 th_item:"Article", th_note:"Note", th_cost:"Coût", th_emp:"Employé", th_job:"Fonction", th_sal:"Salaire",
                 income:"Revenus", expense:"Dépenses Gen.", profit:"Bénéfice Net", cogs:"Coût Marchandises", unsold:"Valeur Stock",
-                err_login:"Données invalides", err_sus:"Compte suspendu",
+                err_login:"Données invalides", err_sus:"Compte suspendu", err_phone_len: "Le numéro doit être de 8 chiffres",
                 empty:"Panier vide", max_qty:"Max disponible: ",
                 prompt_name:"Nom", prompt_buy:"Prix Achat", prompt_sell:"Prix Vente", prompt_qty:"Quantité",
                 prompt_note:"Note", prompt_amount:"Montant", 
@@ -358,7 +354,7 @@
                 adm_gen: "Générer", adm_renew: "Renouveler", adm_pay_hist: "Historique",
                 msg_sus: "Compte suspendu.",
                 msg_exp: "Abonnement expiré.",
-                msg_warn: "Attention: Expire bientôt.",
+                msg_warn: "Attention: Expire bientôt (< 24h).",
                 sub_day: "Jour", sub_week: "Hebdo", sub_month: "Mois", sub_year: "Année",
                 adm_stop: "Stop", adm_start: "Start", adm_del: "Del"
             }
@@ -403,6 +399,8 @@
             closeWelcome: function() { document.getElementById('welcomeModal').style.display = 'none'; localStorage.setItem('welcomeSeen', 'true'); },
             installPWA: async function() { if (!deferredPrompt) return; deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('installBtn').style.display = 'none'; } deferredPrompt = null; },
             
+            isValidPhone: function(p) { return /^\d{8}$/.test(p); },
+
             // --- TRIAL 24H ---
             startTrial: async function() {
                 if(localStorage.getItem('mda_trial_done')) return alert(this.t('trial_used'));
@@ -410,6 +408,8 @@
                 const n = document.getElementById('logName').value;
                 const p = document.getElementById('logPhone').value;
                 if(!n || !p) { this.hideLoader(); return alert("Name & Phone required"); }
+                if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
+
                 try {
                     const tCode = 'TRIAL-' + this.randomStr(8);
                     const now = new Date();
@@ -429,53 +429,105 @@
                     this.start(n,p);
                 } catch(e) { this.hideLoader(); alert(e.message); }
             },
+            
             monitorSession: function(docId, s) {
                 if(!docId) { this.logout(); return; }
                 sessionListener = db.collection('activation_codes').doc(docId)
                     .onSnapshot((doc) => {
-                        if (!doc.exists) { this.logout(); return; }
+                        // 1. Check if deleted by admin
+                        if (!doc.exists) { 
+                            this.showBlockScreen('suspended'); 
+                            return; 
+                        }
+                        
                         const data = doc.data();
+                        // Update state immediately
                         this.state.expiryDate = data.expiryDate;
-                        this.performStatusCheck(data);
-                        if(document.getElementById('authScreen').style.display === 'flex' && data.status === 'active') {
-                             this.state.cid = s.cid; this.state.name = s.name; this.state.phone = s.phone; this.state.admin = false;
-                             this.state.codeDocId = docId;
-                             this.start(s.name, s.phone);
+                        
+                        // 2. Check if suspended by admin
+                        if(data.status === 'suspended') {
+                            this.showBlockScreen('suspended');
+                            return;
+                        }
+
+                        // 3. Update Status Checks
+                        // If we are currently on auth/block screen, try to enter app if valid
+                        if(document.getElementById('authScreen').style.display === 'flex' || document.getElementById('blockScreen').style.display === 'flex') {
+                             this.checkTimeBasedStatus(); // Initial check
+                             if(document.getElementById('blockScreen').style.display === 'none') {
+                                 // Only start if not blocked by time
+                                 this.state.cid = s.cid; this.state.name = s.name; this.state.phone = s.phone; this.state.admin = false;
+                                 this.state.codeDocId = docId;
+                                 this.start(s.name, s.phone);
+                             }
                         }
                     });
+
+                // Clear existing interval
                 if(checkInterval) clearInterval(checkInterval);
+                
+                // Set precise interval (1 second) for expiration check
                 checkInterval = setInterval(() => {
-                    if(this.state.expiryDate) {
-                        const now = new Date(); const expiry = new Date(this.state.expiryDate);
-                        if (now > expiry) { this.showBlockScreen('expired'); }
-                    }
-                }, 5000); 
+                    this.checkTimeBasedStatus();
+                }, 1000); 
             },
+
+            checkTimeBasedStatus: function() {
+                if (!this.state.expiryDate) return;
+                const now = new Date();
+                const expiry = new Date(this.state.expiryDate);
+                const warningEl = document.getElementById('expiryWarning');
+
+                if (now >= expiry) {
+                    // Expired - Block Immediately
+                    this.showBlockScreen('expired');
+                    if(warningEl) warningEl.style.display = 'none';
+                } else {
+                    // Not Expired
+                    
+                    // If we were showing 'expired' block screen, unblock (e.g. renewed while open)
+                    // Note: We don't auto-unblock 'suspended' here as that's handled by snapshot
+                    if (document.getElementById('blockScreen').style.display === 'flex' && document.getElementById('blockMsg').innerText !== '') {
+                         // Simple check: if msg is empty it's likely suspended, if not empty it's expired msg
+                         if(document.getElementById('blockMsg').innerText.length > 0) {
+                             this.switchScreen('appScreen');
+                         }
+                    }
+
+                    // Warning Logic (24 hours = 86400000 ms)
+                    const diff = expiry - now;
+                    if (diff < 86400000 && diff > 0) {
+                        warningEl.style.display = 'block';
+                        warningEl.innerText = this.t('msg_warn');
+                    } else {
+                        warningEl.style.display = 'none';
+                    }
+                }
+            },
+
             performStatusCheck: function(data) {
-                const statusCheck = this.checkAccountStatus(data);
-                if (statusCheck.valid) {
-                    if(document.getElementById('blockScreen').style.display === 'flex') { this.switchScreen('appScreen'); }
-                    if (statusCheck.warning) { document.getElementById('expiryWarning').innerText = this.t('msg_warn'); document.getElementById('expiryWarning').style.display = 'block'; } 
-                    else { document.getElementById('expiryWarning').style.display = 'none'; }
-                } else { this.switchScreen('blockScreen'); this.showBlockScreen(statusCheck.reason); }
+                // This function is kept for compatibility but main logic moved to checkTimeBasedStatus & onSnapshot
+                if (data.status === 'suspended') { this.showBlockScreen('suspended'); return; }
+                this.checkTimeBasedStatus();
                 this.hideLoader();
             },
+
             checkAccountStatus: function(data) {
+                // Helper for synchronous checks
                 if (data.status === 'suspended') return { valid: false, reason: 'suspended' };
                 if (data.expiryDate) {
                     const now = new Date(); const expiry = new Date(data.expiryDate);
-                    const diffTime = expiry - now; const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                    if (diffTime < 0) return { valid: false, reason: 'expired' };
-                    if (diffDays <= 1) return { valid: true, warning: true };
+                    if (now >= expiry) return { valid: false, reason: 'expired' };
                 }
                 return { valid: true };
             },
+
             showBlockScreen: function(reason) {
                 this.switchScreen('blockScreen');
                 const title = document.getElementById('blockTitle');
                 const msg = document.getElementById('blockMsg');
                 if (reason === 'suspended') { title.innerText = this.t('msg_sus'); msg.innerText = ""; } 
-                else { title.innerText = this.t('msg_exp'); msg.innerText = ""; }
+                else { title.innerText = this.t('msg_exp'); msg.innerText = this.t('msg_exp'); }
             },
             
             // --- Utils ---
@@ -496,16 +548,24 @@
                 e.preventDefault(); this.showLoader();
                 const n=document.getElementById('logName').value, p=document.getElementById('logPhone').value, c=document.getElementById('logCode').value;
                 try {
+                    // Admin backdoor check
                     if(p==='46154399' && c==='371915') { 
                         this.state.admin=true; this.state.cid='ADMIN'; 
                         this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true);
                         this.start('Admin','46154399'); return; 
                     }
+
+                    if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
+
                     const s = await db.collection('activation_codes').where('code','==',c).get();
                     if(s.empty) throw new Error(this.t('err_login'));
                     const doc = s.docs[0]; const d = doc.data(); this.state.codeDocId = doc.id;
-                    const statusCheck = this.checkAccountStatus(d);
-                    if (!statusCheck.valid) { this.showBlockScreen(statusCheck.reason); return; }
+                    
+                    // Immediate Check
+                    if (d.status === 'suspended') { this.showBlockScreen('suspended'); return; }
+                    const now = new Date();
+                    if (d.expiryDate && now >= new Date(d.expiryDate)) { this.showBlockScreen('expired'); return; }
+
                     if((d.targetPhone && d.targetPhone!==p) || (d.used && d.actualPhone!==p)) throw new Error(this.t('err_login'));
                     let cid=d.companyId;
                     if(!d.used) {
@@ -690,7 +750,8 @@
             quickAddCustomer: async function() {
                 const n = prompt(this.t('prompt_name'));
                 const ph = prompt(this.t('adm_phone'));
-                if(n) {
+                if(n && ph) {
+                    if(!this.isValidPhone(ph)) return alert(this.t('err_phone_len'));
                     const r = await db.collection('customers').add({companyId:this.state.cid, name:n, phone:ph||'', balance:0, createdAt:new Date().toISOString()});
                     const sel = document.getElementById('posCust');
                     const opt = document.createElement('option'); opt.value=r.id; opt.innerText=n; opt.selected=true;
@@ -787,7 +848,10 @@
                 const h = `<input id="ncName" class="inp" placeholder="${this.t('prompt_name')}"><input id="ncPhone" class="inp" placeholder="${this.t('adm_phone')}">`;
                 this.showModal(this.t('new_cust'), h, async () => {
                     const n=document.getElementById('ncName').value, p=document.getElementById('ncPhone').value;
-                    if(n) { await db.collection('customers').add({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}); this.nav('customers'); }
+                    if(n && p) { 
+                        if(!this.isValidPhone(p)) return alert(this.t('err_phone_len'));
+                        await db.collection('customers').add({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}); this.nav('customers'); 
+                    }
                 });
             },
             payDebtModal: async function(cid, cname) {
@@ -974,7 +1038,10 @@
 
             addSupp: async function() {
                 const n=prompt(this.t('prompt_name')), p=prompt(this.t('adm_phone'));
-                if(n) { await db.collection('suppliers').add({companyId:this.state.cid, name:n, phone:p, createdAt:new Date().toISOString()}); this.nav('suppliers'); }
+                if(n && p) { 
+                     if(!this.isValidPhone(p)) return alert(this.t('err_phone_len'));
+                     await db.collection('suppliers').add({companyId:this.state.cid, name:n, phone:p, createdAt:new Date().toISOString()}); this.nav('suppliers'); 
+                }
             },
             editProd: async function(id, b, os) { let ns = prompt(this.t('prompt_new_price'), os); if(!ns) return; ns=Number(ns); if(ns<=b) return alert(this.t('err_price_logic')); await db.collection('products').doc(id).update({sellPrice:ns}); this.nav('inventory'); },
             del: async function(id, col) { if(confirm(this.t('confirm_del'))) { await db.collection(col).doc(id).delete(); this.nav(col==='products'?'inventory':col); } },
