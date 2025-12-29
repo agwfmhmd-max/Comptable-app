@@ -22,6 +22,21 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Autocomplete Styles */
+        .ac-wrap { position: relative; width: 100%; margin-bottom: 12px; }
+        .ac-list { 
+            position: absolute; top: 100%; left: 0; right: 0; 
+            background: white; border: 1px solid #ddd; border-top: none; 
+            z-index: 1000; max-height: 200px; overflow-y: auto; 
+            border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .ac-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
+        .ac-item:hover { background: #f0f4ff; color: var(--primary); }
+        .ac-item:last-child { border-bottom: none; }
+    </style>
 </head>
 <body>
     <div id="mainLoader"><div class="spinner"></div><p style="color:var(--primary);font-weight:bold;">Loading...</p></div>
@@ -185,7 +200,12 @@
                 th_supp: "المورد", new_supp: "مورد جديد", supp_type: "نوع الشراء", supp_direct: "شراء مباشر (مصروف)", supp_credit: "شراء من مورد (آجل/جزئي)", toggle_new: "مورد جديد",
                 down_pdf: "تحميل كشف PDF", btn_save: "حفظ", op_bal: "رصيد افتتاحي",
                 pay_now_opt: "دفع الراتب الآن", pay_later_opt: "تراكم الراتب (دين)", pay_sal: "دفع راتب",
-                pay_cash: "كاش", pay_bank: "بنك", rep_cash: "كاش فقط", rep_bank: "بنك فقط", rep_all: "الكل"
+                pay_cash: "كاش", pay_bank: "بنك", rep_cash: "كاش فقط", rep_bank: "بنك فقط", rep_all: "الكل",
+                sal_mng: "إدارة الرواتب", sal_new: "موظف جديد", sal_search: "بحث عن موظف...",
+                sal_fixed: "الراتب الثابت", sal_total: "إجمالي المدفوع", sal_file: "ملف الرواتب",
+                sal_rec: "سجل الرواتب", sal_date: "التاريخ", sal_amount: "المبلغ", sal_method: "الطريقة", sal_note: "ملاحظات",
+                sal_back: "عودة", sal_pay_btn: "دفع راتب", sal_pdf: "كشف PDF", sal_none: "لا يوجد سجل رواتب",
+                sal_total_all: "المجموع الكلي", sal_emp: "الموظف", search: "بحث..."
             },
             fr: {
                 title: "Teyssir ERP", comp:"Nom Société", phone:"Téléphone", code:"Code Activation",
@@ -219,7 +239,12 @@
                 th_supp: "Fournisseur", new_supp: "Nouveau Fourn.", supp_type: "Type Achat", supp_direct: "Achat Direct (Dépense)", supp_credit: "Achat Fournisseur (Crédit)", toggle_new: "Nouveau Fournisseur",
                 down_pdf: "Télécharger PDF", btn_save: "Enregistrer", op_bal: "Solde Initial",
                 pay_now_opt: "Payer maintenant", pay_later_opt: "Ne pas payer (Dette)", pay_sal: "Payer Salaire",
-                pay_cash: "Espèces", pay_bank: "Banque", rep_cash: "Espèces", rep_bank: "Banque", rep_all: "Tout"
+                pay_cash: "Espèces", pay_bank: "Banque", rep_cash: "Espèces", rep_bank: "Banque", rep_all: "Tout",
+                sal_mng: "Gestion Salaires", sal_new: "Nouv. Employé", sal_search: "Chercher...",
+                sal_fixed: "Salaire Fixe", sal_total: "Total Payé", sal_file: "Dossier",
+                sal_rec: "Historique", sal_date: "Date", sal_amount: "Montant", sal_method: "Méthode", sal_note: "Note",
+                sal_back: "Retour", sal_pay_btn: "Payer", sal_pdf: "PDF", sal_none: "Aucun historique",
+                sal_total_all: "Total Général", sal_emp: "Employé", search: "Chercher..."
             }
         };
 
@@ -392,8 +417,85 @@
             },
             clearCache: function(collection) { if (collection) delete this.cache[collection]; else this.cache = {}; },
 
+            // --- AUTOCOMPLETE UTILITY ---
+            setupAutocomplete: function(inpId, hiddenId, data, key) {
+                const inp = document.getElementById(inpId);
+                const hid = document.getElementById(hiddenId);
+                const wrapper = inp.parentNode;
+                
+                // Create list container
+                let list = wrapper.querySelector('.ac-list');
+                if(!list) {
+                    list = document.createElement('div');
+                    list.className = 'ac-list';
+                    wrapper.appendChild(list);
+                }
+
+                inp.addEventListener('input', function() {
+                    const val = this.value.toLowerCase();
+                    list.innerHTML = '';
+                    if(!val) { 
+                        list.style.display = 'none'; 
+                        hid.value = ''; // Reset ID if empty
+                        return; 
+                    }
+                    
+                    const matches = data.filter(d => (d[key] || '').toLowerCase().includes(val));
+                    
+                    if(matches.length === 0) {
+                        list.style.display = 'none';
+                        hid.value = ''; // Invalid selection
+                        return;
+                    }
+
+                    matches.forEach(d => {
+                        const item = document.createElement('div');
+                        item.className = 'ac-item';
+                        item.innerText = d[key];
+                        item.onclick = () => {
+                            inp.value = d[key];
+                            hid.value = d.id;
+                            list.style.display = 'none';
+                            // Trigger change if needed for dependent fields
+                            if(inp.onchange) inp.onchange();
+                            // Trigger native change event for other listeners
+                            const event = new Event('change');
+                            inp.dispatchEvent(event);
+                        };
+                        list.appendChild(item);
+                    });
+                    list.style.display = 'block';
+                });
+
+                // Hide when clicking outside
+                document.addEventListener('click', function(e) {
+                    if(e.target !== inp) list.style.display = 'none';
+                });
+            },
+
+            // --- FILTER TABLE UTILITY ---
+            filterTable: function(inputId, tableId) {
+                const input = document.getElementById(inputId);
+                const filter = input.value.toLowerCase();
+                const table = document.getElementById(tableId);
+                const tr = table.getElementsByTagName('tr');
+
+                // Start from 1 to skip header
+                for (let i = 1; i < tr.length; i++) {
+                    const rowContent = tr[i].textContent || tr[i].innerText;
+                    if (rowContent.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            },
+
             pos: async function(div) {
-                this.cart = []; this.cachedProducts = await this.getData('products'); const customers = await this.getData('customers'); const banks = await this.getData('banks');
+                this.cart = []; this.cachedProducts = await this.getData('products'); 
+                const customers = await this.getData('customers'); 
+                const banks = await this.getData('banks');
+                
                 div.innerHTML = `
                 <div class="pos-layout">
                     <div class="pos-left">
@@ -407,12 +509,16 @@
                     </div>
                     <div class="pos-right">
                         <div class="checkout-area">
+                            <label style="font-size:12px; font-weight:bold;">${this.t('p_cl')}</label>
                             <div style="display:flex; gap:5px; margin-bottom:10px;">
-                                <select id="posCust" class="select-box" style="margin:0;"><option value="">-- ${this.t('p_cl')} --</option>${customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select>
-                                <button onclick="app.quickAddCustomer()" class="btn btn-sec" style="width:auto;"><i class="fa-solid fa-plus"></i></button>
+                                <div class="ac-wrap">
+                                    <input id="posCustName" class="inp" placeholder="بحث عن زبون..." autocomplete="off">
+                                    <input type="hidden" id="posCustId">
+                                </div>
+                                <button onclick="app.quickAddCustomer()" class="btn btn-sec" style="width:auto; height: 46px;"><i class="fa-solid fa-plus"></i></button>
                             </div>
-                            <label style="font-size:12px; font-weight:bold;">${this.t('pay_method')}</label>
                             
+                            <label style="font-size:12px; font-weight:bold;">${this.t('pay_method')}</label>
                             <select id="posPayMethod" class="select-box" onchange="app.togglePosInputs()">
                                 <option value="cash">${this.t('cash')}</option>
                                 <option value="bank">${this.t('bank')}</option>
@@ -424,7 +530,10 @@
                                 <input type="number" id="payBank" class="inp" placeholder="${this.t('pay_bank')}" value="0" style="display:none;">
                             </div>
                             <div id="bankSelectDiv" style="display:none; margin-bottom:10px;">
-                                <select id="posBank" class="select-box" style="margin:0;"><option value="">-- ${this.t('select_bank')} --</option>${banks.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select>
+                                <div class="ac-wrap">
+                                    <input id="posBankName" class="inp" placeholder="بحث عن بنك..." autocomplete="off">
+                                    <input type="hidden" id="posBankId">
+                                </div>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; font-weight:bold; margin:15px 0; font-size:18px;">
@@ -438,7 +547,12 @@
                         </div>
                     </div>
                 </div>`;
-                app.togglePosInputs(); // Init state
+                
+                // Init Autocomplete
+                this.setupAutocomplete('posCustName', 'posCustId', customers, 'name');
+                this.setupAutocomplete('posBankName', 'posBankId', banks, 'name');
+
+                app.togglePosInputs(); 
                 setTimeout(() => {
                     const calc = () => app.calcDebt();
                     document.getElementById('payCash').addEventListener('input', calc);
@@ -475,7 +589,6 @@
                 c.innerHTML=h||`<p style="text-align:center; color:#999; margin-top:20px;">${this.t('empty')}</p>`; 
                 document.getElementById('cartTotal').innerText=t; 
                 
-                // Auto fill total based on method if single method selected
                 const m = document.getElementById('posPayMethod').value;
                 if(m === 'cash') document.getElementById('payCash').value = t;
                 if(m === 'bank') document.getElementById('payBank').value = t;
@@ -492,21 +605,29 @@
             },
             quickAddCustomer: async function() {
                 const n = prompt(this.t('prompt_name')); const ph = prompt(this.t('adm_phone'));
-                if(n && ph) { if(!this.isValidPhone(ph)) return alert(this.t('err_phone_len')); const r = await db.collection('customers').add({companyId:this.state.cid, name:n, phone:ph||'', balance:0, createdAt:new Date().toISOString()}); this.clearCache('customers'); const sel = document.getElementById('posCust'); const opt = document.createElement('option'); opt.value=r.id; opt.innerText=n; opt.selected=true; sel.appendChild(opt); }
+                if(n && ph) { 
+                    if(!this.isValidPhone(ph)) return alert(this.t('err_phone_len')); 
+                    const r = await db.collection('customers').add({companyId:this.state.cid, name:n, phone:ph||'', balance:0, createdAt:new Date().toISOString()}); 
+                    this.clearCache('customers'); 
+                    // Auto select the new customer
+                    document.getElementById('posCustName').value = n;
+                    document.getElementById('posCustId').value = r.id;
+                }
             },
             getNextInvoiceNumber: async function(transaction) {
                 const counterRef = db.collection('counters').doc(this.state.cid); const doc = await transaction.get(counterRef); let nextNum = 1; if (doc.exists) { nextNum = doc.data().lastInvoiceNum + 1; } transaction.set(counterRef, { lastInvoiceNum: nextNum }, { merge: true }); return 'INV-' + String(nextNum).padStart(4, '0');
             },
             finalizeInvoice: async function() {
                 if(!this.cart.length) return alert(this.t('empty'));
-                const custId = document.getElementById('posCust').value; const custName = document.getElementById('posCust').options[document.getElementById('posCust').selectedIndex]?.text || 'Walk-in';
+                const custId = document.getElementById('posCustId').value; 
+                const custName = document.getElementById('posCustName').value || 'Walk-in';
                 if(!custId) return alert(this.t('p_cl') + " Required");
                 
                 const total = Number(document.getElementById('cartTotal').innerText);
                 const cash = Number(document.getElementById('payCash').value);
                 const bank = Number(document.getElementById('payBank').value);
-                const bankId = document.getElementById('posBank').value;
-                const bankName = bankId ? document.getElementById('posBank').options[document.getElementById('posBank').selectedIndex].text : null;
+                const bankId = document.getElementById('posBankId').value;
+                const bankName = document.getElementById('posBankName').value;
                 const payMethod = document.getElementById('posPayMethod').value;
 
                 if(payMethod !== 'cash' && !bankId) return alert(this.t('select_bank'));
@@ -538,20 +659,21 @@
                 } catch(e) { console.error(e); alert(e.message); } this.hideLoader();
             },
             listCustomers: async function(div) {
-                div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('cust')}</h3><button onclick="app.addCustomerModal()" class="btn btn-prim" style="width:auto;">+</button></div><div class="card"><div class="table-scroll"><table id="custTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('adm_phone')}</th><th>${this.t('balance')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('customers'); let h=''; s.forEach(c => { h += `<tr><td>${c.name}</td><td>${c.phone||'-'}</td><td style="color:${c.balance>0?'red':'green'}">${c.balance.toLocaleString()}</td><td><button onclick="app.payDebtModal('${c.id}','${c.name}')" class="btn btn-sec" style="padding:5px 10px; font-size:12px;">${this.t('pay_debt')}</button> <button onclick="app.viewStatement('${c.id}','customer', '${c.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('stmt')}</button></td></tr>`; }); document.querySelector('#custTbl tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>';
+                div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('cust')}</h3><button onclick="app.addCustomerModal()" class="btn btn-prim" style="width:auto;">+</button></div><input id="searchCust" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchCust', 'custTbl')"><div class="card"><div class="table-scroll"><table id="custTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('adm_phone')}</th><th>${this.t('balance')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('customers'); let h=''; s.forEach(c => { h += `<tr><td>${c.name}</td><td>${c.phone||'-'}</td><td style="color:${c.balance>0?'red':'green'}">${c.balance.toLocaleString()}</td><td><button onclick="app.payDebtModal('${c.id}','${c.name}')" class="btn btn-sec" style="padding:5px 10px; font-size:12px;">${this.t('pay_debt')}</button> <button onclick="app.viewStatement('${c.id}','customer', '${c.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('stmt')}</button> <button onclick="app.del('${c.id}', 'customers')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.querySelector('#custTbl tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>';
             },
             addCustomerModal: function() { this.showModal(this.t('new_cust'), `<input id="ncName" class="inp" placeholder="${this.t('prompt_name')}"><input id="ncPhone" class="inp" placeholder="${this.t('adm_phone')}">`, async () => { const n=document.getElementById('ncName').value, p=document.getElementById('ncPhone').value; if(n && p) { if(!this.isValidPhone(p)) return alert(this.t('err_phone_len')); await db.collection('customers').add({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}); this.clearCache('customers'); this.nav('customers'); } }); },
             payDebtModal: async function(cid, cname) {
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- Select Bank --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
                 this.showModal(this.t('pay_debt'), `<p>Customer: <b>${cname}</b></p><input type="number" id="pdAmount" class="inp" placeholder="${this.t('prompt_amount')}"><select id="pdMethod" class="select-box" onchange="document.getElementById('pdBankDiv').style.display = this.value==='bank'?'block':'none'"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option></select><div id="pdBankDiv" style="display:none;"><select id="pdBank" class="select-box">${bOpts}</select></div>`, async () => { const amt = Number(document.getElementById('pdAmount').value); const method = document.getElementById('pdMethod').value; const bid = document.getElementById('pdBank').value; if(!amt) return; if(method==='bank' && !bid) return alert(this.t('select_bank')); const batch = db.batch(); const now = new Date().toISOString(); const tRef = db.collection('transactions').doc(); 
-                let cAmt = method === 'cash' ? amt : 0; let bAmt = method === 'bank' ? amt : 0;
+                let cAmt = method === 'cash' ? amt : 0;
+                let bAmt = method === 'bank' ? amt : 0;
                 batch.set(tRef, { companyId: this.state.cid, type: 'debt_payment', customerId: cid, amount: amt, cashAmount: cAmt, bankAmount: bAmt, method, bankId: bid, createdAt: now }); 
                 batch.update(db.collection('customers').doc(cid), { balance: firebase.firestore.FieldValue.increment(-amt) }); 
                 if(method==='bank') batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(amt) }); 
                 await batch.commit(); this.clearCache('customers'); this.clearCache('transactions'); this.clearCache('banks');
                 this.nav('customers'); });
             },
-            listBanks: async function(div) { div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('banks')}</h3><button onclick="app.addBankModal()" class="btn btn-prim" style="width:auto;">+</button></div><div class="card"><div class="table-scroll"><table id="bnkTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('balance')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('banks'); let h=''; s.forEach(b => { h += `<tr><td>${b.name}</td><td>${b.balance.toLocaleString()}</td><td><button onclick="app.viewStatement('${b.id}','bank','${b.name}')" class="btn btn-prim" style="padding:5px;">${this.t('stmt')}</button></td></tr>`; }); document.querySelector('#bnkTbl tbody').innerHTML = h || '<tr><td colspan="3">-</td></tr>'; },
+            listBanks: async function(div) { div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('banks')}</h3><button onclick="app.addBankModal()" class="btn btn-prim" style="width:auto;">+</button></div><input id="searchBank" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchBank', 'bnkTbl')"><div class="card"><div class="table-scroll"><table id="bnkTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('balance')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('banks'); let h=''; s.forEach(b => { h += `<tr><td>${b.name}</td><td>${b.balance.toLocaleString()}</td><td><button onclick="app.viewStatement('${b.id}','bank','${b.name}')" class="btn btn-prim" style="padding:5px;">${this.t('stmt')}</button> <button onclick="app.del('${b.id}', 'banks')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.querySelector('#bnkTbl tbody').innerHTML = h || '<tr><td colspan="3">-</td></tr>'; },
             
             addBankModal: function() { 
                 this.showModal(this.t('banks'), `<input id="nbName" class="inp" placeholder="${this.t('th_name')}"><input type="number" id="nbBal" class="inp" placeholder="${this.t('balance')}">`, async () => { 
@@ -574,7 +696,7 @@
                     } 
                 }); 
             },
-            listSuppliers: async function(div) { div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('supp')}</h3><button onclick="app.addSuppModal()" class="btn btn-prim" style="width:auto;">+</button></div><div class="card"><div class="table-scroll"><table id="supTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('adm_phone')}</th><th>${this.t('supp_bal')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('suppliers'); let h=''; s.forEach(b => { h += `<tr><td>${b.name}</td><td>${b.phone||'-'}</td><td style="color:${b.balance>0?'red':'green'}">${b.balance?.toLocaleString()||0}</td><td><button onclick="app.paySupplierDebt('${b.id}','${b.name}')" class="btn btn-sec" style="padding:5px; font-size:12px;">${this.t('pay_supp')}</button> <button onclick="app.viewStatement('${b.id}','supplier','${b.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('stmt')}</button></td></tr>`; }); document.querySelector('#supTbl tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>'; },
+            listSuppliers: async function(div) { div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('supp')}</h3><button onclick="app.addSuppModal()" class="btn btn-prim" style="width:auto;">+</button></div><input id="searchSupp" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchSupp', 'supTbl')"><div class="card"><div class="table-scroll"><table id="supTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('adm_phone')}</th><th>${this.t('supp_bal')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('suppliers'); let h=''; s.forEach(b => { h += `<tr><td>${b.name}</td><td>${b.phone||'-'}</td><td style="color:${b.balance>0?'red':'green'}">${b.balance?.toLocaleString()||0}</td><td><button onclick="app.paySupplierDebt('${b.id}','${b.name}')" class="btn btn-sec" style="padding:5px; font-size:12px;">${this.t('pay_supp')}</button> <button onclick="app.viewStatement('${b.id}','supplier','${b.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('stmt')}</button> <button onclick="app.del('${b.id}', 'suppliers')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.querySelector('#supTbl tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>'; },
             addSuppModal: function() { this.showModal(this.t('new_supp'), `<input id="nsName" class="inp" placeholder="${this.t('th_name')}"><input id="nsPhone" class="inp" placeholder="${this.t('adm_phone')}">`, async () => { const n=document.getElementById('nsName').value, p=document.getElementById('nsPhone').value; if(n) { await db.collection('suppliers').add({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}); this.clearCache('suppliers'); this.nav('suppliers'); } }); },
             paySupplierDebt: async function(sid, sname) {
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- Select Bank --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
@@ -594,13 +716,13 @@
             
             // --- 1. إدارة الموظفين (إضافة ملف موظف) ---
             addSalaryModal: async function() {
-                this.showModal("إضافة موظف جديد", `
-                    <input id="empName" class="inp" placeholder="اسم الموظف">
-                    <input type="number" id="empSalary" class="inp" placeholder="الراتب الشهري الثابت">
-                    <label style="font-size:12px;font-weight:bold;">طريقة الدفع الافتراضية</label>
+                this.showModal(this.t('sal_new'), `
+                    <input id="empName" class="inp" placeholder="${this.t('th_name')}">
+                    <input type="number" id="empSalary" class="inp" placeholder="${this.t('sal_fixed')}">
+                    <label style="font-size:12px;font-weight:bold;">${this.t('sal_method')}</label>
                     <select id="empMethod" class="select-box">
-                        <option value="cash">كاش (نقدي)</option>
-                        <option value="bank">تحويل بنكي</option>
+                        <option value="cash">${this.t('pay_cash')}</option>
+                        <option value="bank">${this.t('pay_bank')}</option>
                     </select>
                 `, async () => {
                     const name = document.getElementById('empName').value;
@@ -638,7 +760,7 @@
                                           .where('companyId', '==', this.state.cid)
                                           .where('type', '==', 'salary_payment')
                                           .where('refId', '==', empId)
-                                          .get(); // Removing orderBy here to fix index issues
+                                          .get(); 
                                           
                     let history = snaps.docs.map(d => d.data());
                     // Sorting in memory
@@ -649,8 +771,8 @@
                     let rows = '';
                     history.forEach(h => {
                         totalPaid += h.amount;
-                        let date = new Date(h.createdAt).toLocaleDateString('ar-EG');
-                        let methodTxt = h.method === 'cash' ? 'كاش' : (h.method === 'bank' ? 'بنك' : 'مختلط');
+                        let date = new Date(h.createdAt).toLocaleDateString('en-GB');
+                        let methodTxt = h.method === 'cash' ? this.t('pay_cash') : (h.method === 'bank' ? this.t('pay_bank') : this.t('mixed'));
                         rows += `<tr>
                             <td>${date}</td>
                             <td>${h.amount.toLocaleString()}</td>
@@ -662,35 +784,35 @@
                     const html = `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <div>
-                            <button onclick="app.nav('salaries')" class="btn btn-sec" style="width:auto; padding:5px 15px; font-size:12px; margin-bottom:5px;">&larr; عودة</button>
+                            <button onclick="app.nav('salaries')" class="btn btn-sec" style="width:auto; padding:5px 15px; font-size:12px; margin-bottom:5px;">&larr; ${this.t('sal_back')}</button>
                             <h2 style="margin:0; color:var(--primary);">${empName}</h2>
-                            <small style="color:#666;">الراتب الثابت: ${baseSalary.toLocaleString()}</small>
+                            <small style="color:#666;">${this.t('sal_fixed')}: ${baseSalary.toLocaleString()}</small>
                         </div>
                         <div style="text-align:left;">
-                            <span style="display:block; font-size:12px;">إجمالي المدفوع</span>
+                            <span style="display:block; font-size:12px;">${this.t('sal_total')}</span>
                             <span style="font-weight:bold; font-size:18px; color:green;">${totalPaid.toLocaleString()}</span>
                         </div>
                     </div>
 
                     <div style="display:flex; gap:10px; margin-bottom:20px;">
-                        <button onclick="app.payEmployeeModal('${empId}', '${empName}', ${baseSalary})" class="btn btn-prim"><i class="fa-solid fa-hand-holding-dollar"></i> دفع راتب</button>
-                        <button onclick="app.downloadEmpPdf('${empName}', ${baseSalary}, '${encodeURIComponent(JSON.stringify(history))}')" class="btn btn-sec" style="background:#dc2626;"><i class="fa-solid fa-file-pdf"></i> كشف PDF</button>
+                        <button onclick="app.payEmployeeModal('${empId}', '${empName}', ${baseSalary})" class="btn btn-prim"><i class="fa-solid fa-hand-holding-dollar"></i> ${this.t('sal_pay_btn')}</button>
+                        <button onclick="app.downloadEmpPdf('${empName}', ${baseSalary}, '${encodeURIComponent(JSON.stringify(history))}')" class="btn btn-sec" style="background:#dc2626;"><i class="fa-solid fa-file-pdf"></i> ${this.t('sal_pdf')}</button>
                     </div>
 
                     <div class="card">
-                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">سجل الرواتب</h3>
+                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">${this.t('sal_rec')}</h3>
                         <div class="table-scroll">
                             <table style="width:100%;">
                                 <thead>
                                     <tr style="background:#f9f9f9;">
-                                        <th>التاريخ</th>
-                                        <th>المبلغ</th>
-                                        <th>الطريقة</th>
-                                        <th>ملاحظات</th>
+                                        <th>${this.t('sal_date')}</th>
+                                        <th>${this.t('sal_amount')}</th>
+                                        <th>${this.t('sal_method')}</th>
+                                        <th>${this.t('sal_note')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rows || '<tr><td colspan="4" style="text-align:center;">لا يوجد سجل رواتب</td></tr>'}
+                                    ${rows || `<tr><td colspan="4" style="text-align:center;">${this.t('sal_none')}</td></tr>`}
                                 </tbody>
                             </table>
                         </div>
@@ -707,29 +829,29 @@
             // --- 3. نافذة دفع الراتب ---
             payEmployeeModal: async function(empId, empName, baseSalary) {
                 const banks = await this.getData('banks');
-                let bOpts = `<option value="">-- اختر البنك --</option>`;
+                let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`;
                 banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
 
-                this.showModal(`دفع راتب: ${empName}`, `
-                    <label>المبلغ (الراتب الثابت)</label>
+                this.showModal(`${this.t('sal_pay_btn')}: ${empName}`, `
+                    <label>${this.t('sal_amount')}</label>
                     <input type="number" id="payAmount" class="inp" value="${baseSalary}">
                     
-                    <label>طريقة الدفع</label>
+                    <label>${this.t('pay_method')}</label>
                     <select id="payMethod" class="select-box" onchange="app.toggleSalaryInputs()">
-                        <option value="cash">كاش</option>
-                        <option value="bank">بنك</option>
-                        <option value="mixed">مختلط</option>
+                        <option value="cash">${this.t('pay_cash')}</option>
+                        <option value="bank">${this.t('pay_bank')}</option>
+                        <option value="mixed">${this.t('mixed')}</option>
                     </select>
 
                     <div id="payDetails">
-                        <div id="cashDiv"><input id="pCash" type="number" class="inp" placeholder="مبلغ الكاش" value="${baseSalary}"></div>
+                        <div id="cashDiv"><input id="pCash" type="number" class="inp" placeholder="${this.t('pay_cash')}" value="${baseSalary}"></div>
                         <div id="bankDiv" style="display:none;">
-                            <input id="pBank" type="number" class="inp" placeholder="مبلغ البنك" value="0">
+                            <input id="pBank" type="number" class="inp" placeholder="${this.t('pay_bank')}" value="0">
                             <select id="pBankId" class="select-box">${bOpts}</select>
                         </div>
                     </div>
                     
-                    <input id="payNote" class="inp" placeholder="ملاحظة (مثال: راتب شهر ...)">
+                    <input id="payNote" class="inp" placeholder="${this.t('sal_note')}">
                 `, async () => {
                     const total = Number(document.getElementById('payAmount').value);
                     const method = document.getElementById('payMethod').value;
@@ -742,13 +864,13 @@
                     } else if (method === 'bank') {
                         bankAmt = total;
                         bankId = document.getElementById('pBankId').value;
-                        if(!bankId) return alert("اختر البنك");
+                        if(!bankId) return alert(this.t('select_bank'));
                     } else {
                         cashAmt = Number(document.getElementById('pCash').value);
                         bankAmt = Number(document.getElementById('pBank').value);
                         bankId = document.getElementById('pBankId').value;
-                        if(cashAmt + bankAmt !== total) return alert("مجموع الكاش والبنك لا يساوي المبلغ الكلي");
-                        if(!bankId && bankAmt > 0) return alert("اختر البنك");
+                        if(cashAmt + bankAmt !== total) return alert("Total mismatch");
+                        if(!bankId && bankAmt > 0) return alert(this.t('select_bank'));
                     }
 
                     const batch = db.batch();
@@ -810,36 +932,36 @@
                 const history = JSON.parse(decodeURIComponent(historyStr));
                 
                 const bodyData = [
-                    [{text:'التاريخ', bold:true, fillColor:'#eee'}, {text:'المبلغ', bold:true, fillColor:'#eee'}, {text:'الطريقة', bold:true, fillColor:'#eee'}, {text:'ملاحظات', bold:true, fillColor:'#eee'}]
+                    [{text:this.t('sal_date'), bold:true, fillColor:'#eee'}, {text:this.t('sal_amount'), bold:true, fillColor:'#eee'}, {text:this.t('sal_method'), bold:true, fillColor:'#eee'}, {text:this.t('sal_note'), bold:true, fillColor:'#eee'}]
                 ];
                 
                 let total = 0;
                 history.forEach(h => {
                     total += h.amount;
                     bodyData.push([
-                        new Date(h.createdAt).toLocaleDateString('ar-EG'),
+                        new Date(h.createdAt).toLocaleDateString('en-GB'),
                         h.amount.toLocaleString(),
-                        h.method === 'cash' ? 'كاش' : 'بنك',
+                        h.method === 'cash' ? this.t('pay_cash') : (h.method === 'bank' ? this.t('pay_bank') : this.t('mixed')),
                         h.note || '-'
                     ]);
                 });
                 
                 bodyData.push([
-                    {text:'المجموع الكلي', colSpan:3, bold:true, alignment:'left'}, {}, {},
+                    {text:this.t('sal_total_all'), colSpan:3, bold:true, alignment:'left'}, {}, {},
                     {text: total.toLocaleString(), bold:true, color:'green'}
                 ]);
 
                 const docDefinition = {
                     pageSize: 'A4',
                     pageMargins: [20, 20, 20, 20],
-                    defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' },
+                    defaultStyle: { font: 'Tajawal', fontSize: 10, direction: this.state.lang === 'ar' ? 'rtl' : 'ltr' },
                     content: [
                         { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin:[0,0,0,5] },
-                        { text: 'كشف رواتب موظف', fontSize: 12, alignment: 'center', margin:[0,0,0,20] },
+                        { text: this.t('sal_file'), fontSize: 12, alignment: 'center', margin:[0,0,0,20] },
                         {
                             columns: [
-                                { text: `الموظف: ${name}`, bold:true, alignment:'right' },
-                                { text: `الراتب الأساسي: ${salary}`, alignment:'left' }
+                                { text: `${this.t('sal_emp')}: ${name}`, bold:true, alignment:'right' },
+                                { text: `${this.t('sal_fixed')}: ${salary}`, alignment:'left' }
                             ],
                             margin: [0, 0, 0, 10]
                         },
@@ -853,7 +975,7 @@
                         }
                     ]
                 };
-                pdfMake.createPdf(docDefinition).download(`راتب_${name}.pdf`);
+                pdfMake.createPdf(docDefinition).download(`Salary_${name}.pdf`);
             },
 
             filterEmployees: function() {
@@ -879,7 +1001,16 @@
                 const titleKey = type==='invoices'?'inv':(type==='products'?'stock':(type==='revenues'?'rev':(type==='salaries'?'sal':(type==='suppliers'?'supp':'exp')))); 
                 const addBtn = type!=='invoices' && type!=='salaries' ? `<button onclick="${type==='products'?'app.addProductModal()': 'app.addTransactionModal(\''+type+'\')'}" class="btn btn-prim" style="width:auto;padding:8px 15px;">+</button>` : ''; 
                 
-                div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h3>${this.t(titleKey)}</h3>${addBtn}</div><div class="card"><div class="table-scroll"><table id="lst"><thead></thead><tbody><tr><td>Loading...</td></tr></tbody></table></div></div>`; 
+                div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h3>${this.t(titleKey)}</h3>${addBtn}</div>`;
+                
+                // Add search bar for generic list if needed (expenses, revenues) - Optional but good for consistency
+                if (['expenses', 'revenues'].includes(type)) {
+                     div.innerHTML += `<input id="searchGen" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchGen', 'lst')">`;
+                } else if (type === 'products') {
+                     div.innerHTML += `<input id="searchProd" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchProd', 'lst')">`;
+                }
+
+                div.innerHTML += `<div class="card"><div class="table-scroll"><table id="lst"><thead></thead><tbody><tr><td>Loading...</td></tr></tbody></table></div></div>`; 
                 let docs = await this.getData(type); let h='', th='';
                 
                 if(type==='invoices') { 
@@ -887,29 +1018,29 @@
                     docs.forEach(d=>{ const str=encodeURIComponent(JSON.stringify(d.items)); const displayNum = d.invNum || d.id.substring(0,6); const pm = (d.bankAmount>0 && d.cashAmount>0) ? "Mixed" : (d.bankAmount>0?"Bank":"Cash"); const bn = d.bankName || ''; h+=`<tr><td style="font-weight:bold">${displayNum}</td><td>${this.formatDate(d.createdAt)}</td><td>${d.customer}</td><td>${d.total}</td><td>${d.paid}</td><td><button class="btn btn-sec" style="padding:5px;" onclick="app.reprint('${displayNum}','${d.customer}',${d.total},'${str}',${d.paid},${d.debt},'${pm}','${bn}')">${this.t('th_print')}</button></td></tr>`; }); 
                     document.querySelector('#lst thead').innerHTML=th; document.querySelector('#lst tbody').innerHTML=h||'<tr><td colspan="5">-</td></tr>'; 
                 } else if(type==='products') { 
-                    th=`<tr><th>${this.t('th_name')}</th><th>${this.t('th_buy')}</th><th>${this.t('th_sell')}</th><th>${this.t('th_stock')}</th><th>${this.t('th_edit')}</th><th>${this.t('th_del')}</th></tr>`; docs.forEach(d=>h+=`<tr><td>${d.name}</td><td>${d.buyPrice}</td><td>${d.sellPrice}</td><td>${d.stock}</td><td><button onclick="app.editProd('${d.id}',${d.buyPrice},${d.sellPrice})" style="border:none;cursor:pointer;color:var(--primary)">✎</button></td><td onclick="app.del('${d.id}','${type}')" style="color:var(--danger);cursor:pointer">X</td></tr>`); 
+                    th=`<tr><th>${this.t('th_name')}</th><th>${this.t('th_buy')}</th><th>${this.t('th_sell')}</th><th>${this.t('th_stock')}</th><th>${this.t('th_edit')}</th><th>${this.t('th_del')}</th></tr>`; docs.forEach(d=>h+=`<tr><td>${d.name}</td><td>${d.buyPrice}</td><td>${d.sellPrice}</td><td>${d.stock}</td><td><button onclick="app.editProd('${d.id}',${d.buyPrice},${d.sellPrice})" style="border:none;cursor:pointer;color:var(--primary)">✎</button></td><td onclick="app.del('${d.id}','${type}')" style="color:var(--danger);cursor:pointer"><i class="fa-solid fa-trash"></i></td></tr>`); 
                     document.querySelector('#lst thead').innerHTML=th; document.querySelector('#lst tbody').innerHTML=h||'<tr><td colspan="5">-</td></tr>'; 
                 } else if(type==='salaries') {
                     // عرض قائمة الموظفين
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h3>إدارة الرواتب</h3>
-                            <button onclick="app.addSalaryModal()" class="btn btn-prim" style="width:auto; padding:8px 15px;">+ موظف جديد</button>
+                            <h3>${this.t('sal_mng')}</h3>
+                            <button onclick="app.addSalaryModal()" class="btn btn-prim" style="width:auto; padding:8px 15px;">+ ${this.t('sal_new')}</button>
                         </div>
-                        <input type="text" id="empSearch" class="inp" placeholder="بحث عن موظف..." onkeyup="app.filterEmployees()" style="margin-bottom:10px;">
+                        <input type="text" id="empSearch" class="inp" placeholder="${this.t('sal_search')}" onkeyup="app.filterEmployees()" style="margin-bottom:10px;">
                         <div class="card">
                             <div class="table-scroll">
                                 <table id="lst">
                                     <thead>
                                         <tr>
-                                            <th>الموظف</th>
-                                            <th>الراتب الثابت</th>
-                                            <th>إجمالي المدفوع</th>
-                                            <th>تحكم</th>
+                                            <th>${this.t('th_name')}</th>
+                                            <th>${this.t('sal_fixed')}</th>
+                                            <th>${this.t('sal_total')}</th>
+                                            <th>${this.t('adm_act')}</th>
                                         </tr>
                                     </thead>
                                     <tbody id="empListBody">
-                                        ${docs.length ? '' : '<tr><td colspan="4">لا يوجد موظفين</td></tr>'}
+                                        ${docs.length ? '' : '<tr><td colspan="4">-</td></tr>'}
                                     </tbody>
                                 </table>
                             </div>
@@ -918,7 +1049,6 @@
                     const tbody = document.getElementById('empListBody');
                     if(docs.length) {
                         docs.forEach(d => {
-                            // Escape single quotes for the onclick function
                             const safeName = (d.name || '').replace(/'/g, "\\'");
                             const row = `
                             <tr>
@@ -926,14 +1056,15 @@
                                 <td>${d.baseSalary.toLocaleString()}</td>
                                 <td style="color:green;">${(d.totalPaid||0).toLocaleString()}</td>
                                 <td>
-                                    <button onclick="app.viewEmployeeFile('${d.id}', '${safeName}', ${d.baseSalary})" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">ملف الرواتب</button>
+                                    <button onclick="app.viewEmployeeFile('${d.id}', '${safeName}', ${d.baseSalary})" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('sal_file')}</button>
+                                    <button onclick="app.del('${d.id}', 'salaries')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button>
                                 </td>
                             </tr>`;
                             tbody.innerHTML += row;
                         });
                     }
                 } else { 
-                    th=`<tr><th>${this.t('th_name')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th><th>${this.t('th_del')}</th></tr>`; docs.forEach(d=>{ h+=`<tr><td>${d.val1}</td><td>${d.val2}</td><td>${d.val3}</td><td onclick="app.del('${d.id}','${type}')" style="color:var(--danger);cursor:pointer">X</td></tr>`; }); 
+                    th=`<tr><th>${this.t('th_name')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th><th>${this.t('th_del')}</th></tr>`; docs.forEach(d=>{ h+=`<tr><td>${d.val1}</td><td>${d.val2}</td><td>${d.val3}</td><td onclick="app.del('${d.id}','${type}')" style="color:var(--danger);cursor:pointer"><i class="fa-solid fa-trash"></i></td></tr>`; }); 
                     document.querySelector('#lst thead').innerHTML=th; document.querySelector('#lst tbody').innerHTML=h||'<tr><td colspan="5">-</td></tr>'; 
                 } 
             },
@@ -942,6 +1073,7 @@
                 const supps = await this.getData('suppliers'); const banks = await this.getData('banks');
                 let sOpts = `<option value="none">-- ${this.t('supp_direct')} --</option>`; supps.forEach(s=> sOpts += `<option value="${s.id}">${s.name}</option>`);
                 let bOpts = `<option value="">-- Bank --</option>`; banks.forEach(b=> bOpts += `<option value="${b.id}">${b.name}</option>`);
+                
                 const h = `
                 <input id="npName" class="inp" placeholder="${this.t('th_name')}">
                 <div style="display:flex; gap:10px;">
@@ -952,9 +1084,13 @@
                 <hr>
                 <label>${this.t('supp_type')}</label>
                 <div style="display:flex; gap:5px;">
-                    <select id="npSupp" class="select-box" onchange="app.togglePurchaseType(this.value)">${sOpts}</select>
-                    <button onclick="app.quickAddSupplier()" class="btn btn-sec" style="width:auto; height:45px;" title="${this.t('toggle_new')}">+</button>
+                    <div class="ac-wrap" style="flex:1;">
+                        <input id="npSuppName" class="inp" placeholder="بحث عن مورد..." autocomplete="off">
+                        <input type="hidden" id="npSuppId">
+                    </div>
+                    <button onclick="app.quickAddSupplier()" class="btn btn-sec" style="width:auto; height:46px; margin-bottom:12px;"><i class="fa-solid fa-plus"></i></button>
                 </div>
+                
                 <div id="directPayDiv" style="display:block;">
                     <label style="font-size:12px;font-weight:bold;">طريقة الدفع (شراء مباشر)</label>
                     <select id="npDirectMethod" class="select-box" onchange="document.getElementById('npDirectBankDiv').style.display = this.value==='bank'?'block':'none'">
@@ -962,15 +1098,33 @@
                         <option value="bank">بنك</option>
                     </select>
                     <div id="npDirectBankDiv" style="display:none;">
-                        <select id="npDirectBankSelect" class="select-box">${bOpts}</select>
+                        <div class="ac-wrap">
+                            <input id="npDirectBankName" class="inp" placeholder="بحث عن بنك..." autocomplete="off">
+                            <input type="hidden" id="npDirectBankId">
+                        </div>
                     </div>
                 </div>
+                
                 <div id="suppPayDiv" style="display:none;">
-                    <select id="npMethod" class="select-box" onchange="app.toggleSuppInputs()"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option><option value="mixed">${this.t('mixed')}</option></select><div style="display:flex; gap:10px;"><input type="number" id="npCash" class="inp" placeholder="${this.t('pay_cash')}" value="0"><input type="number" id="npBank" class="inp" placeholder="${this.t('pay_bank')}" value="0" style="display:none;"></div><div id="npBankDiv" style="display:none;"><select id="npBankSelect" class="select-box">${bOpts}</select></div><input id="npDebt" class="inp" placeholder="${this.t('remain')}" readonly style="background:#eee;"></div>`;
+                    <select id="npMethod" class="select-box" onchange="app.toggleSuppInputs()"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option><option value="mixed">${this.t('mixed')}</option></select>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="npCash" class="inp" placeholder="${this.t('pay_cash')}" value="0">
+                        <input type="number" id="npBank" class="inp" placeholder="${this.t('pay_bank')}" value="0" style="display:none;">
+                    </div>
+                    <div id="npBankDiv" style="display:none;">
+                        <div class="ac-wrap">
+                            <input id="npBankName" class="inp" placeholder="بحث عن بنك..." autocomplete="off">
+                            <input type="hidden" id="npBankSelectId">
+                        </div>
+                    </div>
+                    <input id="npDebt" class="inp" placeholder="${this.t('remain')}" readonly style="background:#eee;">
+                </div>`;
                 
                 this.showModal(this.t('p_add'), h, async () => {
                     const n = document.getElementById('npName').value.trim(); const b = Number(document.getElementById('npBuy').value); const s = Number(document.getElementById('npSell').value); const q = Number(document.getElementById('npQty').value); 
-                    const suppId = document.getElementById('npSupp').value;
+                    
+                    const suppId = document.getElementById('npSuppId').value; 
+                    
                     if(!n || !b || !s || !q) return alert("Fill all fields"); if(s <= b) return alert(this.t('err_price_logic'));
                     const batch = db.batch(); const now = new Date().toISOString(); const totalCost = b * q;
                     
@@ -979,10 +1133,10 @@
                     if(isMerge && targetId) { batch.update(db.collection('products').doc(targetId), { stock: firebase.firestore.FieldValue.increment(q), buyPrice: b }); } 
                     else { const pRef = db.collection('products').doc(); batch.set(pRef, { companyId:this.state.cid, name:n, buyPrice:b, sellPrice:s, stock:q, createdAt:now }); }
                     
-                    if(suppId === 'none') { 
-                        // شراء مباشر مع اختيار طريقة الدفع
+                    if(!suppId) { 
+                        // Direct Purchase
                         const method = document.getElementById('npDirectMethod').value;
-                        const bankId = document.getElementById('npDirectBankSelect').value;
+                        const bankId = document.getElementById('npDirectBankId').value;
                         
                         if(method === 'bank' && !bankId) return alert("اختر البنك");
                         
@@ -1006,17 +1160,38 @@
                             batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-totalCost) });
                         }
                     } else { 
-                        // شراء آجل من مورد
-                        const cash = Number(document.getElementById('npCash').value); const bank = Number(document.getElementById('npBank').value); const bankId = document.getElementById('npBankSelect').value; const method = document.getElementById('npMethod').value; const paid = cash + bank;
-                        if(paid > totalCost) return alert("Paid > Cost"); if(method !== 'cash' && !bankId) return alert(this.t('select_bank'));
+                        // Supplier Purchase
+                        const cash = Number(document.getElementById('npCash').value); 
+                        const bank = Number(document.getElementById('npBank').value); 
+                        const bankId = document.getElementById('npBankSelectId').value; 
+                        const method = document.getElementById('npMethod').value; 
+                        const paid = cash + bank;
+                        
+                        if(paid > totalCost) return alert("Paid > Cost"); 
+                        if(method !== 'cash' && !bankId) return alert(this.t('select_bank'));
+                        
                         const debt = totalCost - paid; 
+                        
                         batch.update(db.collection('suppliers').doc(suppId), { balance: firebase.firestore.FieldValue.increment(debt) }); 
                         batch.set(db.collection('transactions').doc(), { companyId: this.state.cid, type: 'purchase_stock', supplierId: suppId, amount: totalCost, paid: paid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, note: `Stock from Supplier: ${n}`, createdAt: now }); 
                         if(bank > 0 && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bank) }); } 
                     }
-                    await batch.commit(); this.clearCache('products'); this.clearCache('transactions'); if(suppId !== 'none') this.clearCache('suppliers'); this.clearCache('banks'); this.nav('inventory');
+                    await batch.commit(); this.clearCache('products'); this.clearCache('transactions'); if(suppId) this.clearCache('suppliers'); this.clearCache('banks'); this.nav('inventory');
                 });
                 
+                this.setupAutocomplete('npSuppName', 'npSuppId', supps, 'name');
+                this.setupAutocomplete('npDirectBankName', 'npDirectBankId', banks, 'name');
+                this.setupAutocomplete('npBankName', 'npBankSelectId', banks, 'name');
+
+                const updateVis = () => {
+                    const hasSupp = !!document.getElementById('npSuppId').value;
+                    document.getElementById('directPayDiv').style.display = hasSupp ? 'none' : 'block';
+                    document.getElementById('suppPayDiv').style.display = hasSupp ? 'block' : 'none';
+                };
+                
+                document.getElementById('npSuppName').addEventListener('change', updateVis); 
+                setInterval(updateVis, 500); 
+
                 setTimeout(() => { 
                     app.toggleSuppInputs();
                     const calc = () => {
@@ -1036,10 +1211,13 @@
                 else if (m === 'bank') { c.style.display='none'; b.style.display='block'; bd.style.display='block'; c.value=0; }
                 else { c.style.display='block'; b.style.display='block'; bd.style.display='block'; }
             },
-            quickAddSupplier: async function() { const n = prompt(this.t('prompt_name')); const p = prompt(this.t('adm_phone')); if(n) { try { const ref = await db.collection('suppliers').add({ companyId: this.state.cid, name: n, phone: p||'', balance: 0, createdAt: new Date().toISOString() }); this.clearCache('suppliers'); const sel = document.getElementById('npSupp'); const opt = document.createElement('option'); opt.value = ref.id; opt.text = n; opt.selected = true; sel.appendChild(opt); app.togglePurchaseType(ref.id); } catch(e) { alert(e.message); } } },
+            quickAddSupplier: async function() { const n = prompt(this.t('prompt_name')); const p = prompt(this.t('adm_phone')); if(n) { try { const ref = await db.collection('suppliers').add({ companyId: this.state.cid, name: n, phone: p||'', balance: 0, createdAt: new Date().toISOString() }); this.clearCache('suppliers'); 
+                document.getElementById('npSuppName').value = n;
+                document.getElementById('npSuppId').value = ref.id;
+            } catch(e) { alert(e.message); } } },
             togglePurchaseType: function(val) { document.getElementById('directPayDiv').style.display = val === 'none' ? 'block' : 'none'; document.getElementById('suppPayDiv').style.display = val === 'none' ? 'none' : 'block'; },
             editProd: async function(id, b, os) { let ns = prompt(this.t('prompt_new_price'), os); if(!ns) return; ns=Number(ns); if(ns<=b) return alert(this.t('err_price_logic')); await db.collection('products').doc(id).update({sellPrice:ns}); this.clearCache('products'); this.nav('inventory'); },
-            del: async function(id, col) { if(confirm(this.t('confirm_del'))) { await db.collection(col).doc(id).delete(); this.clearCache(col); this.nav(col==='products'?'inventory':col); } },
+            del: async function(id, col) { if(confirm(this.t('confirm_del'))) { await db.collection(col).doc(id).delete(); this.clearCache(col); this.nav(col==='products'?'inventory':(col==='customers'?'customers':(col==='suppliers'?'suppliers':(col==='banks'?'banks':'salaries')))); } },
             showModal: function(title, contentHtml, actionFn) { document.getElementById('modalTitle').innerText = title; document.getElementById('modalContent').innerHTML = contentHtml; document.getElementById('genericModal').style.display = 'flex'; const btn = document.getElementById('modalActionBtn'); btn.style.display = 'inline-block'; btn.innerText = this.t('btn_save'); btn.onclick = async () => { this.showLoader(); try { await actionFn(); document.getElementById('genericModal').style.display = 'none'; } catch(e) { alert(e.message); } this.hideLoader(); }; },
             
             viewStatement: async function(id, type, name) {
