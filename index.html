@@ -44,6 +44,12 @@
         .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .chart-box { background: white; padding: 15px; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .chart-box h4 { margin-top: 0; color: var(--primary); text-align: center; margin-bottom: 10px; }
+
+        /* Product Report Styles */
+        .prod-rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .stat-box { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-val { font-size: 1.2em; font-weight: bold; color: var(--primary); display: block; }
+        .stat-lbl { font-size: 0.8em; color: #64748b; }
     </style>
 </head>
 <body>
@@ -135,7 +141,6 @@
                 <div class="nav-item" onclick="app.nav('salaries')"><i class="fa-solid fa-users-gear"></i> <span data-key="sal">الرواتب</span></div>
                 <div class="nav-item" onclick="app.nav('reports')"><i class="fa-solid fa-chart-pie"></i> <span data-key="rep">التقارير</span></div>
                 
-                <!-- New Company Info Button -->
                 <div class="nav-item" onclick="app.companyInfoModal()"><i class="fa-solid fa-building"></i> <span data-key="comp_info">معلومات الشركة</span></div>
 
                 <div id="adminLink" class="nav-item" onclick="app.nav('admin')" style="color:var(--danger); border-top:1px solid var(--border); margin-top:10px;"><i class="fa-solid fa-lock"></i> Admin</div>
@@ -150,7 +155,6 @@
     <div id="printArea" class="print-box"></div>
 
     <script>
-        // --- Service Worker Registration for Offline Mode ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW failed', err));
@@ -226,12 +230,15 @@
                 sal_back: "عودة", sal_pay_btn: "دفع راتب", sal_pdf: "كشف PDF", sal_none: "لا يوجد سجل رواتب",
                 sal_total_all: "المجموع الكلي", sal_emp: "الموظف", search: "بحث...",
                 chart_fin: "الأداء المالي", chart_pay: "توزيع الدفع", chart_prod: "المنتجات الأكثر مبيعاً",
-                // Company Info translations
                 comp_info: "معلومات الشركة", comp_addr: "العنوان", comp_web: "الموقع الإلكتروني", 
                 comp_email: "البريد الإلكتروني", comp_logo: "شعار الشركة", btn_save_info: "حفظ المعلومات",
-                // Expiry translations
                 prod_exp: "تاريخ انتهاء الصلاحية", exp_days: "المدة المتبقية", btn_exp: "المنتجات المنتهية الصلاحية",
-                warn_exp: "⚠️ تحذير: هذا المنتج منتهي الصلاحية!"
+                warn_exp: "⚠️ تحذير: هذا المنتج منتهي الصلاحية!",
+                // New Report Translations
+                rep_prod_title: "تقرير المبيعات حسب المنتج", rep_prod_select: "اختر المنتج",
+                rep_prod_from: "من تاريخ", rep_prod_to: "إلى تاريخ", rep_prod_btn: "عرض التقرير",
+                rep_prod_qty_sold: "الكمية المباعة", rep_prod_stock: "المخزون الحالي", rep_prod_total_val: "إجمالي المبيعات",
+                print_rep: "طباعة التقرير"
             },
             fr: {
                 title: "Teyssir ERP", comp:"Nom Société", phone:"Téléphone", code:"Code Activation",
@@ -272,12 +279,15 @@
                 sal_back: "Retour", sal_pay_btn: "Payer", sal_pdf: "PDF", sal_none: "Aucun historique",
                 sal_total_all: "Total Général", sal_emp: "Employé", search: "Chercher...",
                 chart_fin: "Performance Financière", chart_pay: "Répartition Paiements", chart_prod: "Produits Top",
-                // Company Info translations
                 comp_info: "Infos Société", comp_addr: "Adresse", comp_web: "Site Web", 
                 comp_email: "Email", comp_logo: "Logo", btn_save_info: "Enregistrer",
-                // Expiry translations
                 prod_exp: "Date d'expiration", exp_days: "Jours restants", btn_exp: "Produits Expirés",
-                warn_exp: "⚠️ Attention: Ce produit est expiré!"
+                warn_exp: "⚠️ Attention: Ce produit est expiré!",
+                // New Report Translations
+                rep_prod_title: "Rapport Ventes Produit", rep_prod_select: "Choisir Produit",
+                rep_prod_from: "De", rep_prod_to: "À", rep_prod_btn: "Afficher",
+                rep_prod_qty_sold: "Qté Vendue", rep_prod_stock: "Stock Actuel", rep_prod_total_val: "Total Ventes",
+                print_rep: "Imprimer Rapport"
             }
         };
 
@@ -302,7 +312,6 @@
                 } else { this.switchScreen('authScreen'); }
             },
             
-            // ... (Previous Helper Functions: loadArabicFont, showLoader, etc.) ...
             loadArabicFont: function() {
                 fetch('https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-Regular.ttf')
                 .then(response => { if (!response.ok) throw new Error("Font fetch failed"); return response.arrayBuffer(); })
@@ -436,10 +445,8 @@
                 }, 50);
             },
 
-            // --- Company Info Functions ---
             companyInfoModal: function() {
                 const stored = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
-                
                 const html = `
                     <div style="text-align:center;">
                         <img id="previewLogo" src="${stored.logo || 'logo.png'}" class="logo-preview">
@@ -457,7 +464,6 @@
                     <label>${this.t('comp_web')}</label>
                     <input id="ciWeb" class="inp" placeholder="${this.t('comp_web')}" value="${stored.web || ''}">
                 `;
-
                 this.showModal(this.t('comp_info'), html, async () => {
                     const info = {
                         name: document.getElementById('ciName').value,
@@ -467,10 +473,8 @@
                         web: document.getElementById('ciWeb').value,
                         logo: document.getElementById('previewLogo').src
                     };
-                    
                     localStorage.setItem('teyssir_company_info', JSON.stringify(info));
                     alert(this.t('btn_save_info')); 
-                    
                     if(info.name) this.state.name = info.name;
                     if(info.phone) this.state.phone = info.phone;
                 });
@@ -795,7 +799,6 @@
                 const rows = document.querySelectorAll('#lst tbody tr');
                 
                 if (!isFiltering) {
-                    // Show only expired
                     rows.forEach(r => {
                         const daysCell = r.querySelector('.days-cell');
                         if (daysCell) {
@@ -813,7 +816,6 @@
                     btn.style.opacity = '0.7';
                     btn.innerText = "عرض الكل";
                 } else {
-                    // Reset
                     rows.forEach(r => r.style.display = '');
                     btn.setAttribute('data-active', 'false');
                     btn.style.opacity = '1';
@@ -939,32 +941,188 @@
                 const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, content: [ { columns: [ { text: this.state.name, fontSize: 16, bold: true, alignment: 'right', width: '*' }, { text: 'Statement of Account', fontSize: 14, bold: true, alignment: 'center', width: '*' }, { text: new Date().toLocaleDateString(), alignment: 'left', width: '*' } ], margin: [0, 0, 0, 20] }, { text: `${type}: ${name}`, fontSize: 12, bold: true, margin: [0, 0, 0, 10], alignment: 'right' }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto'], body: [ [ { text: 'Date', bold: true, fillColor: '#eeeeee' }, { text: 'Description', bold: true, fillColor: '#eeeeee', alignment:'right' }, { text: 'In (+)', bold: true, fillColor: '#eeeeee' }, { text: 'Out (-)', bold: true, fillColor: '#eeeeee' }, { text: 'Balance', bold: true, fillColor: '#eeeeee' } ], ...data.map(item => [ item.date, { text: item.desc, alignment: 'right' }, { text: item.in.toString(), color: 'green' }, { text: item.out.toString(), color: 'red' }, { text: item.bal.toLocaleString(), bold: true } ]) ] }, layout: 'lightHorizontalLines' }, { text: `Generated by Teyssir ERP`, fontSize: 8, color: 'gray', margin: [0, 20, 0, 0], alignment: 'center' } ] }; pdfMake.createPdf(docDefinition).download(`Statement_${name}.pdf`);
             },
             
-            // --- UPDATED PRINT FUNCTION ---
+            // --- REPRINT FUNCTIONALITY ---
             reprint: function(id, c, t, itemsStr, paid, debt, pm, bn) { const items = JSON.parse(decodeURIComponent(itemsStr)); this.print(id,c,t,items, paid, debt, pm, bn); },
             print: function(id, c, t, items, paid, debt, pm, bn) { 
                 const dir = this.state.lang==='ar'?'rtl':'ltr'; 
                 const formattedDate = this.formatDate(new Date().toISOString()); 
-                
-                // Get local company info
                 const localInfo = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
                 const compName = localInfo.name || this.state.name;
                 const compPhone = localInfo.phone || this.state.phone;
                 const compLogo = localInfo.logo || 'logo.png';
-                
                 let headerHtml = `<div class="print-header-container">`;
                 if(compLogo && compLogo !== window.location.href) { headerHtml += `<img src="${compLogo}" class="print-logo">`; } else { headerHtml += `<div></div>`; }
-
                 headerHtml += `<div class="print-details"><h2>${compName}</h2>${compPhone ? `<div class="print-meta"><i class="fa-solid fa-phone"></i> <span>${compPhone}</span></div>` : ''}${localInfo.addr ? `<div class="print-meta"><i class="fa-solid fa-location-dot"></i> <span>${localInfo.addr}</span></div>` : ''}${localInfo.email ? `<div class="print-meta"><i class="fa-solid fa-envelope"></i> <span>${localInfo.email}</span></div>` : ''}${localInfo.web ? `<div class="print-meta"><i class="fa-solid fa-globe"></i> <span>${localInfo.web}</span></div>` : ''}</div></div>`;
-
                 const headers = `<tr><th style="border:1px solid #000">${this.t('tbl_prod')}</th><th style="border:1px solid #000">${this.t('tbl_qty')}</th><th style="border:1px solid #000">${this.t('tbl_tot')}</th></tr>`; 
                 let rows = items.map(i=>`<tr><td style="border:1px solid #000">${i.n}</td><td style="border:1px solid #000">${i.q}</td><td style="border:1px solid #000">${i.t}</td></tr>`).join(''); 
                 let bankInfo = pm.includes('Bank') && bn ? `(${bn})` : ''; 
-                
                 document.getElementById('printArea').innerHTML = `<div style="padding:20px; direction:${dir}; font-family:'Tajawal'">${headerHtml}<hr><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>INV:</b> ${id}</span><span>${formattedDate}</span></div><p><b>${this.t('th_client')}:</b> ${c}</p><table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">${headers}${rows}</table><hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span>${this.t('p_tot')}:</span> <span>${t} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('paid')}:</span> <span>${paid} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('remain')}:</span> <span>${debt} MRU</span></div><br><div style="text-align:center; font-size:12px;">Method: ${pm} ${bankInfo}</div><center><small>Teyssir ERP</small></center></div>`; 
                 window.print(); 
             },
 
-            reports: async function(div) { div.innerHTML = `<h2>${this.t('rep')}</h2><div class="filters-bar"><select id="repType" class="select-box" style="width:120px;"><option value="all">${this.t('rep_all')}</option><option value="cash">${this.t('rep_cash')}</option><option value="bank">${this.t('rep_bank')}</option></select><input type="date" id="repDate" class="filter-inp"><input type="month" id="repMonth" class="filter-inp"><button onclick="app.generateReport()" class="btn btn-prim" style="width:auto; margin:0 5px;">${this.t('rep_filter')}</button></div><div class="charts-container"><div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="finChart"></canvas></div><div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="payChart"></canvas></div><div class="chart-box"><h4>${this.t('chart_prod')}</h4><canvas id="prodChart"></canvas></div></div><div id="reportContent"></div>`; },
+            // --- REPORTS ---
+            reports: async function(div) { 
+                const products = await this.getData('products'); // Fetch products for the dropdown
+                let prodOptions = `<option value="">${this.t('rep_prod_select')}</option>`;
+                products.forEach(p => prodOptions += `<option value="${p.id}">${p.name}</option>`);
+
+                div.innerHTML = `
+                <h2>${this.t('rep')}</h2>
+                
+                <!-- General Report Section -->
+                <div class="card">
+                    <div class="filters-bar" style="margin:0; background:none; padding:0; justify-content:flex-start;">
+                        <select id="repType" class="select-box" style="width:120px; margin-bottom:0;"><option value="all">${this.t('rep_all')}</option><option value="cash">${this.t('rep_cash')}</option><option value="bank">${this.t('rep_bank')}</option></select>
+                        <input type="date" id="repDate" class="filter-inp">
+                        <input type="month" id="repMonth" class="filter-inp">
+                        <button onclick="app.generateReport()" class="btn btn-prim" style="width:auto; margin:0 5px;">${this.t('rep_filter')}</button>
+                    </div>
+                </div>
+
+                <!-- NEW: Sales by Product Report Section -->
+                <div class="card" style="border-top: 3px solid var(--accent);">
+                    <h3 style="margin-top:0;">${this.t('rep_prod_title')}</h3>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                        <div style="flex:1; min-width:200px;">
+                            <label style="font-size:12px; font-weight:bold; color:#666;">${this.t('tbl_prod')}</label>
+                            <select id="repProdId" class="select-box" style="margin-bottom:0;">${prodOptions}</select>
+                        </div>
+                        <div style="min-width:140px;">
+                            <label style="font-size:12px; font-weight:bold; color:#666;">${this.t('rep_prod_from')}</label>
+                            <input type="date" id="repProdFrom" class="inp" style="margin-bottom:0; padding:10px;">
+                        </div>
+                        <div style="min-width:140px;">
+                            <label style="font-size:12px; font-weight:bold; color:#666;">${this.t('rep_prod_to')}</label>
+                            <input type="date" id="repProdTo" class="inp" style="margin-bottom:0; padding:10px;">
+                        </div>
+                        <button onclick="app.generateProductReport()" class="btn btn-sec" style="width:auto; height:42px;">${this.t('rep_prod_btn')}</button>
+                    </div>
+                    <div id="prodRepResult" style="margin-top:20px;"></div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="finChart"></canvas></div>
+                    <div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="payChart"></canvas></div>
+                    <div class="chart-box"><h4>${this.t('chart_prod')}</h4><canvas id="prodChart"></canvas></div>
+                </div>
+                <div id="reportContent"></div>
+                `; 
+            },
+
+            // --- NEW: Generate Product Report Logic ---
+            generateProductReport: async function() {
+                const prodId = document.getElementById('repProdId').value;
+                const fromDate = document.getElementById('repProdFrom').value;
+                const toDate = document.getElementById('repProdTo').value;
+                const resultDiv = document.getElementById('prodRepResult');
+
+                if(!prodId) return alert(this.t('rep_prod_select'));
+                if(!fromDate || !toDate) return alert("Dates Required");
+
+                resultDiv.innerHTML = '<div class="spinner"></div>';
+
+                try {
+                    // 1. Get Product Details for Name and current Stock
+                    const products = await this.getData('products');
+                    const product = products.find(p => p.id === prodId);
+                    if(!product) throw new Error("Product not found");
+
+                    // 2. Fetch all invoices (filtering by date on client side for simplicity given array structure)
+                    // Note: In production with huge data, better to index or limit, but for this scope:
+                    const invoices = await this.getData('invoices');
+
+                    let totalQtySold = 0;
+                    let totalSalesVal = 0;
+
+                    const start = new Date(fromDate); start.setHours(0,0,0,0);
+                    const end = new Date(toDate); end.setHours(23,59,59,999);
+
+                    invoices.forEach(inv => {
+                        const invDate = new Date(inv.createdAt);
+                        if(invDate >= start && invDate <= end) {
+                            if(inv.items && Array.isArray(inv.items)) {
+                                inv.items.forEach(item => {
+                                    if(item.id === prodId) {
+                                        totalQtySold += (Number(item.q) || 0);
+                                        totalSalesVal += (Number(item.t) || 0);
+                                    }
+                                });
+                            }
+                        }
+                    });
+
+                    // 3. Render Result
+                    const html = `
+                        <div style="background:#f0f9ff; border:1px solid #bae6fd; padding:15px; border-radius:10px;">
+                            <h4 style="margin:0 0 10px; color:var(--primary); text-align:center;">${product.name}</h4>
+                            <div class="prod-rep-grid">
+                                <div class="stat-box">
+                                    <span class="stat-lbl">${this.t('rep_prod_qty_sold')}</span>
+                                    <span class="stat-val">${totalQtySold}</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-lbl">${this.t('rep_prod_stock')}</span>
+                                    <span class="stat-val">${product.stock}</span>
+                                </div>
+                            </div>
+                            <div class="stat-box" style="margin-bottom:15px;">
+                                <span class="stat-lbl">${this.t('rep_prod_total_val')}</span>
+                                <span class="stat-val" style="color:green;">${totalSalesVal.toLocaleString()} MRU</span>
+                            </div>
+                            <button onclick="app.printProductReport('${product.name}', '${fromDate}', '${toDate}', ${totalQtySold}, ${product.stock}, ${totalSalesVal})" class="btn btn-prim"><i class="fa-solid fa-print"></i> ${this.t('print_rep')}</button>
+                        </div>
+                    `;
+                    resultDiv.innerHTML = html;
+
+                } catch(e) {
+                    console.error(e);
+                    resultDiv.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+                }
+            },
+
+            // --- NEW: Print Product Report ---
+            printProductReport: function(name, from, to, qty, stock, val) {
+                const dir = this.state.lang==='ar'?'rtl':'ltr';
+                const localInfo = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
+                const compName = localInfo.name || this.state.name;
+                const compPhone = localInfo.phone || this.state.phone;
+
+                const content = `
+                    <div style="padding:20px; direction:${dir}; font-family:'Tajawal', sans-serif;">
+                        <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:20px;">
+                            <h2 style="margin:0;">${compName}</h2>
+                            <p style="margin:5px 0;">${compPhone}</p>
+                            <h3 style="background:#eee; display:inline-block; padding:5px 15px; border-radius:5px; margin-top:10px;">${this.t('rep_prod_title')}</h3>
+                        </div>
+                        
+                        <div style="margin-bottom:20px; font-size:14px;">
+                            <p><b>${this.t('tbl_prod')}:</b> ${name}</p>
+                            <p><b>${this.t('th_date')}:</b> ${from} - ${to}</p>
+                        </div>
+
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+                            <tr>
+                                <th style="border:1px solid #333; padding:10px;">${this.t('rep_prod_qty_sold')}</th>
+                                <td style="border:1px solid #333; padding:10px; text-align:center; font-weight:bold;">${qty}</td>
+                            </tr>
+                            <tr>
+                                <th style="border:1px solid #333; padding:10px;">${this.t('rep_prod_stock')}</th>
+                                <td style="border:1px solid #333; padding:10px; text-align:center; font-weight:bold;">${stock}</td>
+                            </tr>
+                            <tr>
+                                <th style="border:1px solid #333; padding:10px;">${this.t('rep_prod_total_val')}</th>
+                                <td style="border:1px solid #333; padding:10px; text-align:center; font-weight:bold;">${val.toLocaleString()} MRU</td>
+                            </tr>
+                        </table>
+
+                        <center style="margin-top:50px; color:#666; font-size:12px;">Generated by Teyssir ERP</center>
+                    </div>
+                `;
+                
+                document.getElementById('printArea').innerHTML = content;
+                window.print();
+            },
+
             drawCharts: function(data) {
                 ['finChart', 'payChart', 'prodChart'].forEach(id => { if (this.charts[id]) this.charts[id].destroy(); });
                 this.charts['finChart'] = new Chart(document.getElementById('finChart'), { type: 'bar', data: { labels: [this.t('total_in'), this.t('total_out'), this.t('net_cash')], datasets: [{ label: 'MRU', data: [data.totalIn, data.totalOut, data.net], backgroundColor: ['#10b981', '#ef4444', '#3b82f6'] }] } });
