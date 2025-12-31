@@ -50,6 +50,12 @@
         .stat-box { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
         .stat-val { font-size: 1.2em; font-weight: bold; color: var(--primary); display: block; }
         .stat-lbl { font-size: 0.8em; color: #64748b; }
+        
+        /* Out of Stock Style in Search */
+        .item-out-stock { opacity: 0.6; background: #fff5f5; cursor: not-allowed; }
+        .stock-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+        .stock-ok { background: #dcfce7; color: #166534; }
+        .stock-no { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -235,7 +241,7 @@
                 prod_exp: "تاريخ انتهاء الصلاحية", exp_days: "المدة المتبقية", btn_exp: "المنتجات المنتهية الصلاحية",
                 warn_exp: "⚠️ تحذير: هذا المنتج منتهي الصلاحية!",
                 // New Report Translations
-                rep_prod_title: "تقرير المبيعات حسب المنتج", rep_prod_select: "اختر المنتج",
+                rep_prod_title: "تقرير المبيعات حسب المنتج", rep_prod_select: "بحث عن منتج...",
                 rep_prod_from: "من تاريخ", rep_prod_to: "إلى تاريخ", rep_prod_btn: "عرض التقرير",
                 rep_prod_qty_sold: "الكمية المباعة", rep_prod_stock: "المخزون الحالي", rep_prod_total_val: "إجمالي المبيعات",
                 print_rep: "طباعة التقرير"
@@ -284,7 +290,7 @@
                 prod_exp: "Date d'expiration", exp_days: "Jours restants", btn_exp: "Produits Expirés",
                 warn_exp: "⚠️ Attention: Ce produit est expiré!",
                 // New Report Translations
-                rep_prod_title: "Rapport Ventes Produit", rep_prod_select: "Choisir Produit",
+                rep_prod_title: "Rapport Ventes Produit", rep_prod_select: "Chercher Produit...",
                 rep_prod_from: "De", rep_prod_to: "À", rep_prod_btn: "Afficher",
                 rep_prod_qty_sold: "Qté Vendue", rep_prod_stock: "Stock Actuel", rep_prod_total_val: "Total Ventes",
                 print_rep: "Imprimer Rapport"
@@ -628,7 +634,22 @@
             searchProduct: function(q) {
                 const res = document.getElementById('searchResults'); if(!q || q.length < 1) { res.style.display='none'; return; }
                 const matches = this.cachedProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase())); if(matches.length === 0) { res.style.display='none'; return; }
-                res.innerHTML = matches.map(p => `<div class="search-item" onclick="app.promptQty('${p.id}', '${p.name}', ${p.sellPrice}, ${p.buyPrice}, ${p.stock}, '${p.expiryDate || ''}')"><div><b>${p.name}</b><br><small style="color:gray">${this.t('th_stock')}: ${p.stock}</small></div><div style="color:var(--primary); font-weight:bold;">${p.sellPrice}</div></div>`).join(''); res.style.display = 'block';
+                
+                res.innerHTML = matches.map(p => {
+                    const isOutOfStock = p.stock <= 0;
+                    const stockClass = isOutOfStock ? 'stock-no' : 'stock-ok';
+                    const itemClass = isOutOfStock ? 'search-item item-out-stock' : 'search-item';
+                    const clickAction = isOutOfStock ? '' : `onclick="app.promptQty('${p.id}', '${p.name}', ${p.sellPrice}, ${p.buyPrice}, ${p.stock}, '${p.expiryDate || ''}')"`;
+                    
+                    return `<div class="${itemClass}" ${clickAction}>
+                        <div>
+                            <b>${p.name}</b><br>
+                            <span class="stock-badge ${stockClass}">${this.t('th_stock')}: ${p.stock}</span>
+                        </div>
+                        <div style="color:var(--primary); font-weight:bold;">${p.sellPrice}</div>
+                    </div>`;
+                }).join(''); 
+                res.style.display = 'block';
             },
             promptQty: function(id, name, sell, buy, stock, expiryDate) {
                 // Check expiry
@@ -640,9 +661,17 @@
                 }
 
                 document.getElementById('searchResults').style.display='none'; document.getElementById('prodSearch').value = '';
-                let q = prompt(`${name}\n${this.t('prompt_qty')} (Max: ${stock})`, 1); if(!q) return; q = Number(q); if(q <= 0) return; if(q > stock) return alert(this.t('max_qty')+stock);
+                // Allow adding even if local check says low, but generally good to limit. 
+                // However, since we now support 0 stock not deleting, we prevent adding if stock <= 0 (handled in searchProduct UI), 
+                // but if user types manual quantity > stock, we still warn.
+                let q = prompt(`${name}\n${this.t('prompt_qty')} (Max: ${stock})`, 1); if(!q) return; q = Number(q); if(q <= 0) return; 
+                if(stock > 0 && q > stock) return alert(this.t('max_qty')+stock);
+                
                 const ex = this.cart.findIndex(i=>i.id===id);
-                if(ex>-1) { if(this.cart[ex].q+q > stock) return alert(this.t('max_qty')+stock); this.cart[ex].q+=q; this.cart[ex].t=this.cart[ex].q*this.cart[ex].p; } 
+                if(ex>-1) { 
+                    if(stock > 0 && this.cart[ex].q+q > stock) return alert(this.t('max_qty')+stock); 
+                    this.cart[ex].q+=q; this.cart[ex].t=this.cart[ex].q*this.cart[ex].p; 
+                } 
                 else { this.cart.push({id, n:name, p:sell, bp:buy, q, t:sell*q}); }
                 this.renderCart();
             },
@@ -677,7 +706,19 @@
                 }
             },
             getNextInvoiceNumber: async function(transaction) {
-                const counterRef = db.collection('counters').doc(this.state.cid); const doc = await transaction.get(counterRef); let nextNum = 1; if (doc.exists) { nextNum = doc.data().lastInvoiceNum + 1; } transaction.set(counterRef, { lastInvoiceNum: nextNum }, { merge: true }); return 'INV-' + String(nextNum).padStart(4, '0');
+                // NOTE: For Batch offline support, using transaction for counter is tricky. 
+                // We will use a simpler approach: Read, Increment, Write. 
+                // In high concurrency offline, this might conflict, but for this app scope it's acceptable.
+                // However, since finalizeInvoice is now using Batch, we can't await a transaction inside easily.
+                // We'll use a random fallback or simple increment based on local cache for now, OR separate the counter update.
+                // To keep it simple and safe for offline: We generate a timestamp-based ID or read last known.
+                const counterRef = db.collection('counters').doc(this.state.cid);
+                let nextNum = 1;
+                try {
+                    const doc = await counterRef.get();
+                    if(doc.exists) nextNum = doc.data().lastInvoiceNum + 1;
+                } catch(e) { console.log("Offline counter read"); } // Fallback
+                return { num: 'INV-' + String(nextNum).padStart(4, '0'), nextVal: nextNum };
             },
             finalizeInvoice: async function() {
                 if(!this.cart.length) return alert(this.t('empty'));
@@ -700,24 +741,60 @@
 
                 this.showLoader();
                 try {
-                    await db.runTransaction(async (transaction) => {
-                        const now = new Date().toISOString(); const invNum = await this.getNextInvoiceNumber(transaction); const invRef = db.collection('invoices').doc();
-                        
-                        transaction.set(invRef, { companyId: this.state.cid, invNum: invNum, customer: custName, customerId: custId, items: this.cart, total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, bankName: bankName, createdAt: now });
-                        
-                        let totalCost = 0;
-                        for(let i of this.cart) { const pRef = db.collection('products').doc(i.id); transaction.update(pRef, { stock: firebase.firestore.FieldValue.increment(-i.q) }); totalCost += (i.bp * i.q); }
-                        
-                        if(debt > 0) { const cRef = db.collection('customers').doc(custId); transaction.update(cRef, { balance: firebase.firestore.FieldValue.increment(debt) }); }
-                        if(bank > 0 && bankId) { const bRef = db.collection('banks').doc(bankId); transaction.update(bRef, { balance: firebase.firestore.FieldValue.increment(bank) }); }
-                        
-                        const tRef = db.collection('transactions').doc();
-                        transaction.set(tRef, { companyId: this.state.cid, type: 'sale', refId: invRef.id, invNum: invNum, amount: total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, cogs: totalCost, customerId: custId, createdAt: now, note: `Invoice ${invNum}` });
-                        
-                        this.printData = { id: invNum, c: custName, t: total, items: this.cart, p: totalPaid, d: debt, pm: payMethod, bn: bankName };
-                    });
+                    // ** CRITICAL FIX: Use WriteBatch for Offline Support **
+                    // Transactions fail offline. Batches work offline.
+                    
+                    // 1. Get Invoice Number (Best Effort)
+                    const counterData = await this.getNextInvoiceNumber(); 
+                    const invNum = counterData.num;
+                    
+                    const batch = db.batch();
+                    const now = new Date().toISOString();
+                    
+                    // 2. Create Invoice
+                    const invRef = db.collection('invoices').doc();
+                    batch.set(invRef, { companyId: this.state.cid, invNum: invNum, customer: custName, customerId: custId, items: this.cart, total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, bankName: bankName, createdAt: now });
+                    
+                    // 3. Update Counter
+                    const counterRef = db.collection('counters').doc(this.state.cid);
+                    batch.set(counterRef, { lastInvoiceNum: counterData.nextVal }, { merge: true });
+
+                    // 4. Update Stock & Calculate Cost
+                    let totalCost = 0;
+                    for(let i of this.cart) { 
+                        const pRef = db.collection('products').doc(i.id); 
+                        // Decrement stock. If it goes below 0, it stays below 0. NO DELETE.
+                        batch.update(pRef, { stock: firebase.firestore.FieldValue.increment(-i.q) }); 
+                        totalCost += (i.bp * i.q); 
+                    }
+                    
+                    // 5. Update Customer Balance (Debt)
+                    if(debt > 0) { 
+                        const cRef = db.collection('customers').doc(custId); 
+                        batch.update(cRef, { balance: firebase.firestore.FieldValue.increment(debt) }); 
+                    }
+
+                    // 6. Update Bank Balance
+                    if(bank > 0 && bankId) { 
+                        const bRef = db.collection('banks').doc(bankId); 
+                        batch.update(bRef, { balance: firebase.firestore.FieldValue.increment(bank) }); 
+                    }
+                    
+                    // 7. Create Transaction Record
+                    const tRef = db.collection('transactions').doc();
+                    batch.set(tRef, { companyId: this.state.cid, type: 'sale', refId: invRef.id, invNum: invNum, amount: total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, cogs: totalCost, customerId: custId, createdAt: now, note: `Invoice ${invNum}` });
+                    
+                    // Commit Batch (Works offline!)
+                    // CRITICAL CHANGE: Do NOT await this if offline, or handle the promise to not block UI
+                    batch.commit().catch(e => console.error("Sync error (will retry): ", e));
+
+                    // Print Data Prep
+                    this.printData = { id: invNum, c: custName, t: total, items: this.cart, p: totalPaid, d: debt, pm: payMethod, bn: bankName };
+                    
                     this.clearCache('products'); this.clearCache('invoices'); this.clearCache('customers'); this.clearCache('transactions'); this.clearCache('banks');
-                    this.print(this.printData.id, this.printData.c, this.printData.t, this.printData.items, this.printData.p, this.printData.d, this.printData.pm, this.printData.bn); this.nav('pos');
+                    this.print(this.printData.id, this.printData.c, this.printData.t, this.printData.items, this.printData.p, this.printData.d, this.printData.pm, this.printData.bn); 
+                    this.nav('pos');
+
                 } catch(e) { console.error(e); alert(e.message); } this.hideLoader();
             },
             
@@ -727,13 +804,23 @@
             addCustomerModal: function() { this.showModal(this.t('new_cust'), `<input id="ncName" class="inp" placeholder="${this.t('prompt_name')}"><input id="ncPhone" class="inp" placeholder="${this.t('adm_phone')}">`, async () => { const n=document.getElementById('ncName').value, p=document.getElementById('ncPhone').value; if(n && p) { if(!this.isValidPhone(p)) return alert(this.t('err_phone_len')); await db.collection('customers').add({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}); this.clearCache('customers'); this.nav('customers'); } }); },
             payDebtModal: async function(cid, cname) {
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- Select Bank --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
-                this.showModal(this.t('pay_debt'), `<p>Customer: <b>${cname}</b></p><input type="number" id="pdAmount" class="inp" placeholder="${this.t('prompt_amount')}"><select id="pdMethod" class="select-box" onchange="document.getElementById('pdBankDiv').style.display = this.value==='bank'?'block':'none'"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option></select><div id="pdBankDiv" style="display:none;"><select id="pdBank" class="select-box">${bOpts}</select></div>`, async () => { const amt = Number(document.getElementById('pdAmount').value); const method = document.getElementById('pdMethod').value; const bid = document.getElementById('pdBank').value; if(!amt) return; if(method==='bank' && !bid) return alert(this.t('select_bank')); const batch = db.batch(); const now = new Date().toISOString(); const tRef = db.collection('transactions').doc(); 
+                this.showModal(this.t('pay_debt'), `<p>Customer: <b>${cname}</b></p><input type="number" id="pdAmount" class="inp" placeholder="${this.t('prompt_amount')}"><select id="pdMethod" class="select-box" onchange="document.getElementById('pdBankDiv').style.display = this.value==='bank'?'block':'none'"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option></select><div id="pdBankDiv" style="display:none;"><select id="pdBank" class="select-box">${bOpts}</select></div>`, async () => { const amt = Number(document.getElementById('pdAmount').value); const method = document.getElementById('pdMethod').value; const bid = document.getElementById('pdBank').value; if(!amt) return; if(method==='bank' && !bid) return alert(this.t('select_bank')); 
+                
+                // Using Batch for Offline support
+                const batch = db.batch(); 
+                const now = new Date().toISOString(); 
+                const tRef = db.collection('transactions').doc(); 
                 let cAmt = method === 'cash' ? amt : 0;
                 let bAmt = method === 'bank' ? amt : 0;
+                
                 batch.set(tRef, { companyId: this.state.cid, type: 'debt_payment', customerId: cid, amount: amt, cashAmount: cAmt, bankAmount: bAmt, method, bankId: bid, createdAt: now }); 
                 batch.update(db.collection('customers').doc(cid), { balance: firebase.firestore.FieldValue.increment(-amt) }); 
                 if(method==='bank') batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(amt) }); 
-                await batch.commit(); this.clearCache('customers'); this.clearCache('transactions'); this.clearCache('banks');
+                
+                // Don't await commit to prevent hanging offline
+                batch.commit().catch(e => console.error(e));
+                
+                this.clearCache('customers'); this.clearCache('transactions'); this.clearCache('banks');
                 this.nav('customers'); });
             },
             
@@ -756,7 +843,9 @@
             addBankModal: function() { 
                 this.showModal(this.t('banks'), `<input id="nbName" class="inp" placeholder="${this.t('th_name')}"><input type="number" id="nbBal" class="inp" placeholder="${this.t('balance')}">`, async () => { 
                     const n = document.getElementById('nbName').value; const b = Number(document.getElementById('nbBal').value); 
-                    if(n) { const batch = db.batch(); const now = new Date().toISOString(); const bankRef = db.collection('banks').doc(); batch.set(bankRef, {companyId:this.state.cid, name:n, balance:b||0, createdAt:now}); if(b > 0) { const transRef = db.collection('transactions').doc(); batch.set(transRef, { companyId: this.state.cid, type: 'opening_balance', bankId: bankRef.id, amount: b, bankAmount: b, cashAmount: 0, method: 'bank', note: 'Opening Balance', createdAt: now }); } await batch.commit(); this.clearCache('banks'); this.clearCache('transactions'); this.nav('banks'); } 
+                    if(n) { const batch = db.batch(); const now = new Date().toISOString(); const bankRef = db.collection('banks').doc(); batch.set(bankRef, {companyId:this.state.cid, name:n, balance:b||0, createdAt:now}); if(b > 0) { const transRef = db.collection('transactions').doc(); batch.set(transRef, { companyId: this.state.cid, type: 'opening_balance', bankId: bankRef.id, amount: b, bankAmount: b, cashAmount: 0, method: 'bank', note: 'Opening Balance', createdAt: now }); } 
+                    batch.commit().catch(e=>console.error(e)); 
+                    this.clearCache('banks'); this.clearCache('transactions'); this.nav('banks'); } 
                 }); 
             },
 
@@ -767,7 +856,11 @@
                 this.showModal(this.t('pay_supp'), `<p>Supplier: <b>${sname}</b></p><input type="number" id="psAmount" class="inp" placeholder="${this.t('prompt_amount')}"><select id="psMethod" class="select-box" onchange="document.getElementById('psBankDiv').style.display = this.value==='bank'?'block':'none'"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option></select><div id="psBankDiv" style="display:none;"><select id="psBank" class="select-box">${bOpts}</select></div>`, async () => { const amt = Number(document.getElementById('psAmount').value); const method = document.getElementById('psMethod').value; const bid = document.getElementById('psBank').value; if(!amt) return; if(method==='bank' && !bid) return alert(this.t('select_bank')); const batch = db.batch(); const now = new Date().toISOString(); 
                 let cAmt = method === 'cash' ? amt : 0; let bAmt = method === 'bank' ? amt : 0;
                 batch.set(db.collection('transactions').doc(), { companyId: this.state.cid, type: 'supplier_payment', supplierId: sid, amount: amt, cashAmount: cAmt, bankAmount: bAmt, method, bankId: bid, createdAt: now }); 
-                batch.update(db.collection('suppliers').doc(sid), { balance: firebase.firestore.FieldValue.increment(-amt) }); if(method==='bank') batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(-amt) }); await batch.commit(); this.clearCache('suppliers'); this.clearCache('transactions'); this.clearCache('banks');
+                batch.update(db.collection('suppliers').doc(sid), { balance: firebase.firestore.FieldValue.increment(-amt) }); if(method==='bank') batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(-amt) }); 
+                
+                batch.commit().catch(e=>console.error(e));
+                
+                this.clearCache('suppliers'); this.clearCache('transactions'); this.clearCache('banks');
                 this.nav('suppliers'); });
             },
 
@@ -775,7 +868,9 @@
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- Select Bank --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
                 this.showModal(this.t(type), `<input id="trName" class="inp" placeholder="${this.t('prompt_name')}"><input id="trNote" class="inp" placeholder="${this.t('prompt_note')}"><input type="number" id="trAmount" class="inp" placeholder="${this.t('prompt_amount')}"><label>${this.t('pay_method')}</label><select id="trMethod" class="select-box" onchange="document.getElementById('trBankDiv').style.display = this.value==='bank'?'block':'none'"><option value="cash">${this.t('cash')}</option><option value="bank">${this.t('bank')}</option></select><div id="trBankDiv" style="display:none;"><select id="trBank" class="select-box">${bOpts}</select></div>`, async () => { const val1 = document.getElementById('trName').value; const val2 = document.getElementById('trNote').value; const amt = Number(document.getElementById('trAmount').value); const method = document.getElementById('trMethod').value; const bid = document.getElementById('trBank').value; if(!val1 || !amt) return; if(method==='bank' && !bid) return alert(this.t('select_bank')); const batch = db.batch(); const now = new Date().toISOString(); const ref = db.collection(type).doc(); batch.set(ref, { companyId:this.state.cid, val1, val2, val3:amt, method, bankId:bid, createdAt:now }); const tRef = db.collection('transactions').doc(); let tType = type === 'revenues' ? 'revenue' : 'expense'; 
                 let cAmt = method === 'cash' ? amt : 0; let bAmt = method === 'bank' ? amt : 0;
-                batch.set(tRef, { companyId: this.state.cid, type: tType, refId: ref.id, amount: amt, cashAmount: cAmt, bankAmount: bAmt, method, bankId: bid, note: val1, createdAt: now }); if(method==='bank' && bid) { const increment = type === 'revenues' ? amt : -amt; batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(increment) }); } await batch.commit(); this.clearCache(type); this.clearCache('transactions'); this.clearCache('banks');
+                batch.set(tRef, { companyId: this.state.cid, type: tType, refId: ref.id, amount: amt, cashAmount: cAmt, bankAmount: bAmt, method, bankId: bid, note: val1, createdAt: now }); if(method==='bank' && bid) { const increment = type === 'revenues' ? amt : -amt; batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(increment) }); } 
+                batch.commit().catch(e=>console.error(e));
+                this.clearCache(type); this.clearCache('transactions'); this.clearCache('banks');
                 this.nav(type); });
             },
             
@@ -787,7 +882,9 @@
             },
             payEmployeeModal: async function(empId, empName, baseSalary) {
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
-                this.showModal(`${this.t('sal_pay_btn')}: ${empName}`, `<label>${this.t('sal_amount')}</label><input type="number" id="payAmount" class="inp" value="${baseSalary}"><label>${this.t('pay_method')}</label><select id="payMethod" class="select-box" onchange="app.toggleSalaryInputs()"><option value="cash">${this.t('pay_cash')}</option><option value="bank">${this.t('pay_bank')}</option><option value="mixed">${this.t('mixed')}</option></select><div id="payDetails"><div id="cashDiv"><input id="pCash" type="number" class="inp" placeholder="${this.t('pay_cash')}" value="${baseSalary}"></div><div id="bankDiv" style="display:none;"><input id="pBank" type="number" class="inp" placeholder="${this.t('pay_bank')}" value="0"><select id="pBankId" class="select-box">${bOpts}</select></div></div><input id="payNote" class="inp" placeholder="${this.t('sal_note')}">`, async () => { const total = Number(document.getElementById('payAmount').value); const method = document.getElementById('payMethod').value; const note = document.getElementById('payNote').value; let cashAmt = 0, bankAmt = 0, bankId = null; if (method === 'cash') { cashAmt = total; } else if (method === 'bank') { bankAmt = total; bankId = document.getElementById('pBankId').value; if(!bankId) return alert(this.t('select_bank')); } else { cashAmt = Number(document.getElementById('pCash').value); bankAmt = Number(document.getElementById('pBank').value); bankId = document.getElementById('pBankId').value; if(cashAmt + bankAmt !== total) return alert("Total mismatch"); if(!bankId && bankAmt > 0) return alert(this.t('select_bank')); } const batch = db.batch(); const now = new Date().toISOString(); const tRef = db.collection('transactions').doc(); batch.set(tRef, { companyId: this.state.cid, type: 'salary_payment', refId: empId, employeeName: empName, amount: total, cashAmount: cashAmt, bankAmount: bankAmt, bankId: bankId, method: method, note: note, createdAt: now }); if (bankAmt > 0 && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bankAmt) }); } batch.update(db.collection('salaries').doc(empId), { totalPaid: firebase.firestore.FieldValue.increment(total) }); await batch.commit(); this.clearCache('transactions'); this.clearCache('banks'); this.clearCache('salaries'); this.viewEmployeeFile(empId, empName, baseSalary); });
+                this.showModal(`${this.t('sal_pay_btn')}: ${empName}`, `<label>${this.t('sal_amount')}</label><input type="number" id="payAmount" class="inp" value="${baseSalary}"><label>${this.t('pay_method')}</label><select id="payMethod" class="select-box" onchange="app.toggleSalaryInputs()"><option value="cash">${this.t('pay_cash')}</option><option value="bank">${this.t('bank')}</option><option value="mixed">${this.t('mixed')}</option></select><div id="payDetails"><div id="cashDiv"><input id="pCash" type="number" class="inp" placeholder="${this.t('pay_cash')}" value="${baseSalary}"></div><div id="bankDiv" style="display:none;"><input id="pBank" type="number" class="inp" placeholder="${this.t('pay_bank')}" value="0"><select id="pBankId" class="select-box">${bOpts}</select></div></div><input id="payNote" class="inp" placeholder="${this.t('sal_note')}">`, async () => { const total = Number(document.getElementById('payAmount').value); const method = document.getElementById('payMethod').value; const note = document.getElementById('payNote').value; let cashAmt = 0, bankAmt = 0, bankId = null; if (method === 'cash') { cashAmt = total; } else if (method === 'bank') { bankAmt = total; bankId = document.getElementById('pBankId').value; if(!bankId) return alert(this.t('select_bank')); } else { cashAmt = Number(document.getElementById('pCash').value); bankAmt = Number(document.getElementById('pBank').value); bankId = document.getElementById('pBankId').value; if(cashAmt + bankAmt !== total) return alert("Total mismatch"); if(!bankId && bankAmt > 0) return alert(this.t('select_bank')); } const batch = db.batch(); const now = new Date().toISOString(); const tRef = db.collection('transactions').doc(); batch.set(tRef, { companyId: this.state.cid, type: 'salary_payment', refId: empId, employeeName: empName, amount: total, cashAmount: cashAmt, bankAmount: bankAmt, bankId: bankId, method: method, note: note, createdAt: now }); if (bankAmt > 0 && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bankAmt) }); } batch.update(db.collection('salaries').doc(empId), { totalPaid: firebase.firestore.FieldValue.increment(total) }); 
+                batch.commit().catch(e=>console.error(e));
+                this.clearCache('transactions'); this.clearCache('banks'); this.clearCache('salaries'); this.viewEmployeeFile(empId, empName, baseSalary); });
             },
             toggleSalaryInputs: function() { const m = document.getElementById('payMethod').value; const c = document.getElementById('cashDiv'); const b = document.getElementById('bankDiv'); if(m === 'cash') { c.style.display = 'block'; b.style.display = 'none'; } else if(m === 'bank') { c.style.display = 'none'; b.style.display = 'block'; } else { c.style.display = 'block'; b.style.display = 'block'; } },
             downloadEmpPdf: function(name, salary, historyStr) { const history = JSON.parse(decodeURIComponent(historyStr)); const bodyData = [ [{text:this.t('sal_date'), bold:true, fillColor:'#eee'}, {text:this.t('sal_amount'), bold:true, fillColor:'#eee'}, {text:this.t('sal_method'), bold:true, fillColor:'#eee'}, {text:this.t('sal_note'), bold:true, fillColor:'#eee'}] ]; let total = 0; history.forEach(h => { total += h.amount; bodyData.push([ new Date(h.createdAt).toLocaleDateString('en-GB'), h.amount.toLocaleString(), h.method === 'cash' ? this.t('pay_cash') : (h.method === 'bank' ? this.t('pay_bank') : this.t('mixed')), h.note || '-' ]); }); bodyData.push([ {text:this.t('sal_total_all'), colSpan:3, bold:true, alignment:'left'}, {}, {}, {text: total.toLocaleString(), bold:true, color:'green'} ]); const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: this.state.lang === 'ar' ? 'rtl' : 'ltr' }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin:[0,0,0,5] }, { text: this.t('sal_file'), fontSize: 12, alignment: 'center', margin:[0,0,0,20] }, { columns: [ { text: `${this.t('sal_emp')}: ${name}`, bold:true, alignment:'right' }, { text: `${this.t('sal_fixed')}: ${salary}`, alignment:'left' } ], margin: [0, 0, 0, 10] }, { table: { headerRows: 1, widths: ['auto', 'auto', 'auto', '*'], body: bodyData }, layout: 'lightHorizontalLines' } ] }; pdfMake.createPdf(docDefinition).download(`Salary_${name}.pdf`); },
@@ -902,7 +999,8 @@
                         batch.set(db.collection('transactions').doc(), { companyId: this.state.cid, type: 'purchase_stock', supplierId: suppId, amount: totalCost, paid: paid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, note: `Stock from Supplier: ${n}`, createdAt: now }); 
                         if(bank > 0 && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bank) }); } 
                     }
-                    await batch.commit(); this.clearCache('products'); this.clearCache('transactions'); if(suppId) this.clearCache('suppliers'); this.clearCache('banks'); this.nav('inventory');
+                    batch.commit().catch(e=>console.error(e));
+                    this.clearCache('products'); this.clearCache('transactions'); if(suppId) this.clearCache('suppliers'); this.clearCache('banks'); this.nav('inventory');
                 });
                 
                 this.setupAutocomplete('npSuppName', 'npSuppId', supps, 'name'); this.setupAutocomplete('npDirectBankName', 'npDirectBankId', banks, 'name'); this.setupAutocomplete('npBankName', 'npBankSelectId', banks, 'name');
@@ -941,30 +1039,33 @@
                 const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, content: [ { columns: [ { text: this.state.name, fontSize: 16, bold: true, alignment: 'right', width: '*' }, { text: 'Statement of Account', fontSize: 14, bold: true, alignment: 'center', width: '*' }, { text: new Date().toLocaleDateString(), alignment: 'left', width: '*' } ], margin: [0, 0, 0, 20] }, { text: `${type}: ${name}`, fontSize: 12, bold: true, margin: [0, 0, 0, 10], alignment: 'right' }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto'], body: [ [ { text: 'Date', bold: true, fillColor: '#eeeeee' }, { text: 'Description', bold: true, fillColor: '#eeeeee', alignment:'right' }, { text: 'In (+)', bold: true, fillColor: '#eeeeee' }, { text: 'Out (-)', bold: true, fillColor: '#eeeeee' }, { text: 'Balance', bold: true, fillColor: '#eeeeee' } ], ...data.map(item => [ item.date, { text: item.desc, alignment: 'right' }, { text: item.in.toString(), color: 'green' }, { text: item.out.toString(), color: 'red' }, { text: item.bal.toLocaleString(), bold: true } ]) ] }, layout: 'lightHorizontalLines' }, { text: `Generated by Teyssir ERP`, fontSize: 8, color: 'gray', margin: [0, 20, 0, 0], alignment: 'center' } ] }; pdfMake.createPdf(docDefinition).download(`Statement_${name}.pdf`);
             },
             
-            // --- REPRINT FUNCTIONALITY ---
+            // --- UPDATED PRINT FUNCTION ---
             reprint: function(id, c, t, itemsStr, paid, debt, pm, bn) { const items = JSON.parse(decodeURIComponent(itemsStr)); this.print(id,c,t,items, paid, debt, pm, bn); },
             print: function(id, c, t, items, paid, debt, pm, bn) { 
                 const dir = this.state.lang==='ar'?'rtl':'ltr'; 
                 const formattedDate = this.formatDate(new Date().toISOString()); 
+                
+                // Get local company info
                 const localInfo = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
                 const compName = localInfo.name || this.state.name;
                 const compPhone = localInfo.phone || this.state.phone;
                 const compLogo = localInfo.logo || 'logo.png';
+                
                 let headerHtml = `<div class="print-header-container">`;
                 if(compLogo && compLogo !== window.location.href) { headerHtml += `<img src="${compLogo}" class="print-logo">`; } else { headerHtml += `<div></div>`; }
+
                 headerHtml += `<div class="print-details"><h2>${compName}</h2>${compPhone ? `<div class="print-meta"><i class="fa-solid fa-phone"></i> <span>${compPhone}</span></div>` : ''}${localInfo.addr ? `<div class="print-meta"><i class="fa-solid fa-location-dot"></i> <span>${localInfo.addr}</span></div>` : ''}${localInfo.email ? `<div class="print-meta"><i class="fa-solid fa-envelope"></i> <span>${localInfo.email}</span></div>` : ''}${localInfo.web ? `<div class="print-meta"><i class="fa-solid fa-globe"></i> <span>${localInfo.web}</span></div>` : ''}</div></div>`;
+
                 const headers = `<tr><th style="border:1px solid #000">${this.t('tbl_prod')}</th><th style="border:1px solid #000">${this.t('tbl_qty')}</th><th style="border:1px solid #000">${this.t('tbl_tot')}</th></tr>`; 
                 let rows = items.map(i=>`<tr><td style="border:1px solid #000">${i.n}</td><td style="border:1px solid #000">${i.q}</td><td style="border:1px solid #000">${i.t}</td></tr>`).join(''); 
                 let bankInfo = pm.includes('Bank') && bn ? `(${bn})` : ''; 
+                
                 document.getElementById('printArea').innerHTML = `<div style="padding:20px; direction:${dir}; font-family:'Tajawal'">${headerHtml}<hr><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>INV:</b> ${id}</span><span>${formattedDate}</span></div><p><b>${this.t('th_client')}:</b> ${c}</p><table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">${headers}${rows}</table><hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span>${this.t('p_tot')}:</span> <span>${t} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('paid')}:</span> <span>${paid} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('remain')}:</span> <span>${debt} MRU</span></div><br><div style="text-align:center; font-size:12px;">Method: ${pm} ${bankInfo}</div><center><small>Teyssir ERP</small></center></div>`; 
                 window.print(); 
             },
 
-            // --- REPORTS ---
             reports: async function(div) { 
-                const products = await this.getData('products'); // Fetch products for the dropdown
-                let prodOptions = `<option value="">${this.t('rep_prod_select')}</option>`;
-                products.forEach(p => prodOptions += `<option value="${p.id}">${p.name}</option>`);
+                const products = await this.getData('products'); 
 
                 div.innerHTML = `
                 <h2>${this.t('rep')}</h2>
@@ -985,7 +1086,13 @@
                     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
                         <div style="flex:1; min-width:200px;">
                             <label style="font-size:12px; font-weight:bold; color:#666;">${this.t('tbl_prod')}</label>
-                            <select id="repProdId" class="select-box" style="margin-bottom:0;">${prodOptions}</select>
+                            
+                            <!-- UPDATED: Autocomplete for Product Search -->
+                            <div class="ac-wrap" style="margin-bottom:0;">
+                                <input id="repProdName" class="inp" placeholder="${this.t('rep_prod_select')}" style="margin-bottom:0;" autocomplete="off">
+                                <input type="hidden" id="repProdId">
+                            </div>
+
                         </div>
                         <div style="min-width:140px;">
                             <label style="font-size:12px; font-weight:bold; color:#666;">${this.t('rep_prod_from')}</label>
@@ -1007,6 +1114,9 @@
                 </div>
                 <div id="reportContent"></div>
                 `; 
+                
+                // Initialize Autocomplete for the Report
+                this.setupAutocomplete('repProdName', 'repProdId', products, 'name');
             },
 
             // --- NEW: Generate Product Report Logic ---
