@@ -248,7 +248,9 @@
                 cust_walkin: "زبون نقدي (غير مسجل)", err_walkin_debt: "عذراً، لا يمكن تسجيل دين على زبون غير مسجل.",
                 err_insufficient_bank: "عذراً، رصيد البنك غير كافٍ لهذه العملية.",
                 err_excess_debt: "عذراً، المبلغ المدخل أكبر من الدين المستحق.",
-                err_excess_supp_debt: "عذراً، المبلغ المدخل أكبر من الدين المتبقي للمورد."
+                err_excess_supp_debt: "عذراً، المبلغ المدخل أكبر من الدين المتبقي للمورد.",
+                th_date_time: "التاريخ والوقت",
+                purch_rec: "إيصال شراء مخزون", purch_type: "نوع الشراء", purch_direct: "مباشر", purch_credit: "مورد"
             },
             fr: {
                 title: "Teyssir ERP", comp:"Nom Société", phone:"Téléphone", code:"Code Activation",
@@ -301,7 +303,9 @@
                 cust_walkin: "Client Passager", err_walkin_debt: "Erreur: Pas de crédit pour client passager.",
                 err_insufficient_bank: "Erreur: Fonds insuffisants dans la banque.",
                 err_excess_debt: "Erreur: Le montant dépasse la dette.",
-                err_excess_supp_debt: "Erreur: Le montant dépasse la dette fournisseur."
+                err_excess_supp_debt: "Erreur: Le montant dépasse la dette fournisseur.",
+                th_date_time: "Date & Heure",
+                purch_rec: "Bon de Réception", purch_type: "Type Achat", purch_direct: "Direct", purch_credit: "Fournisseur"
             }
         };
 
@@ -381,7 +385,7 @@
                 const daysLeft = diff / (1000 * 60 * 60 * 24);
                 
                 if (now >= expiry) { this.showBlockScreen('expired'); } 
-                else if (daysLeft <= 1 && daysLeft > 0) { // CHANGED: Only show if 1 day or less
+                else if (daysLeft <= 1 && daysLeft > 0) { 
                     document.getElementById('subAlertBox').style.display = 'flex';
                 } else {
                     document.getElementById('subAlertBox').style.display = 'none';
@@ -705,22 +709,39 @@
                 if(n && ph) { 
                     if(!this.isValidPhone(ph)) return alert(this.t('err_phone_len')); 
                     const ref = db.collection('customers').doc();
-                    ref.set({companyId:this.state.cid, name:n, phone:ph||'', balance:0, createdAt:new Date().toISOString()}).catch(e=>console.error(e));
+                    ref.set({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}).catch(e=>console.error(e));
                     this.clearCache('customers'); 
                     document.getElementById('posCustName').value = n;
                     document.getElementById('posCustId').value = ref.id;
                 }
             },
             
-            getNextInvoiceNumber: async function(transaction) {
-                const counterRef = db.collection('counters').doc(this.state.cid);
+            // --- UPDATED Invoice Numbering (Online + Offline + LocalStorage) ---
+            getNextInvoiceNumber: async function() {
                 let nextNum = 1;
+                // 1. Get from Local Storage (Immediate, works offline)
+                const localLast = Number(localStorage.getItem('teyssir_last_inv') || 0);
+                
+                // 2. Try getting from Server (Online)
                 try {
-                    const doc = await counterRef.get();
-                    if(doc.exists) nextNum = doc.data().lastInvoiceNum + 1;
-                } catch(e) { console.log("Offline counter read"); } 
+                    const doc = await db.collection('counters').doc(this.state.cid).get();
+                    if(doc.exists) {
+                        const serverLast = doc.data().lastInvoiceNum || 0;
+                        nextNum = Math.max(localLast, serverLast) + 1;
+                    } else {
+                        nextNum = localLast + 1;
+                    }
+                } catch(e) {
+                    // If offline, rely on local + 1
+                    nextNum = localLast + 1;
+                }
+
+                // 3. Update Local Storage Immediately (to prevent dupes in same session)
+                localStorage.setItem('teyssir_last_inv', nextNum);
+                
                 return { num: 'INV-' + String(nextNum).padStart(4, '0'), nextVal: nextNum };
             },
+
             finalizeInvoice: async function() {
                 if(!this.cart.length) return alert(this.t('empty'));
                 let custId = document.getElementById('posCustId').value; 
@@ -746,20 +767,7 @@
                 if(payMethod !== 'cash' && !bankId) return alert(this.t('select_bank'));
                 if((cash + bank) > total) return alert("Total paid cannot exceed invoice amount");
 
-                // --- 2. Bank Balance Check ---
-                if (bank > 0 && bankId) {
-                    const banks = await this.getData('banks');
-                    const selectedBank = banks.find(b => b.id === bankId);
-                    if (selectedBank) {
-                        if (selectedBank.balance < bank) {
-                            return alert(this.t('err_insufficient_bank') + ` (${selectedBank.name}: ${selectedBank.balance})`);
-                        }
-                    } else {
-                        // Offline edge case: might not be in cache if added very recently and no sync
-                        // Allow to proceed or block? Better block to be safe or warn. 
-                        // Proceeding for now assuming cache is coherent.
-                    }
-                }
+                // Note: Incoming money (Sales) -> NO BANK BALANCE CHECK REQUIRED
 
                 const totalPaid = cash + bank;
                 const debt = total - totalPaid;
@@ -841,11 +849,7 @@
                     return alert(this.t('err_excess_debt') + " (" + customer.balance + ")");
                 }
 
-                // Bank Balance Check
-                if(method === 'bank' && bid) {
-                    const selectedBank = banks.find(b => b.id === bid);
-                    if(selectedBank && selectedBank.balance < amt) return alert(this.t('err_insufficient_bank'));
-                }
+                // Incoming money -> No Bank Balance Check
 
                 const batch = db.batch(); 
                 const now = new Date().toISOString(); 
@@ -924,7 +928,7 @@
                     return alert(this.t('err_excess_supp_debt') + " (" + supplier.balance + ")");
                 }
 
-                // Bank Check
+                // Bank Check (OUTGOING)
                 if(method === 'bank' && bid) {
                     const selectedBank = banks.find(b => b.id === bid);
                     if(selectedBank && selectedBank.balance < amt) return alert(this.t('err_insufficient_bank'));
@@ -982,7 +986,7 @@
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
                 this.showModal(`${this.t('sal_pay_btn')}: ${empName}`, `<label>${this.t('sal_amount')}</label><input type="number" id="payAmount" class="inp" value="${baseSalary}"><label>${this.t('pay_method')}</label><select id="payMethod" class="select-box" onchange="app.toggleSalaryInputs()"><option value="cash">${this.t('pay_cash')}</option><option value="bank">${this.t('bank')}</option><option value="mixed">${this.t('mixed')}</option></select><div id="payDetails"><div id="cashDiv"><input id="pCash" type="number" class="inp" placeholder="${this.t('pay_cash')}" value="${baseSalary}"></div><div id="bankDiv" style="display:none;"><input id="pBank" type="number" class="inp" placeholder="${this.t('pay_bank')}" value="0"><select id="pBankId" class="select-box">${bOpts}</select></div></div><input id="payNote" class="inp" placeholder="${this.t('sal_note')}">`, async () => { const total = Number(document.getElementById('payAmount').value); const method = document.getElementById('payMethod').value; const note = document.getElementById('payNote').value; let cashAmt = 0, bankAmt = 0, bankId = null; if (method === 'cash') { cashAmt = total; } else if (method === 'bank') { bankAmt = total; bankId = document.getElementById('pBankId').value; if(!bankId) return alert(this.t('select_bank')); } else { cashAmt = Number(document.getElementById('pCash').value); bankAmt = Number(document.getElementById('pBank').value); bankId = document.getElementById('pBankId').value; if(cashAmt + bankAmt !== total) return alert("Total mismatch"); if(!bankId && bankAmt > 0) return alert(this.t('select_bank')); } 
                 
-                // Bank Check
+                // Bank Check (OUTGOING)
                 if (bankAmt > 0 && bankId) {
                     const selectedBank = banks.find(b => b.id === bankId);
                     if(selectedBank && selectedBank.balance < bankAmt) return alert(this.t('err_insufficient_bank'));
@@ -1092,21 +1096,48 @@
                     let targetId = null; let isMerge = false; existingSnap.forEach(doc => { if(doc.data().sellPrice === s) { targetId = doc.id; isMerge = true; } });
                     if(isMerge && targetId) { batch.update(db.collection('products').doc(targetId), { stock: firebase.firestore.FieldValue.increment(q), buyPrice: b, expiryDate: exp }); } 
                     else { const pRef = db.collection('products').doc(); batch.set(pRef, { companyId:this.state.cid, name:n, buyPrice:b, sellPrice:s, stock:q, expiryDate: exp, createdAt:now }); }
+                    
+                    let printData = null;
+
                     if(!suppId) { 
                         const method = document.getElementById('npDirectMethod').value; const bankId = document.getElementById('npDirectBankId').value;
                         if(method === 'bank' && !bankId) return alert("اختر البنك");
+                        
+                        // BANK CHECK (OUTGOING)
+                        if(method === 'bank' && bankId) {
+                            const selectedBank = banks.find(b => b.id === bankId);
+                            if(selectedBank && selectedBank.balance < totalCost) return alert(this.t('err_insufficient_bank'));
+                        }
+
                         let cashAmt = method === 'cash' ? totalCost : 0; let bankAmt = method === 'bank' ? totalCost : 0;
                         batch.set(db.collection('transactions').doc(), { companyId: this.state.cid, type: 'expense', amount: totalCost, paid: totalCost, cashAmount: cashAmt, bankAmount: bankAmt, bankId: bankId, method: method, note: `Direct Purchase: ${n}`, createdAt: now });
                         if(method === 'bank' && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-totalCost) }); }
+                        
+                        printData = { type: 'direct', name: n, qty: q, total: totalCost, paid: totalCost, debt: 0, suppName: '-' };
                     } else { 
                         const cash = Number(document.getElementById('npCash').value); const bank = Number(document.getElementById('npBank').value); const bankId = document.getElementById('npBankSelectId').value; const method = document.getElementById('npMethod').value; const paid = cash + bank;
                         if(paid > totalCost) return alert("Paid > Cost"); if(method !== 'cash' && !bankId) return alert(this.t('select_bank'));
+                        
+                        // BANK CHECK (OUTGOING)
+                        if(bank > 0 && bankId) {
+                            const selectedBank = banks.find(b => b.id === bankId);
+                            if(selectedBank && selectedBank.balance < bank) return alert(this.t('err_insufficient_bank'));
+                        }
+
                         const debt = totalCost - paid; batch.update(db.collection('suppliers').doc(suppId), { balance: firebase.firestore.FieldValue.increment(debt) }); 
                         batch.set(db.collection('transactions').doc(), { companyId: this.state.cid, type: 'purchase_stock', supplierId: suppId, amount: totalCost, paid: paid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, note: `Stock from Supplier: ${n}`, createdAt: now }); 
                         if(bank > 0 && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bank) }); } 
+                        
+                        const suppName = document.getElementById('npSuppName').value;
+                        printData = { type: 'credit', name: n, qty: q, total: totalCost, paid: paid, debt: debt, suppName: suppName };
                     }
+                    
                     batch.commit().catch(e=>console.error(e));
-                    this.clearCache('products'); this.clearCache('transactions'); if(suppId) this.clearCache('suppliers'); this.clearCache('banks'); this.nav('inventory');
+                    this.clearCache('products'); this.clearCache('transactions'); if(suppId) this.clearCache('suppliers'); this.clearCache('banks'); 
+                    
+                    if(printData) app.printStockPurchase(printData);
+                    
+                    this.nav('inventory');
                 });
                 
                 this.setupAutocomplete('npSuppName', 'npSuppId', supps, 'name'); this.setupAutocomplete('npDirectBankName', 'npDirectBankId', banks, 'name'); this.setupAutocomplete('npBankName', 'npBankSelectId', banks, 'name');
@@ -1114,6 +1145,37 @@
                 document.getElementById('npSuppName').addEventListener('change', updateVis); setInterval(updateVis, 500); 
                 setTimeout(() => { app.toggleSuppInputs(); const calc = () => { const b = Number(document.getElementById('npBuy').value); const q = Number(document.getElementById('npQty').value); const c = Number(document.getElementById('npCash').value); const k = Number(document.getElementById('npBank').value); const d = (b*q) - (c+k); document.getElementById('npDebt').value = d > 0 ? d : 0; }; ['npBuy','npQty','npCash','npBank'].forEach(i => document.getElementById(i).addEventListener('input', calc)); }, 100);
             },
+            
+            // --- NEW: Print Stock Purchase ---
+            printStockPurchase: function(d) {
+                const dir = this.state.lang==='ar'?'rtl':'ltr';
+                const localInfo = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
+                const compName = localInfo.name || this.state.name;
+                const formattedDate = this.formatDate(new Date().toISOString());
+                const typeTxt = d.type === 'direct' ? this.t('purch_direct') : this.t('purch_credit');
+
+                const content = `
+                    <div style="padding:20px; direction:${dir}; font-family:'Tajawal', sans-serif;">
+                        <h2 style="text-align:center; margin:0;">${compName}</h2>
+                        <h3 style="text-align:center; background:#eee; padding:5px;">${this.t('purch_rec')}</h3>
+                        <p>${this.t('th_date')}: ${formattedDate}</p>
+                        <p>${this.t('purch_type')}: ${typeTxt}</p>
+                        ${d.suppName !== '-' ? `<p>${this.t('th_supp')}: ${d.suppName}</p>` : ''}
+                        <hr>
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <tr><th style="border:1px solid #000; padding:5px;">${this.t('tbl_prod')}</th><th style="border:1px solid #000; padding:5px;">${this.t('tbl_qty')}</th><th style="border:1px solid #000; padding:5px;">${this.t('tbl_tot')}</th></tr>
+                            <tr><td style="border:1px solid #000; padding:5px;">${d.name}</td><td style="border:1px solid #000; padding:5px;">${d.qty}</td><td style="border:1px solid #000; padding:5px;">${d.total}</td></tr>
+                        </table>
+                        <div style="margin-top:10px; font-weight:bold;">
+                            <p>${this.t('paid')}: ${d.paid}</p>
+                            <p>${this.t('remain')}: ${d.debt}</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('printArea').innerHTML = content;
+                window.print();
+            },
+
             toggleSuppInputs: function() { const m = document.getElementById('npMethod').value; const c = document.getElementById('npCash'); const b = document.getElementById('npBank'); const bd = document.getElementById('npBankDiv'); if(m === 'cash') { c.style.display='block'; b.style.display='none'; bd.style.display='none'; b.value=0; } else if (m === 'bank') { c.style.display='none'; b.style.display='block'; bd.style.display='block'; c.value=0; } else { c.style.display='block'; b.style.display='block'; bd.style.display='block'; } },
             
             // --- OFFLINE FIX: quickAddSupplier ---
@@ -1385,12 +1447,12 @@
                     txs.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); const net = totalIn - totalOut;
                     app.drawCharts({ totalIn, totalOut, net, cashIn, bankIn, topProducts });
                     
-                    let h = `<table style="width:100%; font-size:13px;"><thead><tr><th>Type</th><th>Ref</th><th>Time</th><th>Val</th></tr></thead><tbody>`; 
+                    let h = `<table style="width:100%; font-size:13px;"><thead><tr><th>Type</th><th>Ref</th><th>${this.t('th_date_time')}</th><th>Val</th></tr></thead><tbody>`; 
                     txs.forEach(t => { 
                         let typeLabel = t.type; let refLabel = t.note || (t.invNum ? t.invNum : '-'); 
                         let val = t.fIn > 0 ? t.fIn : t.fOut; let color = t.fIn > 0 ? 'green' : 'red';
                         let d = new Date(t.createdAt);
-                        let timeStr = `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+                        let timeStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
                         h += `<tr><td>${typeLabel}</td><td>${refLabel}</td><td style="font-size:11px;color:#555">${timeStr}</td><td style="color:${color}">${val.toLocaleString()}</td></tr>`; 
                     }); 
                     h += '</tbody></table>'; 
@@ -1420,7 +1482,7 @@
                 
                 let rows = txs.map(t => {
                     let d = new Date(t.createdAt);
-                    let timeStr = `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+                    let timeStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
                     let val = t.fIn > 0 ? t.fIn : t.fOut;
                     let ref = t.note || (t.invNum ? t.invNum : '-');
                     let typeSign = t.fIn > 0 ? '+' : '-';
