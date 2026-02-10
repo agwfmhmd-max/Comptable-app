@@ -1150,8 +1150,48 @@
 
             admin: async function(div) { 
                 div.innerHTML = `<div class="card"><input id="an" class="inp" placeholder="Name"><input id="ap" class="inp" placeholder="Phone"><select id="adur" class="select-box"><option value="day">${this.t('sub_day')}</option><option value="week">${this.t('sub_week')}</option><option value="month" selected>${this.t('sub_month')}</option><option value="year">${this.t('sub_year')}</option></select><input id="amax" type="number" class="inp" placeholder="${this.t('max_emp')}" value="5"><button onclick="app.gen()" class="btn btn-prim">${this.t('adm_gen')}</button></div><div style="margin-bottom:10px;"><input id="adminSearch" class="inp" placeholder="Search Company or Phone..." onkeyup="app.filterAdminTable()"></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`; 
-                const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(50).get(); let h=`<tr><th>${this.t('adm_time')}</th><th>${this.t('adm_code')}</th><th>${this.t('adm_comp')}</th><th>${this.t('adm_phone')}</th><th>Limit</th><th>Expires</th><th>${this.t('adm_act')}</th></tr>`, b=''; s.forEach(d=>{ const v=d.data(); const comp = v.actualName || v.targetCompanyName || '-'; const ph = v.actualPhone || v.targetPhone || '-'; const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; const stopBtnText = v.status === 'active' ? 'إيقاف' : 'تفعيل'; const maxE = v.maxEmployees || 5; b+=`<tr><td>${this.formatDate(v.createdAt)}</td><td style="font-family:monospace;font-weight:bold">${v.code} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${v.code}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td class="admin-comp">${comp}</td><td class="admin-phone" style="color:var(--primary);font-weight:bold">${ph}</td><td>${maxE}</td><td style="color:${new Date(v.expiryDate)<new Date()?'red':'var(--success)'}">${expDate}</td><td><button onclick="app.renewCompany('${d.id}', '${v.subscriptionType||'month'}')" class="btn btn-sec" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_renew')}</button> <button onclick="app.toggleStatus('${d.id}', '${v.status}')" class="btn btn-warn" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${stopBtnText}</button> <button onclick="app.delCode('${d.id}')" class="btn btn-dan" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_del')}</button></td></tr>`; }); document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b; 
+                const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(50).get(); let h=`<tr><th>${this.t('adm_time')}</th><th>${this.t('adm_code')}</th><th>${this.t('adm_comp')}</th><th>${this.t('adm_phone')}</th><th>Limit</th><th>Expires</th><th>${this.t('adm_act')}</th></tr>`, b=''; s.forEach(d=>{ const v=d.data(); const comp = v.actualName || v.targetCompanyName || '-'; const ph = v.actualPhone || v.targetPhone || '-'; const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; const stopBtnText = v.status === 'active' ? 'إيقاف' : 'تفعيل'; const maxE = v.maxEmployees || 5; b+=`<tr><td>${this.formatDate(v.createdAt)}</td><td style="font-family:monospace;font-weight:bold">${v.code} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${v.code}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td class="admin-comp">${comp}</td><td class="admin-phone" style="color:var(--primary);font-weight:bold">${ph}</td><td>${maxE} <i class="fa-solid fa-pen" style="cursor:pointer;color:blue;font-size:10px" onclick="app.editLimit('${d.id}', '${v.companyId}', ${maxE})"></i></td><td style="color:${new Date(v.expiryDate)<new Date()?'red':'var(--success)'}">${expDate}</td><td><button onclick="app.adminViewUsers('${v.companyId}', '${comp}')" class="btn btn-prim" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;"><i class="fa-solid fa-users"></i></button> <button onclick="app.renewCompany('${d.id}', '${v.subscriptionType||'month'}')" class="btn btn-sec" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_renew')}</button> <button onclick="app.toggleStatus('${d.id}', '${v.status}')" class="btn btn-warn" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${stopBtnText}</button> <button onclick="app.delCode('${d.id}')" class="btn btn-dan" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_del')}</button></td></tr>`; }); document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b; 
             },
+            
+            editLimit: async function(codeDocId, companyId, currentVal) {
+                const newVal = prompt("أدخل الحد الأقصى الجديد للموظفين:", currentVal);
+                if(newVal && !isNaN(newVal)) {
+                    const limit = parseInt(newVal);
+                    const batch = db.batch();
+                    batch.update(db.collection('activation_codes').doc(codeDocId), { maxEmployees: limit });
+                    if(companyId) {
+                        batch.update(db.collection('companies').doc(companyId), { maxEmployees: limit });
+                    }
+                    await batch.commit();
+                    alert("تم تحديث العدد");
+                    this.nav('admin');
+                }
+            },
+
+            adminViewUsers: async function(companyId, compName) {
+                if(!companyId) return alert("لم يتم إنشاء شركة لهذا الكود بعد");
+                this.showLoader();
+                try {
+                    const snaps = await db.collection('companies').doc(companyId).collection('employees').get();
+                    let html = `<h4 style="color:var(--primary)">${compName}</h4><table style="width:100%;text-align:center;font-size:12px;"><thead><tr><th>الاسم</th><th>PIN</th><th>الصلاحيات</th></tr></thead><tbody>`;
+                    
+                    if(snaps.empty) {
+                        html += `<tr><td colspan="3">لا يوجد موظفين</td></tr>`;
+                    } else {
+                        snaps.forEach(doc => {
+                            const d = doc.data();
+                            html += `<tr><td>${d.name}</td><td>${d.pinCode}</td><td>${d.permissions ? d.permissions.length : 0}</td></tr>`;
+                        });
+                    }
+                    html += `</tbody></table>`;
+                    this.showModal("مستخدمو الشركة", html, async ()=>{ document.getElementById('genericModal').style.display='none'; });
+                    document.getElementById('modalActionBtn').style.display = 'none';
+                } catch(e) {
+                    alert("خطأ: " + e.message);
+                }
+                this.hideLoader();
+            },
+
             copyToClipboard: function(text) { navigator.clipboard.writeText(text).then(() => { alert("تم نسخ الكود: " + text); }).catch(err => { console.error('Failed to copy: ', err); }); },
             filterAdminTable: function() { const input = document.getElementById('adminSearch'); const filter = input.value.toLowerCase(); const table = document.getElementById('at'); const tr = table.getElementsByTagName('tr'); for (let i = 1; i < tr.length; i++) { const compTd = tr[i].querySelector('.admin-comp'); const phoneTd = tr[i].querySelector('.admin-phone'); if (compTd || phoneTd) { const compTxt = compTd ? (compTd.textContent || compTd.innerText) : ''; const phoneTxt = phoneTd ? (phoneTd.textContent || phoneTd.innerText) : ''; if (compTxt.toLowerCase().indexOf(filter) > -1 || phoneTxt.indexOf(filter) > -1) { tr[i].style.display = ""; } else { tr[i].style.display = "none"; } } } },
             gen: async function() { 
