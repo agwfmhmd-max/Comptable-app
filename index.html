@@ -63,6 +63,9 @@
         .inv-warn-box { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffeeba; display: flex; align-items: center; gap: 10px; font-size: 12px; }
         .rep-section { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
         .rep-prod-item { display: flex; justify-content: space-between; padding: 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; border-radius: 5px; margin-bottom: 5px;}
+        .perm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .perm-item { display: flex; align-items: center; gap: 5px; font-size: 12px; background: #f9f9f9; padding: 8px; border-radius: 5px; }
+        .nav-item.disabled-link { opacity: 0.3; pointer-events: none; display: none !important; }
     </style>
 </head>
 <body>
@@ -73,8 +76,23 @@
     <div id="genericModal" class="modal-overlay"><div class="modal-box"><h3 id="modalTitle" style="margin-top:0; color:var(--primary);">عنوان</h3><div id="modalContent"></div><div style="display:flex; gap:10px; margin-top:20px;"><button id="modalActionBtn" class="btn btn-prim">حفظ</button><button onclick="document.getElementById('genericModal').style.display='none'" class="btn btn-sec" style="background:#ccc; color:#333">إغلاق</button></div></div></div>
     <div id="welcomeModal" class="welcome-modal"><div class="welcome-content"><img src="logo.png" style="width:100px; margin-bottom:15px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0;" data-key="w_title">أهلاً بك في Teyssir ERP</h2><p style="color:#666; font-size:16px;">النظام المالي المتكامل.</p><a href="https://wa.me/22220479962" class="wa-link" style="margin-bottom:20px; justify-content:center;"><i class="fa-brands fa-whatsapp"></i> <span data-key="cont">تواصل للتفعيل</span></a><button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;" data-key="w_btn">ابدأ الآن</button></div></div>
     <div id="blockScreen" class="block-screen"><i class="fa-solid fa-triangle-exclamation block-icon"></i><h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2><p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p><a href="https://wa.me/22220479962" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a><button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button></div>
-    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div></form><div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22220479962" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
-    <div id="appScreen" class="app-container"><div class="sidebar-overlay" onclick="app.toggleMenu()"></div><header class="top-header"><div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div><div class="header-title">Teyssir ERP</div></header><aside class="sidebar" id="sidebar"><div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);"><img src="logo.png" style="width:70px; border-radius:10px;"><div id="h_name" style="font-weight:bold; color:var(--primary); margin-top:10px;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div></div><div style="padding: 10px 0; flex:1;"><div class="nav-item active" onclick="app.nav('home')"><i class="fa-solid fa-home"></i> <span data-key="home">الرئيسية</span></div><div class="nav-item" onclick="app.nav('pos')"><i class="fa-solid fa-cart-shopping"></i> <span data-key="pos">نقطة البيع</span></div><div class="nav-item" onclick="app.nav('customers')"><i class="fa-solid fa-users"></i> <span data-key="cust">الزبناء</span></div><div class="nav-item" onclick="app.nav('inventory')"><i class="fa-solid fa-boxes-stacked"></i> <span data-key="stock">المخزون</span></div><div class="nav-item" onclick="app.nav('suppliers')"><i class="fa-solid fa-truck-field"></i> <span data-key="supp">الموردين</span></div><div class="nav-item" onclick="app.nav('treasury')"><i class="fa-solid fa-sack-dollar"></i> <span data-key="treasury">الخزينة (الكاش)</span></div><div class="nav-item" onclick="app.nav('banks')"><i class="fa-solid fa-building-columns"></i> <span data-key="banks">البنوك</span></div><div class="nav-item" onclick="app.nav('expenses')"><i class="fa-solid fa-wallet"></i> <span data-key="exp">المصروفات</span></div><div class="nav-item" onclick="app.nav('revenues')"><i class="fa-solid fa-hand-holding-dollar"></i> <span data-key="rev">الإيرادات</span></div><div class="nav-item" onclick="app.nav('invoices')"><i class="fa-solid fa-file-invoice-dollar"></i> <span data-key="inv">الفواتير</span></div><div class="nav-item" onclick="app.nav('salaries')"><i class="fa-solid fa-users-gear"></i> <span data-key="sal">الرواتب</span></div><div class="nav-item" onclick="app.nav('reports')"><i class="fa-solid fa-chart-pie"></i> <span data-key="rep">التقارير</span></div><div class="nav-item" onclick="app.companyInfoModal()"><i class="fa-solid fa-building"></i> <span data-key="comp_info">معلومات الشركة</span></div><div id="adminLink" class="nav-item" onclick="app.nav('admin')" style="color:var(--danger); border-top:1px solid var(--border); margin-top:10px;"><i class="fa-solid fa-lock"></i> Admin</div></div><div style="padding: 10px 0; border-top: 1px solid var(--border);"><div class="nav-item" onclick="app.logout()" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></div></div></aside><main id="workspace" class="main-content"></main><button id="homeBtn" class="home-float-btn" onclick="app.nav('home')"><i class="fa-solid fa-house"></i></button></div>
+    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div></form><div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22220479962" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
+    <div id="appScreen" class="app-container"><div class="sidebar-overlay" onclick="app.toggleMenu()"></div><header class="top-header"><div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div><div class="header-title">Teyssir ERP</div></header><aside class="sidebar" id="sidebar"><div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);"><img src="logo.png" style="width:70px; border-radius:10px;"><div id="h_name" style="font-weight:bold; color:var(--primary); margin-top:10px;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div><div id="h_role" style="font-size:10px; background:var(--accent); color:white; padding:2px 5px; border-radius:4px; display:inline-block; margin-top:5px;"></div></div><div style="padding: 10px 0; flex:1;">
+        <div class="nav-item active" onclick="app.nav('home')" data-perm="all"><i class="fa-solid fa-home"></i> <span data-key="home">الرئيسية</span></div>
+        <div class="nav-item" onclick="app.nav('pos')" data-perm="pos"><i class="fa-solid fa-cart-shopping"></i> <span data-key="pos">نقطة البيع</span></div>
+        <div class="nav-item" onclick="app.nav('customers')" data-perm="customers"><i class="fa-solid fa-users"></i> <span data-key="cust">الزبناء</span></div>
+        <div class="nav-item" onclick="app.nav('inventory')" data-perm="inventory"><i class="fa-solid fa-boxes-stacked"></i> <span data-key="stock">المخزون</span></div>
+        <div class="nav-item" onclick="app.nav('suppliers')" data-perm="suppliers"><i class="fa-solid fa-truck-field"></i> <span data-key="supp">الموردين</span></div>
+        <div class="nav-item" onclick="app.nav('treasury')" data-perm="treasury"><i class="fa-solid fa-sack-dollar"></i> <span data-key="treasury">الخزينة (الكاش)</span></div>
+        <div class="nav-item" onclick="app.nav('banks')" data-perm="banks"><i class="fa-solid fa-building-columns"></i> <span data-key="banks">البنوك</span></div>
+        <div class="nav-item" onclick="app.nav('expenses')" data-perm="expenses"><i class="fa-solid fa-wallet"></i> <span data-key="exp">المصروفات</span></div>
+        <div class="nav-item" onclick="app.nav('revenues')" data-perm="revenues"><i class="fa-solid fa-hand-holding-dollar"></i> <span data-key="rev">الإيرادات</span></div>
+        <div class="nav-item" onclick="app.nav('invoices')" data-perm="invoices"><i class="fa-solid fa-file-invoice-dollar"></i> <span data-key="inv">الفواتير</span></div>
+        <div class="nav-item" onclick="app.nav('salaries')" data-perm="salaries"><i class="fa-solid fa-users-gear"></i> <span data-key="sal">الرواتب</span></div>
+        <div class="nav-item" onclick="app.nav('reports')" data-perm="reports"><i class="fa-solid fa-chart-pie"></i> <span data-key="rep">التقارير</span></div>
+        <div class="nav-item" onclick="app.nav('users')" data-perm="users" style="display:none;" id="navUsers"><i class="fa-solid fa-user-shield"></i> <span data-key="users">المستخدمين</span></div>
+        <div class="nav-item" onclick="app.companyInfoModal()" data-perm="all"><i class="fa-solid fa-building"></i> <span data-key="comp_info">معلومات الشركة</span></div>
+        <div id="adminLink" class="nav-item" onclick="app.nav('admin')" style="color:var(--danger); border-top:1px solid var(--border); margin-top:10px;"><i class="fa-solid fa-lock"></i> Admin</div></div><div style="padding: 10px 0; border-top: 1px solid var(--border);"><div class="nav-item" onclick="app.logout()" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></div></div></aside><main id="workspace" class="main-content"></main><button id="homeBtn" class="home-float-btn" onclick="app.nav('home')"><i class="fa-solid fa-house"></i></button></div>
     <div id="printArea" class="print-box"></div>
 
     <script>
@@ -156,7 +174,9 @@
                 inv_msg_days: "متبقي لك: ",
                 rep_net: "الصافي", rep_top5: "أكثر 5 منتجات مبيعاً", rep_det_title: "تقرير تفصيلي للمعاملات",
                 rep_det_pdf: "طباعة التقرير التفصيلي",
-                th_type: "النوع"
+                th_type: "النوع",
+                users: "المستخدمين", perm: "الصلاحيات", max_emp: "الحد الأقصى للموظفين",
+                add_user: "إضافة موظف", role: "الدور", perm_denied: "ليس لديك صلاحية للدخول لهذه الصفحة"
             },
             fr: {
                 title: "Teyssir ERP", comp:"Nom Société", phone:"Téléphone", code:"Code Activation",
@@ -220,12 +240,14 @@
                 inv_warn: "⚠️ Attention: 3 jours pour saisir le stock initial.",
                 inv_msg_days: "Jours restants: ",
                 rep_net: "Net", rep_top5: "Top 5 Produits", rep_det_title: "Rapport Détaillé",
-                rep_det_pdf: "Imprimer PDF", th_type: "Type"
+                rep_det_pdf: "Imprimer PDF", th_type: "Type",
+                users: "Utilisateurs", perm: "Permissions", max_emp: "Max Employés",
+                add_user: "Ajouter Utilisateur", role: "Rôle", perm_denied: "Accès Refusé"
             }
         };
 
         const app = {
-            state: { cid:null, name:'', phone:'', admin:false, lang:'ar', codeDocId: null, expiryDate: null, currentView: 'home', cashBalance: 0, inventoryLocked: false },
+            state: { cid:null, name:'', phone:'', admin:false, lang:'ar', codeDocId: null, expiryDate: null, currentView: 'home', cashBalance: 0, inventoryLocked: false, userRole: 'admin', currentUser: null, permissions: [] },
             cart: [], cachedProducts: [], listeners: [], cache: {},
             charts: {}, 
             reportData: { transactions: [], productStats: {}, aggregatedSales: {} },
@@ -241,9 +263,19 @@
                     if(s.admin) { this.state.cid='ADMIN'; this.state.name='Admin'; this.state.phone='46154399'; this.state.admin=true; this.start('Admin', '46154399'); } 
                     else {
                         this.state.cid = s.cid; this.state.name = s.name; this.state.phone = s.phone; this.state.codeDocId = s.codeDocId;
+                        this.state.userRole = s.userRole || 'admin';
+                        this.state.permissions = s.permissions || [];
+                        this.state.currentUser = s.currentUser || null;
+
                         const cachedBal = localStorage.getItem('teyssir_cash_balance');
                         if(cachedBal !== null) this.state.cashBalance = Number(cachedBal);
-                        this.monitorSession(s.codeDocId, s); this.start(s.name, s.phone);
+                        this.monitorSession(s.codeDocId, s); 
+                        
+                        // Display role name
+                        const roleDisp = this.state.userRole === 'admin' ? 'مدير' : (s.currentUser ? s.currentUser.name : 'موظف');
+                        document.getElementById('h_role').innerText = roleDisp;
+                        
+                        this.start(s.name, s.phone);
                         this.refreshTreasury(); 
                     }
                 } else { this.switchScreen('authScreen'); }
@@ -276,12 +308,14 @@
                 try {
                     const tCode = 'TRIAL-' + this.randomStr(8); const now = new Date(); 
                     const expiry = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
-                    const codeRef = await db.collection('activation_codes').add({ code: tCode, targetCompanyName: n, targetPhone: p, status: 'active', used: true, usedAt: now.toISOString(), expiryDate: expiry.toISOString(), subscriptionType: 'trial', isTrial: true });
-                    const compRef = await db.collection('companies').add({ name: n, phone: p, code: tCode, createdAt: now.toISOString() });
+                    const codeRef = await db.collection('activation_codes').add({ code: tCode, targetCompanyName: n, targetPhone: p, status: 'active', used: true, usedAt: now.toISOString(), expiryDate: expiry.toISOString(), subscriptionType: 'trial', isTrial: true, maxEmployees: 2 });
+                    const compRef = await db.collection('companies').add({ name: n, phone: p, code: tCode, maxEmployees: 2, createdAt: now.toISOString() });
                     await codeRef.update({ companyId: compRef.id, actualName: n, actualPhone: p });
                     localStorage.setItem('mda_trial_done', 'true');
                     this.state.cid = compRef.id; this.state.name = n; this.state.phone = p; this.state.codeDocId = codeRef.id;
-                    this.saveSession(compRef.id, n, p, tCode, codeRef.id, false); this.monitorSession(codeRef.id, {cid:compRef.id, name:n, phone:p}); this.start(n,p);
+                    this.state.userRole = 'admin';
+                    this.saveSession(compRef.id, n, p, tCode, codeRef.id, false, 'admin', null, []); 
+                    this.monitorSession(codeRef.id, {cid:compRef.id, name:n, phone:p}); this.start(n,p);
                 } catch(e) { this.hideLoader(); alert(e.message); }
             },
             
@@ -326,33 +360,156 @@
 
             login: async function(e) {
                 e.preventDefault(); this.showLoader();
-                const n=document.getElementById('logName').value, p=document.getElementById('logPhone').value, c=document.getElementById('logCode').value;
+                const n=document.getElementById('logName').value.trim(), p=document.getElementById('logPhone').value, c=document.getElementById('logCode').value;
                 try {
-                    if(p==='46154399' && c==='371915') { this.state.admin=true; this.state.cid='ADMIN'; this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true); this.start('Admin', '46154399'); return; }
-                    if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
-                    const s = await db.collection('activation_codes').where('code','==',c).get();
-                    if(s.empty) throw new Error(this.t('err_login'));
-                    const doc = s.docs[0]; const d = doc.data(); this.state.codeDocId = doc.id;
-                    if (d.status === 'suspended') { this.showBlockScreen('suspended'); return; }
-                    const now = new Date();
-                    if (d.expiryDate && now >= new Date(d.expiryDate)) { this.showBlockScreen('expired'); return; }
-                    if((d.targetPhone && d.targetPhone!==p) || (d.used && d.actualPhone!==p)) throw new Error(this.t('err_login'));
-                    let cid=d.companyId;
-                    if(!d.used) {
-                        const r = await db.collection('companies').add({name:n, phone:p, code:c, createdAt:new Date().toISOString()});
-                        cid=r.id; const now = new Date(); const expiry = this.addDuration(now, d.subscriptionType || 'month');
-                        await db.collection('activation_codes').doc(doc.id).update({ used:true, companyId:cid, actualName:n, actualPhone:p, status:'active', usedAt:now.toISOString(), expiryDate: expiry });
+                    // Super Admin Login
+                    if(p==='46154399' && c==='371915') { 
+                        this.state.admin=true; this.state.cid='ADMIN'; 
+                        this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true, 'admin', null, []); 
+                        this.start('Admin', '46154399'); return; 
                     }
-                    this.state.cid=cid; this.state.name=n; this.state.phone=p;
-                    this.saveSession(cid, n, p, c, doc.id, false); this.monitorSession(doc.id, {cid, name:n, phone:p}); this.start(n,p);
+                    if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
+
+                    // 1. Try Login as Admin (Master Code)
+                    const s = await db.collection('activation_codes').where('code','==',c).get();
+                    if(!s.empty) {
+                        // It is a Master Code (Admin Login)
+                        const doc = s.docs[0]; const d = doc.data(); 
+                        if (d.status === 'suspended') { this.showBlockScreen('suspended'); return; }
+                        const now = new Date();
+                        if (d.expiryDate && now >= new Date(d.expiryDate)) { this.showBlockScreen('expired'); return; }
+                        
+                        // STRICT COMPANY NAME AND PHONE CHECK FOR ADMIN
+                        if((d.targetPhone && d.targetPhone!==p) || (d.used && d.actualPhone!==p)) throw new Error(this.t('err_login'));
+                        if(d.used && d.actualName && d.actualName.trim() !== n) throw new Error("اسم الشركة غير مطابق");
+
+                        let cid=d.companyId;
+                        if(!d.used) {
+                            // First time using code -> Create Company
+                            const r = await db.collection('companies').add({name:n, phone:p, code:c, maxEmployees: d.maxEmployees || 5, createdAt:new Date().toISOString()});
+                            cid=r.id; const expiry = this.addDuration(now, d.subscriptionType || 'month');
+                            await db.collection('activation_codes').doc(doc.id).update({ used:true, companyId:cid, actualName:n, actualPhone:p, status:'active', usedAt:now.toISOString(), expiryDate: expiry });
+                        }
+                        this.state.cid=cid; this.state.name=n; this.state.phone=p; this.state.codeDocId=doc.id;
+                        this.state.userRole = 'admin';
+                        this.saveSession(cid, n, p, c, doc.id, false, 'admin', null, []); 
+                        this.monitorSession(doc.id, {cid, name:n, phone:p}); this.start(n,p);
+                    } else {
+                        // 2. Try Login as Employee (Iterate all companies with same phone)
+                        const comps = await db.collection('companies').where('phone','==',p).get();
+                        if(comps.empty) throw new Error(this.t('err_login'));
+                        
+                        let foundEmployee = null;
+                        let targetCompId = null;
+                        let targetCompData = null;
+                        let activeCodeId = null;
+
+                        // Check ALL companies with this phone number
+                        for (const compDoc of comps.docs) {
+                            const compData = compDoc.data();
+                            
+                            // Check company status
+                            const codes = await db.collection('activation_codes').where('companyId','==',compDoc.id).get();
+                            if(codes.empty) continue; 
+                            
+                            const activeCodeDoc = codes.docs[0];
+                            const activeCodeData = activeCodeDoc.data();
+                            
+                            if (activeCodeData.status === 'suspended') continue;
+                            if (activeCodeData.expiryDate && new Date() >= new Date(activeCodeData.expiryDate)) continue;
+
+                            // STRICT COMPANY NAME CHECK FOR EMPLOYEE
+                            if (compData.name.trim() !== n) continue;
+
+                            // Now check if employee exists in this valid company
+                            const empSnap = await db.collection('companies').doc(compDoc.id).collection('employees').where('pinCode', '==', c).get();
+                            if (!empSnap.empty) {
+                                foundEmployee = empSnap.docs[0];
+                                targetCompId = compDoc.id;
+                                targetCompData = compData;
+                                activeCodeId = activeCodeDoc.id;
+                                break; // Success!
+                            }
+                        }
+
+                        if (!foundEmployee) {
+                            throw new Error(this.t('err_login') + " أو اسم الشركة غير مطابق");
+                        }
+                        
+                        const empData = foundEmployee.data();
+                        this.state.cid = targetCompId; 
+                        this.state.name = targetCompData.name; 
+                        this.state.phone = targetCompData.phone;
+                        this.state.codeDocId = activeCodeId;
+                        this.state.userRole = 'employee';
+                        this.state.currentUser = { id: foundEmployee.id, name: empData.name };
+                        this.state.permissions = empData.permissions || [];
+                        
+                        this.saveSession(targetCompId, targetCompData.name, targetCompData.phone, c, activeCodeId, false, 'employee', this.state.currentUser, this.state.permissions);
+                        this.monitorSession(activeCodeId, {cid:targetCompId, name:targetCompData.name, phone:targetCompData.phone});
+                        this.start(targetCompData.name, targetCompData.phone);
+                    }
                 } catch(er) { this.hideLoader(); alert(er.message); }
             },
-            saveSession: function(cid, name, phone, code, codeDocId, isAdmin) { localStorage.setItem('mda_session', JSON.stringify({cid, name, phone, code, codeDocId, admin: isAdmin})); },
+            saveSession: function(cid, name, phone, code, codeDocId, isAdmin, userRole, currentUser, permissions) { 
+                localStorage.setItem('mda_session', JSON.stringify({cid, name, phone, code, codeDocId, admin: isAdmin, userRole, currentUser, permissions})); 
+            },
             logout: function() { this.listeners.forEach(u => { if (typeof u === 'function') u(); }); this.listeners = []; localStorage.removeItem('mda_session'); location.reload(); },
-            start: function(n,p) { document.getElementById('h_name').innerText=n; document.getElementById('h_phone').innerText=p; if(this.state.admin) document.getElementById('adminLink').style.display='flex'; else document.getElementById('adminLink').style.display='none'; this.switchScreen('appScreen'); this.nav('home'); },
+            start: function(n,p) { 
+                document.getElementById('h_name').innerText=n; 
+                document.getElementById('h_phone').innerText=p; 
+                document.getElementById('h_role').innerText = this.state.userRole === 'admin' ? 'مدير' : (this.state.currentUser ? this.state.currentUser.name : 'موظف');
+                
+                // Toggle Users Menu
+                if(this.state.userRole === 'admin') {
+                    document.getElementById('navUsers').style.display = 'block';
+                    document.getElementById('adminLink').style.display = this.state.admin ? 'flex' : 'none';
+                } else {
+                    document.getElementById('navUsers').style.display = 'none';
+                    document.getElementById('adminLink').style.display = 'none';
+                }
+                
+                // Hide sidebar items based on permissions
+                this.applySidebarPermissions();
+
+                this.switchScreen('appScreen'); this.nav('home'); 
+            },
+
+            applySidebarPermissions: function() {
+                const els = document.querySelectorAll('[data-perm]');
+                els.forEach(el => {
+                    const perm = el.getAttribute('data-perm');
+                    if(perm === 'all') return;
+                    if(this.state.userRole === 'admin') {
+                        el.classList.remove('disabled-link');
+                    } else {
+                        if(this.state.permissions.includes(perm)) {
+                            el.classList.remove('disabled-link');
+                        } else {
+                            el.classList.add('disabled-link');
+                        }
+                    }
+                });
+            },
+
+            checkPermission: function(perm) {
+                if(this.state.userRole === 'admin') return true;
+                return this.state.permissions.includes(perm);
+            },
 
             nav: function(page) {
                 if(page === 'admin' && !this.state.admin) return;
+                
+                // Permission Check
+                const pagePermMap = {
+                    'pos': 'pos', 'customers': 'customers', 'inventory': 'inventory', 'suppliers': 'suppliers',
+                    'treasury': 'treasury', 'banks': 'banks', 'expenses': 'expenses', 'revenues': 'revenues',
+                    'invoices': 'invoices', 'salaries': 'salaries', 'reports': 'reports', 'users': 'users'
+                };
+                if(pagePermMap[page] && !this.checkPermission(pagePermMap[page])) {
+                    return alert(this.t('perm_denied'));
+                }
+
                 this.state.currentView = page;
                 const hb = document.getElementById('homeBtn');
                 if(hb) hb.style.display = (page === 'home') ? 'none' : 'flex';
@@ -376,6 +533,7 @@
                             case 'salaries': await this.list(ws, 'salaries'); break;
                             case 'reports': await this.reports(ws); break;
                             case 'treasury': await this.treasury(ws); break;
+                            case 'users': await this.users(ws); break;
                             case 'admin': await this.admin(ws); break;
                         }
                     } catch (error) {
@@ -384,6 +542,91 @@
                     }
                 }, 50);
             },
+
+            // --- USER MANAGEMENT (For Company Admin) ---
+            users: async function(div) {
+                if(this.state.userRole !== 'admin') return alert(this.t('perm_denied'));
+                div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('users')}</h3><button onclick="app.addUserModal()" class="btn btn-prim" style="width:auto;">+</button></div><div class="card"><div class="table-scroll"><table id="usersTbl"><thead><tr><th>${this.t('th_name')}</th><th>PIN</th><th>${this.t('perm')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`;
+                const s = await db.collection('companies').doc(this.state.cid).collection('employees').get();
+                let h = '';
+                s.forEach(doc => {
+                    const d = doc.data();
+                    const permCount = d.permissions ? d.permissions.length : 0;
+                    // تم تعديل هذا السطر لعرض الرمز وزر النسخ
+                    h += `<tr><td>${d.name}</td><td>${d.pinCode} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${d.pinCode}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td>${permCount}</td><td><button onclick="app.delUser('${doc.id}')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                });
+                div.querySelector('tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>';
+            },
+
+            addUserModal: async function() {
+                this.showLoader(); // Show loading indicator
+                try {
+                    // Check limit safely
+                    const compDoc = await db.collection('companies').doc(this.state.cid).get();
+                    if (!compDoc.exists) throw new Error("Company data not found");
+                    
+                    const limit = compDoc.data().maxEmployees || 5;
+                    const current = await db.collection('companies').doc(this.state.cid).collection('employees').get();
+                    
+                    this.hideLoader(); // Hide loader before showing modal or alert
+
+                    if(current.size >= limit) return alert(`${this.t('max_emp')}: ${limit}`);
+
+                    const perms = [
+                        {k:'pos', l:'نقطة البيع'}, {k:'customers', l:'الزبناء'}, {k:'inventory', l:'المخزون'},
+                        {k:'suppliers', l:'الموردين'}, {k:'treasury', l:'الخزينة'}, {k:'banks', l:'البنوك'},
+                        {k:'expenses', l:'المصروفات'}, {k:'revenues', l:'الإيرادات'}, {k:'invoices', l:'الفواتير'},
+                        {k:'salaries', l:'الرواتب'}, {k:'reports', l:'التقارير'}
+                    ];
+                    let permHtml = '';
+                    perms.forEach(p => {
+                        permHtml += `<label class="perm-item"><input type="checkbox" name="uperm" value="${p.k}"> ${p.l}</label>`;
+                    });
+
+                    const html = `<input id="un" class="inp" placeholder="${this.t('th_name')}"><input id="uc" type="tel" class="inp" placeholder="PIN Code (4-6 digits)" maxlength="6"><label style="font-weight:bold;margin-top:10px;display:block;">${this.t('perm')}</label><div class="perm-grid">${permHtml}</div>`;
+                    
+                    this.showModal(this.t('add_user'), html, async () => {
+                        const n = document.getElementById('un').value;
+                        const c = document.getElementById('uc').value;
+                        const checkboxes = document.querySelectorAll('input[name="uperm"]:checked');
+                        const selectedPerms = Array.from(checkboxes).map(cb => cb.value);
+
+                        if(!n || !c) return alert("Missing fields");
+                        if(c.length < 4) return alert("PIN too short (Min 4)");
+
+                        // --- Strong PIN Validation Logic ---
+                        // 1. Check for repeated numbers (e.g., 1111, 2222)
+                        if (/^(\d)\1+$/.test(c)) return alert("الرمز ضعيف: لا يمكن استخدام أرقام مكررة (مثل 1111)");
+                        
+                        // 2. Check for sequential numbers (e.g., 1234, 4321)
+                        const seq = "01234567890123456789";
+                        const revSeq = "98765432109876543210";
+                        if (seq.includes(c) || revSeq.includes(c)) return alert("الرمز ضعيف: لا يمكن استخدام أرقام متسلسلة (مثل 1234)");
+                        // -----------------------------------
+
+                        // Check PIN uniqueness in company
+                        const check = await db.collection('companies').doc(this.state.cid).collection('employees').where('pinCode', '==', c).get();
+                        if(!check.empty) return alert("PIN already exists");
+
+                        await db.collection('companies').doc(this.state.cid).collection('employees').add({
+                            name: n, pinCode: c, permissions: selectedPerms, createdAt: new Date().toISOString()
+                        });
+                        this.nav('users');
+                    });
+                } catch (e) {
+                    this.hideLoader();
+                    console.error(e);
+                    alert("Error checking limits: " + e.message);
+                }
+            },
+
+            delUser: async function(uid) {
+                if(confirm(this.t('confirm_del'))) {
+                    await db.collection('companies').doc(this.state.cid).collection('employees').doc(uid).delete();
+                    this.nav('users');
+                }
+            },
+            // --- END USER MANAGEMENT ---
 
             companyInfoModal: function() {
                 const stored = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
@@ -405,6 +648,7 @@
                     <input id="ciWeb" class="inp" placeholder="${this.t('comp_web')}" value="${stored.web || ''}">
                 `;
                 this.showModal(this.t('comp_info'), html, async () => {
+                    if(this.state.userRole !== 'admin') return alert(this.t('perm_denied'));
                     const info = { name: document.getElementById('ciName').value, phone: document.getElementById('ciPhone').value, addr: document.getElementById('ciAddr').value, email: document.getElementById('ciEmail').value, web: document.getElementById('ciWeb').value, logo: document.getElementById('previewLogo').src };
                     localStorage.setItem('teyssir_company_info', JSON.stringify(info));
                     alert(this.t('btn_save_info')); 
@@ -423,7 +667,16 @@
             
             home: function(div) { 
                 const items = [ {k:'pos', i:'fa-cart-shopping', a:"app.nav('pos')"}, {k:'cust', i:'fa-users', a:"app.nav('customers')"}, {k:'stock', i:'fa-boxes-stacked', a:"app.nav('inventory')"}, {k:'supp', i:'fa-truck-field', a:"app.nav('suppliers')"}, {k:'treasury', i:'fa-sack-dollar', a:"app.nav('treasury')"}, {k:'banks', i:'fa-building-columns', a:"app.nav('banks')"}, {k:'exp', i:'fa-wallet', a:"app.nav('expenses')"}, {k:'rev', i:'fa-hand-holding-dollar', a:"app.nav('revenues')"}, {k:'inv', i:'fa-file-invoice-dollar', a:"app.nav('invoices')"}, {k:'sal', i:'fa-users-gear', a:"app.nav('salaries')"}, {k:'rep', i:'fa-chart-pie', a:"app.nav('reports')", full: true} ];
-                let h = '<div class="home-grid">'; items.forEach(it => { const fullClass = it.full ? 'full-width' : ''; h += `<div class="home-card ${fullClass}" onclick="${it.a}"><i class="fa-solid ${it.i}"></i><h3 data-key="${it.k}">${this.t(it.k)}</h3></div>`; }); h += '</div>'; div.innerHTML = h; 
+                let h = '<div class="home-grid">'; 
+                items.forEach(it => { 
+                    // Hide home items if no permission
+                    const permKeyMap = {'pos':'pos', 'cust':'customers', 'stock':'inventory', 'supp':'suppliers', 'treasury':'treasury', 'banks':'banks', 'exp':'expenses', 'rev':'revenues', 'inv':'invoices', 'sal':'salaries', 'rep':'reports'};
+                    if(this.checkPermission(permKeyMap[it.k])) {
+                        const fullClass = it.full ? 'full-width' : ''; 
+                        h += `<div class="home-card ${fullClass}" onclick="${it.a}"><i class="fa-solid ${it.i}"></i><h3 data-key="${it.k}">${this.t(it.k)}</h3></div>`; 
+                    }
+                }); 
+                h += '</div>'; div.innerHTML = h; 
             },
 
             getData: async function(collection, orderBy = null) {
@@ -474,25 +727,22 @@
 
             refreshTreasury: async function() {
                 try {
+                    // FIX: Don't automatically overwrite DB on missing doc to prevent race conditions
                     const doc = await db.collection('treasury').doc(this.state.cid).get();
                     if(doc.exists) {
                         this.state.cashBalance = Number(doc.data().balance || 0);
                         localStorage.setItem('teyssir_cash_balance', this.state.cashBalance);
-                    } else if (navigator.onLine) {
-                        // Only recalculate if explicitly online and doc missing (first time)
-                        // Do not overwrite with 0 if just offline
-                        const txs = await db.collection('transactions').where('companyId','==',this.state.cid).where('isTreasury','==',true).get();
-                        let bal = 0;
-                        txs.forEach(t => {
-                            const d = t.data();
-                            if(d.type === 'cash_in') bal += d.amount;
-                            if(d.type === 'cash_out') bal -= d.amount;
-                        });
-                        this.state.cashBalance = bal;
-                        await db.collection('treasury').doc(this.state.cid).set({ balance: bal, updatedAt: new Date().toISOString() });
+                    } else {
+                        const cached = localStorage.getItem('teyssir_cash_balance');
+                        this.state.cashBalance = cached ? Number(cached) : 0;
                     }
-                } catch(e) { console.error("Online sync failed", e); }
-                const balEl = document.querySelector('.treasury-balance'); if(balEl) balEl.innerText = this.state.cashBalance.toLocaleString() + " MRU";
+                } catch(e) { 
+                    console.error("Sync error", e);
+                    const cached = localStorage.getItem('teyssir_cash_balance');
+                    if(cached) this.state.cashBalance = Number(cached);
+                }
+                const balEl = document.querySelector('.treasury-balance'); 
+                if(balEl) balEl.innerText = this.state.cashBalance.toLocaleString() + " MRU";
             },
 
             processCashTransaction: async function(batch, amount, type, note, refId, relatedEntity, bankId = null) {
@@ -898,10 +1148,17 @@
                 const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#eeeeee', alignment: 'center' } }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: this.t('rep_det_title'), fontSize: 12, alignment: 'center', margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', 'auto', '*', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' } ] }; pdfMake.createPdf(docDefinition).open();
             },
 
-            admin: async function(div) { div.innerHTML = `<div class="card"><input id="an" class="inp" placeholder="Name"><input id="ap" class="inp" placeholder="Phone"><select id="adur" class="select-box"><option value="day">${this.t('sub_day')}</option><option value="week">${this.t('sub_week')}</option><option value="month" selected>${this.t('sub_month')}</option><option value="year">${this.t('sub_year')}</option></select><button onclick="app.gen()" class="btn btn-prim">${this.t('adm_gen')}</button></div><div style="margin-bottom:10px;"><input id="adminSearch" class="inp" placeholder="Search Company or Phone..." onkeyup="app.filterAdminTable()"></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`; const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(50).get(); let h=`<tr><th>${this.t('adm_time')}</th><th>${this.t('adm_code')}</th><th>${this.t('adm_comp')}</th><th>${this.t('adm_phone')}</th><th>Expires</th><th>${this.t('adm_act')}</th></tr>`, b=''; s.forEach(d=>{ const v=d.data(); const comp = v.actualName || v.targetCompanyName || '-'; const ph = v.actualPhone || v.targetPhone || '-'; const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; const stopBtnText = v.status === 'active' ? 'إيقاف' : 'تفعيل'; b+=`<tr><td>${this.formatDate(v.createdAt)}</td><td style="font-family:monospace;font-weight:bold">${v.code} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${v.code}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td class="admin-comp">${comp}</td><td class="admin-phone" style="color:var(--primary);font-weight:bold">${ph}</td><td style="color:${new Date(v.expiryDate)<new Date()?'red':'var(--success)'}">${expDate}</td><td><button onclick="app.renewCompany('${d.id}', '${v.subscriptionType||'month'}')" class="btn btn-sec" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_renew')}</button> <button onclick="app.toggleStatus('${d.id}', '${v.status}')" class="btn btn-warn" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${stopBtnText}</button> <button onclick="app.delCode('${d.id}')" class="btn btn-dan" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_del')}</button></td></tr>`; }); document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b; },
+            admin: async function(div) { 
+                div.innerHTML = `<div class="card"><input id="an" class="inp" placeholder="Name"><input id="ap" class="inp" placeholder="Phone"><select id="adur" class="select-box"><option value="day">${this.t('sub_day')}</option><option value="week">${this.t('sub_week')}</option><option value="month" selected>${this.t('sub_month')}</option><option value="year">${this.t('sub_year')}</option></select><input id="amax" type="number" class="inp" placeholder="${this.t('max_emp')}" value="5"><button onclick="app.gen()" class="btn btn-prim">${this.t('adm_gen')}</button></div><div style="margin-bottom:10px;"><input id="adminSearch" class="inp" placeholder="Search Company or Phone..." onkeyup="app.filterAdminTable()"></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`; 
+                const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(50).get(); let h=`<tr><th>${this.t('adm_time')}</th><th>${this.t('adm_code')}</th><th>${this.t('adm_comp')}</th><th>${this.t('adm_phone')}</th><th>Limit</th><th>Expires</th><th>${this.t('adm_act')}</th></tr>`, b=''; s.forEach(d=>{ const v=d.data(); const comp = v.actualName || v.targetCompanyName || '-'; const ph = v.actualPhone || v.targetPhone || '-'; const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; const stopBtnText = v.status === 'active' ? 'إيقاف' : 'تفعيل'; const maxE = v.maxEmployees || 5; b+=`<tr><td>${this.formatDate(v.createdAt)}</td><td style="font-family:monospace;font-weight:bold">${v.code} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${v.code}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td class="admin-comp">${comp}</td><td class="admin-phone" style="color:var(--primary);font-weight:bold">${ph}</td><td>${maxE}</td><td style="color:${new Date(v.expiryDate)<new Date()?'red':'var(--success)'}">${expDate}</td><td><button onclick="app.renewCompany('${d.id}', '${v.subscriptionType||'month'}')" class="btn btn-sec" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_renew')}</button> <button onclick="app.toggleStatus('${d.id}', '${v.status}')" class="btn btn-warn" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${stopBtnText}</button> <button onclick="app.delCode('${d.id}')" class="btn btn-dan" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_del')}</button></td></tr>`; }); document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b; 
+            },
             copyToClipboard: function(text) { navigator.clipboard.writeText(text).then(() => { alert("تم نسخ الكود: " + text); }).catch(err => { console.error('Failed to copy: ', err); }); },
             filterAdminTable: function() { const input = document.getElementById('adminSearch'); const filter = input.value.toLowerCase(); const table = document.getElementById('at'); const tr = table.getElementsByTagName('tr'); for (let i = 1; i < tr.length; i++) { const compTd = tr[i].querySelector('.admin-comp'); const phoneTd = tr[i].querySelector('.admin-phone'); if (compTd || phoneTd) { const compTxt = compTd ? (compTd.textContent || compTd.innerText) : ''; const phoneTxt = phoneTd ? (phoneTd.textContent || phoneTd.innerText) : ''; if (compTxt.toLowerCase().indexOf(filter) > -1 || phoneTxt.indexOf(filter) > -1) { tr[i].style.display = ""; } else { tr[i].style.display = "none"; } } } },
-            gen: async function() { const n=document.getElementById('an').value, p=document.getElementById('ap').value, dur=document.getElementById('adur').value; if(n&&p) { await db.collection('activation_codes').add({ code:this.randomStr(10), targetCompanyName:n, targetPhone:p, status:'active', used:false, createdAt:new Date().toISOString(), subscriptionType: dur, paymentHistory: [] }); this.nav('admin'); } },
+            gen: async function() { 
+                const n=document.getElementById('an').value, p=document.getElementById('ap').value, dur=document.getElementById('adur').value; 
+                const max = Number(document.getElementById('amax').value) || 5;
+                if(n&&p) { await db.collection('activation_codes').add({ code:this.randomStr(10), targetCompanyName:n, targetPhone:p, status:'active', used:false, createdAt:new Date().toISOString(), subscriptionType: dur, maxEmployees: max, paymentHistory: [] }); this.nav('admin'); } 
+            },
             renewCompany: async function(id, type) { const newType = document.getElementById('adur').value; if(!confirm("Confirm Renew? ("+newType+")")) return; const doc = await db.collection('activation_codes').doc(id).get(); const data = doc.data(); let baseDate = new Date(); if(data.expiryDate && new Date(data.expiryDate) > baseDate) { baseDate = new Date(data.expiryDate); } const newExpiry = this.addDuration(baseDate, newType); await db.collection('activation_codes').doc(id).update({ expiryDate: newExpiry }); alert("Renewed"); this.nav('admin'); },
             toggleStatus: async function(id, st) { if(!confirm(st==='active' ? 'Disable?' : 'Enable?')) return; await db.collection('activation_codes').doc(id).update({status: st==='active'?'suspended':'active'}); this.nav('admin'); },
             delCode: async function(id) { if(confirm('Delete?')) { await db.collection('activation_codes').doc(id).delete(); this.nav('admin'); } }
