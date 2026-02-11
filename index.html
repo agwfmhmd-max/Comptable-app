@@ -12,10 +12,10 @@
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase Scripts (Updated) -->
+    <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
     <!-- PDF & Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -75,11 +75,21 @@
     <div id="mainLoader"><div class="spinner"></div><p style="color:var(--primary);font-weight:bold;">Loading...</p></div>
     <button onclick="app.toggleLang()" class="lang-btn-style"><i class="fa-solid fa-language"></i></button>
     <div id="connStatus" class="conn-status conn-online"><i class="fa-solid fa-wifi"></i> Online</div>
-    <div id="subAlertBox" class="sub-alert-box"><i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i><div class="sub-alert-text" data-key="msg_warn">اشتراكك ينتهي قريباً!</div><a href="https://wa.me/22220479962" class="sub-wa-btn" target="_blank"><i class="fa-brands fa-whatsapp"></i></a></div>
+    
+    <!-- تم تغيير الرقم هنا -->
+    <div id="subAlertBox" class="sub-alert-box"><i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i><div class="sub-alert-text" data-key="msg_warn">اشتراكك ينتهي قريباً!</div><a href="https://wa.me/22224241012" class="sub-wa-btn" target="_blank"><i class="fa-brands fa-whatsapp"></i></a></div>
+    
     <div id="genericModal" class="modal-overlay"><div class="modal-box"><h3 id="modalTitle" style="margin-top:0; color:var(--primary);">عنوان</h3><div id="modalContent"></div><div style="display:flex; gap:10px; margin-top:20px;"><button id="modalActionBtn" class="btn btn-prim">حفظ</button><button onclick="document.getElementById('genericModal').style.display='none'" class="btn btn-sec" style="background:#ccc; color:#333">إغلاق</button></div></div></div>
-    <div id="welcomeModal" class="welcome-modal"><div class="welcome-content"><img src="logo.png" style="width:100px; margin-bottom:15px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0;" data-key="w_title">أهلاً بك في Teyssir ERP</h2><p style="color:#666; font-size:16px;">النظام المالي المتكامل.</p><a href="https://wa.me/22220479962" class="wa-link" style="margin-bottom:20px; justify-content:center;"><i class="fa-brands fa-whatsapp"></i> <span data-key="cont">تواصل للتفعيل</span></a><button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;" data-key="w_btn">ابدأ الآن</button></div></div>
-    <div id="blockScreen" class="block-screen"><i class="fa-solid fa-triangle-exclamation block-icon"></i><h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2><p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p><a href="https://wa.me/22220479962" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a><button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button></div>
-    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div></form><div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22220479962" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
+    
+    <!-- تم تغيير الرقم هنا -->
+    <div id="welcomeModal" class="welcome-modal"><div class="welcome-content"><img src="logo.png" style="width:100px; margin-bottom:15px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0;" data-key="w_title">أهلاً بك في Teyssir ERP</h2><p style="color:#666; font-size:16px;">النظام المالي المتكامل.</p><a href="https://wa.me/22224241012" class="wa-link" style="margin-bottom:20px; justify-content:center;"><i class="fa-brands fa-whatsapp"></i> <span data-key="cont">تواصل للتفعيل</span></a><button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;" data-key="w_btn">ابدأ الآن</button></div></div>
+    
+    <!-- تم تغيير الرقم هنا -->
+    <div id="blockScreen" class="block-screen"><i class="fa-solid fa-triangle-exclamation block-icon"></i><h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2><p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p><a href="https://wa.me/22224241012" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a><button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button></div>
+    
+    <!-- تم تغيير الرقم هنا -->
+    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div></form><div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22224241012" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
+    
     <div id="appScreen" class="app-container"><div class="sidebar-overlay" onclick="app.toggleMenu()"></div><header class="top-header"><div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div><div class="header-title">Teyssir ERP</div></header><aside class="sidebar" id="sidebar"><div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);"><img src="logo.png" style="width:70px; border-radius:10px;"><div id="h_name" style="font-weight:bold; color:var(--primary); margin-top:10px;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div><div id="h_role" style="font-size:10px; background:var(--accent); color:white; padding:2px 5px; border-radius:4px; display:inline-block; margin-top:5px;"></div></div><div style="padding: 10px 0; flex:1;">
         <div class="nav-item active" onclick="app.nav('home')" data-perm="all"><i class="fa-solid fa-home"></i> <span data-key="home">الرئيسية</span></div>
         <div class="nav-item" onclick="app.nav('pos')" data-perm="pos"><i class="fa-solid fa-cart-shopping"></i> <span data-key="pos">نقطة البيع</span></div>
@@ -302,10 +312,9 @@
                 } else { this.switchScreen('authScreen'); }
             },
             
-            // --- BIOMETRICS FUNCTIONS (ADDED) ---
+            // --- BIOMETRICS FUNCTIONS ---
             setupBiometrics: async function() {
                 if(!window.PublicKeyCredential) return;
-                // Check if we already registered on this device
                 if(localStorage.getItem('bio_registered')) return;
                 
                 try {
@@ -339,22 +348,33 @@
             },
 
             verifyBiometric: async function() {
-                if(!localStorage.getItem('bio_registered')) return true; // If not set up, bypass
-                
+                // إذا لم يقم المشرف بتفعيل البصمة من قبل، اسمح له بالمرور
+                if (!localStorage.getItem('bio_registered')) {
+                    alert("تنبيه: لم يتم تفعيل حماية البصمة لهذا الجهاز. سيتم الحذف بدونها.");
+                    return true; 
+                }
+
                 try {
                     const challenge = new Uint8Array(32);
                     window.crypto.getRandomValues(challenge);
-                    
-                    await navigator.credentials.get({
+
+                    const assertion = await navigator.credentials.get({
                         publicKey: {
                             challenge: challenge,
-                            rpId: window.location.hostname === 'localhost' ? 'localhost' : undefined,
-                            userVerification: "required"
+                            rpId: window.location.hostname,
+                            userVerification: "required",
+                            timeout: 60000
                         }
                     });
-                    return true;
-                } catch(e) {
-                    alert("فشل التحقق من البصمة. لا يمكن إتمام العملية.");
+
+                    if (assertion) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } catch (e) {
+                    console.error("Biometric Error:", e);
+                    alert("فشل التحقق من البصمة. تأكد من نظافة المستشعر أو أنك تستخدم الجهاز الصحيح.");
                     return false;
                 }
             },
@@ -446,9 +466,8 @@
                         this.state.admin=true; this.state.cid='ADMIN'; 
                         this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true, 'admin', null, []); 
                         this.start('Admin', '46154399'); 
-                        // --- Prompt Biometrics for Admin ---
+                        // Prompt Biometrics for Admin
                         setTimeout(() => { this.setupBiometrics(); }, 1000); 
-                        // -----------------------------------
                         return; 
                     }
                     if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
@@ -1271,13 +1290,28 @@
             },
             renewCompany: async function(id, type) { const newType = document.getElementById('adur').value; if(!confirm("Confirm Renew? ("+newType+")")) return; const doc = await db.collection('activation_codes').doc(id).get(); const data = doc.data(); let baseDate = new Date(); if(data.expiryDate && new Date(data.expiryDate) > baseDate) { baseDate = new Date(data.expiryDate); } const newExpiry = this.addDuration(baseDate, newType); await db.collection('activation_codes').doc(id).update({ expiryDate: newExpiry }); alert("Renewed"); this.nav('admin'); },
             toggleStatus: async function(id, st) { if(!confirm(st==='active' ? 'Disable?' : 'Enable?')) return; await db.collection('activation_codes').doc(id).update({status: st==='active'?'suspended':'active'}); this.nav('admin'); },
-            // --- UPDATED DELETE FUNCTION ---
-            delCode: async function(id) { 
-                // Biometric Check
-                if(await this.verifyBiometric() && confirm('Delete?')) { 
-                    await db.collection('activation_codes').doc(id).delete(); 
-                    this.nav('admin'); 
-                } 
+            
+            // --- UPDATED DELETE FUNCTION (CONFIRM FIRST, THEN BIO) ---
+            delCode: async function(id) {
+                // 1. Ask "Are you sure?" first
+                const userConfirmed = window.confirm("هل أنت متأكد تماماً من حذف كود التفعيل هذا؟ لا يمكن التراجع.");
+                if (!userConfirmed) return;
+
+                // 2. Ask for Bio second
+                this.showLoader();
+                const isBioOk = await this.verifyBiometric();
+
+                if (isBioOk) {
+                    try {
+                        await db.collection('activation_codes').doc(id).delete();
+                        alert("✅ تم حذف الكود بنجاح.");
+                        this.nav('admin');
+                    } catch (error) {
+                        console.error("Delete Error:", error);
+                        alert("❌ حدث خطأ من السيرفر: " + error.message);
+                    }
+                }
+                this.hideLoader();
             }
         };
         
