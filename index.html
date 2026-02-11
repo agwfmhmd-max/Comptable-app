@@ -15,7 +15,7 @@
     <!-- Firebase Scripts (Updated) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> <!-- تم إضافة هذا السطر -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> 
     
     <!-- PDF & Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -28,9 +28,7 @@
     <style>
         :root { --primary: #1a4585; --accent: #dcb14a; --bg: #f8f9fa; --white: #ffffff; --text-dark: #374151; --text-light: #6b7280; --border: #e5e7eb; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --lang-green: #006935; --header-h: 60px; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        /* منع تحديد النصوص في كامل الموقع */
         body { margin: 0; font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text-dark); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; user-select: none; -webkit-user-select: none; }
-        /* السماح بالكتابة وتحديد النصوص داخل الحقول فقط */
         input, textarea, select { user-select: text; -webkit-user-select: text; }
         
         .ac-wrap { position: relative; width: 100%; margin-bottom: 12px; }
@@ -121,7 +119,7 @@
         firebase.initializeApp(firebaseConfig); 
         firebase.firestore().enablePersistence({ synchronizeTabs: true }).catch(err => console.log("Persistence:", err.code)); 
         const db = firebase.firestore();
-        const auth = firebase.auth(); // Added for security
+        const auth = firebase.auth(); 
 
         window.addEventListener('online', updateStatus); window.addEventListener('offline', updateStatus);
         function updateStatus() { const el = document.getElementById('connStatus'); if(navigator.onLine) { el.className='conn-status conn-online'; el.innerHTML='<i class="fa-solid fa-wifi"></i> Online'; } else { el.className='conn-status conn-offline'; el.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Offline'; } }
@@ -304,6 +302,64 @@
                 } else { this.switchScreen('authScreen'); }
             },
             
+            // --- BIOMETRICS FUNCTIONS (ADDED) ---
+            setupBiometrics: async function() {
+                if(!window.PublicKeyCredential) return;
+                // Check if we already registered on this device
+                if(localStorage.getItem('bio_registered')) return;
+                
+                try {
+                    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                    if(!available) return;
+
+                    if(confirm("هل تريد تفعيل الدخول ببصمة الإصبع/الوجه لتأمين عمليات الحذف؟")) {
+                        const challenge = new Uint8Array(32);
+                        window.crypto.getRandomValues(challenge);
+                        
+                        const publicKey = {
+                            challenge: challenge,
+                            rp: { name: "Teyssir ERP" },
+                            user: {
+                                id: new TextEncoder().encode("admin-" + Date.now()),
+                                name: "admin@teyssir",
+                                displayName: "Super Admin"
+                            },
+                            pubKeyCredParams: [{alg: -7, type: "public-key"}],
+                            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                            timeout: 60000
+                        };
+
+                        await navigator.credentials.create({ publicKey });
+                        localStorage.setItem('bio_registered', 'true');
+                        alert("تم تفعيل البصمة بنجاح!");
+                    }
+                } catch(e) {
+                    console.error("Bio setup failed", e);
+                }
+            },
+
+            verifyBiometric: async function() {
+                if(!localStorage.getItem('bio_registered')) return true; // If not set up, bypass
+                
+                try {
+                    const challenge = new Uint8Array(32);
+                    window.crypto.getRandomValues(challenge);
+                    
+                    await navigator.credentials.get({
+                        publicKey: {
+                            challenge: challenge,
+                            rpId: window.location.hostname === 'localhost' ? 'localhost' : undefined,
+                            userVerification: "required"
+                        }
+                    });
+                    return true;
+                } catch(e) {
+                    alert("فشل التحقق من البصمة. لا يمكن إتمام العملية.");
+                    return false;
+                }
+            },
+            // --- END BIOMETRICS FUNCTIONS ---
+
             loadArabicFont: function() {
                 fetch('https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-Regular.ttf')
                 .then(response => { if (!response.ok) throw new Error("Font fetch failed"); return response.arrayBuffer(); })
@@ -389,7 +445,11 @@
                     if(p==='46154399' && c==='371915') { 
                         this.state.admin=true; this.state.cid='ADMIN'; 
                         this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true, 'admin', null, []); 
-                        this.start('Admin', '46154399'); return; 
+                        this.start('Admin', '46154399'); 
+                        // --- Prompt Biometrics for Admin ---
+                        setTimeout(() => { this.setupBiometrics(); }, 1000); 
+                        // -----------------------------------
+                        return; 
                     }
                     if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
 
@@ -575,23 +635,21 @@
                 s.forEach(doc => {
                     const d = doc.data();
                     const permCount = d.permissions ? d.permissions.length : 0;
-                    // تم تعديل هذا السطر لعرض الرمز وزر النسخ
                     h += `<tr><td>${d.name}</td><td>${d.pinCode} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${d.pinCode}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td>${permCount}</td><td><button onclick="app.delUser('${doc.id}')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
                 div.querySelector('tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>';
             },
 
             addUserModal: async function() {
-                this.showLoader(); // Show loading indicator
+                this.showLoader(); 
                 try {
-                    // Check limit safely
                     const compDoc = await db.collection('companies').doc(this.state.cid).get();
                     if (!compDoc.exists) throw new Error("Company data not found");
                     
                     const limit = compDoc.data().maxEmployees || 5;
                     const current = await db.collection('companies').doc(this.state.cid).collection('employees').get();
                     
-                    this.hideLoader(); // Hide loader before showing modal or alert
+                    this.hideLoader(); 
 
                     if(current.size >= limit) return alert(`${this.t('max_emp')}: ${limit}`);
 
@@ -617,17 +675,11 @@
                         if(!n || !c) return alert("Missing fields");
                         if(c.length < 4) return alert("PIN too short (Min 4)");
 
-                        // --- Strong PIN Validation Logic ---
-                        // 1. Check for repeated numbers (e.g., 1111, 2222)
                         if (/^(\d)\1+$/.test(c)) return alert("الرمز ضعيف: لا يمكن استخدام أرقام مكررة (مثل 1111)");
-                        
-                        // 2. Check for sequential numbers (e.g., 1234, 4321)
                         const seq = "01234567890123456789";
                         const revSeq = "98765432109876543210";
                         if (seq.includes(c) || revSeq.includes(c)) return alert("الرمز ضعيف: لا يمكن استخدام أرقام متسلسلة (مثل 1234)");
-                        // -----------------------------------
 
-                        // Check PIN uniqueness in company
                         const check = await db.collection('companies').doc(this.state.cid).collection('employees').where('pinCode', '==', c).get();
                         if(!check.empty) return alert("PIN already exists");
 
@@ -750,7 +802,6 @@
 
             refreshTreasury: async function() {
                 try {
-                    // FIX: Don't automatically overwrite DB on missing doc to prevent race conditions
                     const doc = await db.collection('treasury').doc(this.state.cid).get();
                     if(doc.exists) {
                         this.state.cashBalance = Number(doc.data().balance || 0);
@@ -770,21 +821,17 @@
 
             processCashTransaction: async function(batch, amount, type, note, refId, relatedEntity, bankId = null) {
                 const currentBal = this.state.cashBalance || 0;
-                // Validation only. Server is truth.
                 if (type === 'out' && currentBal < amount) { throw new Error(this.t('err_no_cash') + " (" + currentBal + " MRU)"); }
                 
-                // Optimistic UI Update
                 let newBal = type === 'in' ? (currentBal + amount) : (currentBal - amount);
                 const nowStr = new Date().toISOString();
                 this.state.cashBalance = newBal; 
                 localStorage.setItem('teyssir_cash_balance', newBal); 
                 localStorage.setItem('teyssir_cash_time', nowStr);
                 
-                // ATOMIC UPDATE FIX
                 const treasuryRef = db.collection('treasury').doc(this.state.cid);
                 const incrementVal = type === 'in' ? amount : -amount;
                 
-                // Use set with merge and FieldValue.increment to ensure atomic server-side calculation
                 batch.set(treasuryRef, { 
                     balance: firebase.firestore.FieldValue.increment(incrementVal), 
                     updatedAt: nowStr 
@@ -1224,7 +1271,14 @@
             },
             renewCompany: async function(id, type) { const newType = document.getElementById('adur').value; if(!confirm("Confirm Renew? ("+newType+")")) return; const doc = await db.collection('activation_codes').doc(id).get(); const data = doc.data(); let baseDate = new Date(); if(data.expiryDate && new Date(data.expiryDate) > baseDate) { baseDate = new Date(data.expiryDate); } const newExpiry = this.addDuration(baseDate, newType); await db.collection('activation_codes').doc(id).update({ expiryDate: newExpiry }); alert("Renewed"); this.nav('admin'); },
             toggleStatus: async function(id, st) { if(!confirm(st==='active' ? 'Disable?' : 'Enable?')) return; await db.collection('activation_codes').doc(id).update({status: st==='active'?'suspended':'active'}); this.nav('admin'); },
-            delCode: async function(id) { if(confirm('Delete?')) { await db.collection('activation_codes').doc(id).delete(); this.nav('admin'); } }
+            // --- UPDATED DELETE FUNCTION ---
+            delCode: async function(id) { 
+                // Biometric Check
+                if(await this.verifyBiometric() && confirm('Delete?')) { 
+                    await db.collection('activation_codes').doc(id).delete(); 
+                    this.nav('admin'); 
+                } 
+            }
         };
         
         window.onload = function() { app.init(); };
