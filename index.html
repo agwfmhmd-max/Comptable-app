@@ -12,9 +12,10 @@
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase -->
+    <!-- Firebase Scripts (Updated) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> <!-- تم إضافة هذا السطر -->
     
     <!-- PDF & Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -27,7 +28,11 @@
     <style>
         :root { --primary: #1a4585; --accent: #dcb14a; --bg: #f8f9fa; --white: #ffffff; --text-dark: #374151; --text-light: #6b7280; --border: #e5e7eb; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --lang-green: #006935; --header-h: 60px; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text-dark); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
+        /* منع تحديد النصوص في كامل الموقع */
+        body { margin: 0; font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text-dark); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; user-select: none; -webkit-user-select: none; }
+        /* السماح بالكتابة وتحديد النصوص داخل الحقول فقط */
+        input, textarea, select { user-select: text; -webkit-user-select: text; }
+        
         .ac-wrap { position: relative; width: 100%; margin-bottom: 12px; }
         .ac-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; z-index: 1000; max-height: 200px; overflow-y: auto; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
         .ac-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
@@ -96,6 +101,16 @@
     <div id="printArea" class="print-box"></div>
 
     <script>
+        // --- Security Scripts (Anti-Tamper) ---
+        // Prevent Right Click
+        document.addEventListener('contextmenu', function (e) { e.preventDefault(); return false; });
+        // Prevent F12 and Shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.keyCode == 123) { e.preventDefault(); return false; } // F12
+            if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) { e.preventDefault(); return false; } // Ctrl+Shift+I/J/C
+            if (e.ctrlKey && e.keyCode == 85) { e.preventDefault(); return false; } // Ctrl+U
+        });
+
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW failed', err));
         let deferredPrompt; window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; const btn=document.getElementById('installBtn'); if(btn) btn.style.display = 'block'; });
         const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
@@ -103,7 +118,10 @@
         if (isIos() && !isInStandaloneMode()) { const btn = document.getElementById('installBtn'); if(btn) btn.style.display = 'block'; }
 
         const firebaseConfig = { apiKey: "AIzaSyA6glwj94Onm0r6gRtxtoyqEISpPChDcHo", authDomain: "comptabilite-e35ed.firebaseapp.com", projectId: "comptabilite-e35ed", storageBucket: "comptabilite-e35ed.firebasestorage.app", messagingSenderId: "59372022194", appId: "1:59372022194:web:22b9f70c41b1479835dcab", measurementId: "G-EEDNJXLSN6" };
-        firebase.initializeApp(firebaseConfig); firebase.firestore().enablePersistence({ synchronizeTabs: true }).catch(err => console.log("Persistence:", err.code)); const db = firebase.firestore();
+        firebase.initializeApp(firebaseConfig); 
+        firebase.firestore().enablePersistence({ synchronizeTabs: true }).catch(err => console.log("Persistence:", err.code)); 
+        const db = firebase.firestore();
+        const auth = firebase.auth(); // Added for security
 
         window.addEventListener('online', updateStatus); window.addEventListener('offline', updateStatus);
         function updateStatus() { const el = document.getElementById('connStatus'); if(navigator.onLine) { el.className='conn-status conn-online'; el.innerHTML='<i class="fa-solid fa-wifi"></i> Online'; } else { el.className='conn-status conn-offline'; el.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Offline'; } }
@@ -254,6 +272,11 @@
 
             init: function() {
                 this.showLoader(); updateStatus();
+                // --- Auth Init ---
+                auth.signInAnonymously().catch((error) => {
+                    console.error("Auth Error", error);
+                });
+                
                 if (!localStorage.getItem('welcomeSeen')) document.getElementById('welcomeModal').style.display = 'flex';
                 if (deferredPrompt) deferredPrompt.prompt();
                 this.loadArabicFont();
