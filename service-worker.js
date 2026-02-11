@@ -1,60 +1,64 @@
-const CACHE_NAME = 'teyssir-erp-v2-offline';
-const ASSETS = [
-    './',
-    './index.html',
-    './style.css',
-    './logo.png',
-    './manifest.json',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-    'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap',
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
-    'https://cdn.jsdelivr.net/npm/chart.js'
+const CACHE_NAME = 'teyssir-erp-v1';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './style.css',
+  './logo.png',
+  './manifest.json',
+  
+  // مكتبات Firebase
+  'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js',
+  
+  // مكتبات التصميم والخطوط
+  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  
+  // الخط العربي (مهم للـ PDF)
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-Regular.ttf'
 ];
 
-// Install Event
-self.addEventListener('install', event => {
-    self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(ASSETS);
-        })
-    );
+// 1. تثبيت التطبيق وتخزين الملفات
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Caching assets...');
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
 });
 
-// Activate Event
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cache => {
-                    if (cache !== CACHE_NAME) {
-                        return caches.delete(cache);
-                    }
-                })
-            );
+// 2. تفعيل الكاش وحذف القديم
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
         })
-    );
-    self.clients.claim();
+      );
+    })
+  );
 });
 
-// Fetch Event
-self.addEventListener('fetch', event => {
-    // Handle Firestore/Google API requests differently or let Network fail gracefully
-    if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('google')) {
-        return; 
-    }
-
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request).catch(() => {
-                // Return cached index if navigation fails
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
-            });
-        })
-    );
+// 3. جلب الملفات (استخدام الكاش عند انقطاع النت)
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      // إذا وجد الملف في الكاش، استخدمه (Offline Mode)
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      // إذا لم يوجد، حاول جلبه من الإنترنت
+      return fetch(event.request).catch(() => {
+        // إذا فشل النت أيضاً، يمكن إرجاع صفحة خطأ مخصصة هنا (اختياري)
+      });
+    })
+  );
 });
