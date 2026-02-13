@@ -76,18 +76,14 @@
     <button onclick="app.toggleLang()" class="lang-btn-style"><i class="fa-solid fa-language"></i></button>
     <div id="connStatus" class="conn-status conn-online"><i class="fa-solid fa-wifi"></i> Online</div>
     
-    <!-- تم تغيير الرقم هنا -->
     <div id="subAlertBox" class="sub-alert-box"><i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i><div class="sub-alert-text" data-key="msg_warn">اشتراكك ينتهي قريباً!</div><a href="https://wa.me/22224241012" class="sub-wa-btn" target="_blank"><i class="fa-brands fa-whatsapp"></i></a></div>
     
     <div id="genericModal" class="modal-overlay"><div class="modal-box"><h3 id="modalTitle" style="margin-top:0; color:var(--primary);">عنوان</h3><div id="modalContent"></div><div style="display:flex; gap:10px; margin-top:20px;"><button id="modalActionBtn" class="btn btn-prim">حفظ</button><button onclick="document.getElementById('genericModal').style.display='none'" class="btn btn-sec" style="background:#ccc; color:#333">إغلاق</button></div></div></div>
     
-    <!-- تم تغيير الرقم هنا -->
     <div id="welcomeModal" class="welcome-modal"><div class="welcome-content"><img src="logo.png" style="width:100px; margin-bottom:15px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0;" data-key="w_title">أهلاً بك في Teyssir ERP</h2><p style="color:#666; font-size:16px;">النظام المالي المتكامل.</p><a href="https://wa.me/22224241012" class="wa-link" style="margin-bottom:20px; justify-content:center;"><i class="fa-brands fa-whatsapp"></i> <span data-key="cont">تواصل للتفعيل</span></a><button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;" data-key="w_btn">ابدأ الآن</button></div></div>
     
-    <!-- تم تغيير الرقم هنا -->
     <div id="blockScreen" class="block-screen"><i class="fa-solid fa-triangle-exclamation block-icon"></i><h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2><p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p><a href="https://wa.me/22224241012" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a><button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button></div>
     
-    <!-- تم تغيير الرقم هنا -->
     <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div></form><div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22224241012" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
     
     <div id="appScreen" class="app-container"><div class="sidebar-overlay" onclick="app.toggleMenu()"></div><header class="top-header"><div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div><div class="header-title">Teyssir ERP</div></header><aside class="sidebar" id="sidebar"><div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);"><img src="logo.png" style="width:70px; border-radius:10px;"><div id="h_name" style="font-weight:bold; color:var(--primary); margin-top:10px;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div><div id="h_role" style="font-size:10px; background:var(--accent); color:white; padding:2px 5px; border-radius:4px; display:inline-block; margin-top:5px;"></div></div><div style="padding: 10px 0; flex:1;">
@@ -194,7 +190,7 @@
                 tr_balance: "رصيد الخزينة الحالي", tr_open: "رصيد افتتاحي للخزينة", tr_dep: "إيداع في البنك (من الخزينة)",
                 tr_with: "سحب من البنك (إلى الخزينة)", tr_hist: "سجل حركات الخزينة", err_no_cash: "عذراً، رصيد الخزينة لا يكفي لهذه العملية!",
                 tr_in: "وارد", tr_out: "صادر", tr_desc: "الوصف", tr_bal_after: "الرصيد بعد",
-                filter_by: "عرض حسب", f_day: "يوم", f_month: "شهر", f_range: "فترة",
+                filter_by: "عرض حسب", f_day: "يوم", f_month: "شهر", f_range: "فترة", f_year: "سنة",
                 mode_exist: "منتج موجود (رصيد أول المدة)", mode_buy: "شراء بضاعة جديدة",
                 inv_warn: "⚠️ تنبيه: لديك 3 أيام فقط لإدخال المنتجات الموجودة مسبقاً (رصيد أول المدة).",
                 inv_msg_days: "متبقي لك: ",
@@ -261,7 +257,7 @@
                 tr_balance: "Solde Caisse", tr_open: "Solde Initial", tr_dep: "Dépôt Banque",
                 tr_with: "Retrait Banque", tr_hist: "Historique Caisse", err_no_cash: "Erreur: Solde caisse insuffisant!",
                 tr_in: "Entrée", tr_out: "Sortie", tr_desc: "Description", tr_bal_after: "Solde après",
-                filter_by: "Filtrer par", f_day: "Jour", f_month: "Mois", f_range: "Période",
+                filter_by: "Filtrer par", f_day: "Jour", f_month: "Mois", f_range: "Période", f_year: "Année",
                 mode_exist: "Produit Existant (Stock Initial)", mode_buy: "Nouvel Achat",
                 inv_warn: "⚠️ Attention: 3 jours pour saisir le stock initial.",
                 inv_msg_days: "Jours restants: ",
@@ -645,6 +641,40 @@
                 }, 50);
             },
 
+            // --- FIX FOR OFFLINE DATA ---
+            getData: async function(collection, orderBy = null) {
+                // If offline, force cache retrieval immediately to prevent hanging
+                if (!navigator.onLine) {
+                    try {
+                        const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
+                        const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
+                        data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
+                        this.cache[collection] = data;
+                        return data;
+                    } catch(e) { return []; }
+                }
+
+                // If online, try default (server), fall back to cache if server fails
+                try {
+                    let q = db.collection(collection).where('companyId','==',this.state.cid);
+                    const snaps = await q.get(); 
+                    const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
+                    data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
+                    this.cache[collection] = data; 
+                    return data;
+                } catch (e) {
+                    try {
+                        const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
+                        const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
+                        data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
+                        this.cache[collection] = data;
+                        return data;
+                    } catch(e2) { return []; }
+                }
+            },
+            
+            clearCache: function(collection) { if (collection) delete this.cache[collection]; else this.cache = {}; },
+
             // --- USER MANAGEMENT (For Company Admin) ---
             users: async function(div) {
                 if(this.state.userRole !== 'admin') return alert(this.t('perm_denied'));
@@ -773,29 +803,6 @@
                 h += '</div>'; div.innerHTML = h; 
             },
 
-            getData: async function(collection, orderBy = null) {
-                if (this.cache[collection]) return this.cache[collection];
-                try {
-                    const source = navigator.onLine ? 'default' : 'cache';
-                    let q = db.collection(collection).where('companyId','==',this.state.cid);
-                    const snaps = await q.get({ source }); 
-                    const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
-                    data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
-                    this.cache[collection] = data; 
-                    return data;
-                } catch (e) {
-                    console.error("getData error", e);
-                    try {
-                        const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
-                        const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
-                        data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
-                        this.cache[collection] = data;
-                        return data;
-                    } catch(e2) { return []; }
-                }
-            },
-            clearCache: function(collection) { if (collection) delete this.cache[collection]; else this.cache = {}; },
-
             setupAutocomplete: function(inpId, hiddenId, data, key) {
                 const inp = document.getElementById(inpId); const hid = document.getElementById(hiddenId); const wrapper = inp.parentNode;
                 let list = wrapper.querySelector('.ac-list'); if(!list) { list = document.createElement('div'); list.className = 'ac-list'; wrapper.appendChild(list); }
@@ -821,6 +828,15 @@
 
             refreshTreasury: async function() {
                 try {
+                    // Fix: Check offline
+                    if (!navigator.onLine) {
+                        const cachedBal = localStorage.getItem('teyssir_cash_balance');
+                        if(cachedBal !== null) this.state.cashBalance = Number(cachedBal);
+                        const balEl = document.querySelector('.treasury-balance'); 
+                        if(balEl) balEl.innerText = this.state.cashBalance.toLocaleString() + " MRU";
+                        return;
+                    }
+
                     const doc = await db.collection('treasury').doc(this.state.cid).get();
                     if(doc.exists) {
                         this.state.cashBalance = Number(doc.data().balance || 0);
@@ -863,8 +879,10 @@
 
             treasury: async function(div) {
                 this.refreshTreasury(); 
-                const hist = await db.collection('transactions').where('companyId','==',this.state.cid).where('isTreasury','==',true).limit(50).get();
-                let txs = hist.docs.map(d => d.data()); txs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); const hasHistory = txs.length > 0;
+                // Fix: use getData to support offline
+                const hist = await this.getData('transactions');
+                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
+                const hasHistory = txs.length > 0;
                 div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${this.state.cashBalance.toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>${this.t('tr_hist')}</h3><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(txs)}</tbody></table></div></div>`;
                 document.getElementById('tfDate').valueAsDate = new Date();
             },
@@ -917,26 +935,29 @@
             },
 
             filterTreasury: async function(type, val1, val2) {
-                let q = db.collection('transactions').where('companyId','==',this.state.cid).where('isTreasury','==',true);
-                const snaps = await q.get(); let txs = snaps.docs.map(d=>d.data());
+                const txs = await this.getData('transactions');
+                const filtered = txs.filter(t => t.isTreasury);
+                
                 let dStart, dEnd;
                 if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } 
                 else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } 
                 else if (type === 'range') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); }
-                if (dStart && dEnd) { txs = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
-                txs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                document.getElementById('trBody').innerHTML = this.renderTreasuryRows(txs);
+                
+                const final = filtered.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; });
+                final.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                document.getElementById('trBody').innerHTML = this.renderTreasuryRows(final);
             },
 
             printTreasuryStatement: async function() {
                 const type = document.getElementById('tfType').value; let val1, val2;
                 if (type === 'day') val1 = document.getElementById('tfDate').value; else if (type === 'month') val1 = document.getElementById('tfMonth').value; else { val1 = document.getElementById('tfFrom').value; val2 = document.getElementById('tfTo').value; }
-                let q = db.collection('transactions').where('companyId','==',this.state.cid).where('isTreasury','==',true);
-                const snaps = await q.get(); let txs = snaps.docs.map(d=>d.data());
-                if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } txs = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
-                txs.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+                const txs = await this.getData('transactions');
+                let filtered = txs.filter(t => t.isTreasury);
+                
+                if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } filtered = filtered.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
+                filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
                 const bodyData = [ [{text: this.t('th_date_time'), style: 'tableHeader'}, {text: this.t('tr_desc'), style: 'tableHeader'}, {text: this.t('tr_in'), style: 'tableHeader'}, {text: this.t('tr_out'), style: 'tableHeader'}, {text: this.t('tr_bal_after'), style: 'tableHeader'}] ];
-                txs.forEach(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; bodyData.push([ {text: dStr, fontSize: 9}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 9, alignment: 'right'}, {text: inAmt, fontSize: 9, color: 'green'}, {text: outAmt, fontSize: 9, color: 'red'}, {text: t.balanceAfter.toLocaleString(), fontSize: 9, bold: true} ]); });
+                filtered.forEach(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; bodyData.push([ {text: dStr, fontSize: 9}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 9, alignment: 'right'}, {text: inAmt, fontSize: 9, color: 'green'}, {text: outAmt, fontSize: 9, color: 'red'}, {text: t.balanceAfter.toLocaleString(), fontSize: 9, bold: true} ]); });
                 const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#eeeeee', alignment: 'center' } }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: this.t('tr_hist'), fontSize: 12, alignment: 'center', margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' }, { text: `Current Balance: ${this.state.cashBalance.toLocaleString()} MRU`, bold:true, margin:[0,20,0,0] } ] }; pdfMake.createPdf(docDefinition).open();
             },
 
@@ -975,29 +996,77 @@
                 const n = prompt(this.t('prompt_name')); const ph = prompt(this.t('adm_phone')); if(n && ph) { if(!this.isValidPhone(ph)) return alert(this.t('err_phone_len')); const ref = db.collection('customers').doc(); ref.set({companyId:this.state.cid, name:n, phone:ph, balance:0, createdAt:new Date().toISOString()}).catch(e=>console.error(e)); this.clearCache('customers'); document.getElementById('posCustName').value = n; document.getElementById('posCustId').value = ref.id; }
             },
             
+            // --- FIX FOR INVOICE NUMBERING (INV-YYXXXXX) ---
             getNextInvoiceNumber: async function() {
-                let nextNum = 1; const localLast = Number(localStorage.getItem('teyssir_last_inv') || 0);
-                try { const doc = await db.collection('counters').doc(this.state.cid).get(); if(doc.exists) { const serverLast = doc.data().lastInvoiceNum || 0; nextNum = Math.max(localLast, serverLast) + 1; } else { nextNum = localLast + 1; } } catch(e) { nextNum = localLast + 1; }
-                localStorage.setItem('teyssir_last_inv', nextNum); return { num: 'INV-' + String(nextNum).padStart(4, '0'), nextVal: nextNum };
+                const now = new Date();
+                const yearShort = now.getFullYear().toString().substr(-2); // e.g., "26"
+                const storageKey = `teyssir_last_inv_${yearShort}`;
+                
+                // Get local last sequence
+                let localSeq = Number(localStorage.getItem(storageKey)) || 0;
+                let nextSeq = localSeq + 1;
+
+                // Sync with server if online to prevent duplication, but prefer higher
+                if (navigator.onLine) {
+                    try {
+                        const doc = await db.collection('counters').doc(this.state.cid).get();
+                        if(doc.exists) {
+                            const data = doc.data();
+                            // Check if server year matches current year
+                            if (data.year === yearShort) {
+                                nextSeq = Math.max(nextSeq, (data.lastSeq || 0) + 1);
+                            }
+                        }
+                    } catch(e) { console.log("Counter check skipped"); }
+                }
+
+                // Lock sequence locally
+                localStorage.setItem(storageKey, nextSeq);
+                
+                // Pad to 7 digits total or similar logic. Prompt said INV 2600001
+                // So "INV-" + "26" + "00001"
+                const paddedSeq = String(nextSeq).padStart(5, '0');
+                return { 
+                    full: `INV-${yearShort}${paddedSeq}`, 
+                    seq: nextSeq,
+                    year: yearShort 
+                };
             },
 
             finalizeInvoice: async function() {
                 if(!this.cart.length) return alert(this.t('empty'));
+                
+                // --- FIX: STRICT NEGATIVE STOCK CHECK ---
+                for (let item of this.cart) {
+                    const prod = this.cachedProducts.find(p => p.id === item.id);
+                    if (!prod) return alert("Product not found: " + item.n);
+                    if (prod.stock < item.q) {
+                        return alert(`عذراً، الكمية غير متوفرة للمنتج: ${item.n} (المتوفر: ${prod.stock})`);
+                    }
+                }
+
                 let custId = document.getElementById('posCustId').value; let custName = document.getElementById('posCustName').value;
                 const total = Number(document.getElementById('cartTotal').innerText); const cash = Number(document.getElementById('payCash').value); const bank = Number(document.getElementById('payBank').value); const bankId = document.getElementById('posBankId').value; const bankName = document.getElementById('posBankName').value; const payMethod = document.getElementById('posPayMethod').value;
                 let isWalkIn = false;
                 if(!custId) { const debtCheck = total - (cash + bank); if(debtCheck > 0) return alert(this.t('err_walkin_debt')); custName = this.t('cust_walkin'); custId = "WALK_IN"; isWalkIn = true; }
                 if(payMethod !== 'cash' && !bankId) return alert(this.t('select_bank')); if((cash + bank) > total) return alert("Total paid cannot exceed invoice amount");
                 const totalPaid = cash + bank; const debt = total - totalPaid;
+                
                 this.showLoader();
                 try {
-                    const counterData = await this.getNextInvoiceNumber(); const invNum = counterData.num; const batch = db.batch(); const now = new Date().toISOString(); const invRef = db.collection('invoices').doc();
+                    const counterData = await this.getNextInvoiceNumber(); const invNum = counterData.full; 
+                    const batch = db.batch(); const now = new Date().toISOString(); const invRef = db.collection('invoices').doc();
+                    
                     let totalCost = 0;
                     for(let i of this.cart) { const pRef = db.collection('products').doc(i.id); const currentCached = this.cachedProducts.find(p => p.id === i.id); const isDepleted = (currentCached.stock - i.q) <= 0; if(isDepleted && i.sourceType === 'opening') { batch.delete(pRef); } else { batch.update(pRef, { stock: firebase.firestore.FieldValue.increment(-i.q) }); } totalCost += (i.bp * i.q); }
                     const profit = total - totalCost;
                     if (cash > 0) { await this.processCashTransaction(batch, cash, 'in', `Sale ${invNum}`, invRef.id, custName); }
                     batch.set(invRef, { companyId: this.state.cid, invNum: invNum, customer: custName, customerId: custId, items: this.cart, total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, bankName: bankName, profit: profit, createdAt: now });
-                    const counterRef = db.collection('counters').doc(this.state.cid); batch.set(counterRef, { lastInvoiceNum: counterData.nextVal }, { merge: true });
+                    
+                    // Update Server Counter
+                    const counterRef = db.collection('counters').doc(this.state.cid); 
+                    batch.set(counterRef, { lastSeq: counterData.seq, year: counterData.year }, { merge: true });
+                    
                     if(debt > 0 && !isWalkIn) { const cRef = db.collection('customers').doc(custId); batch.update(cRef, { balance: firebase.firestore.FieldValue.increment(debt) }); }
                     if(bank > 0 && bankId) { const bRef = db.collection('banks').doc(bankId); batch.update(bRef, { balance: firebase.firestore.FieldValue.increment(bank) }); }
                     const tRef = db.collection('transactions').doc(); batch.set(tRef, { companyId: this.state.cid, type: 'sale', refId: invRef.id, invNum: invNum, amount: total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, cogs: totalCost, customerId: custId, createdAt: now, note: `Invoice ${invNum}` });
@@ -1037,7 +1106,7 @@
 
             list: async function(div, type) { 
                 try {
-                    const titleKey = type==='invoices'?'inv':(type==='products'?'stock':(type==='revenues'?'rev':(type==='salaries'?'sal':(type==='suppliers'?'supp':'exp')))); let docs = await this.getData(type); let addBtn = ''; let topHtml = '';
+                    const titleKey = type==='invoices'?'inv':(type==='products'?'stock':(type==='revenues'?'rev':(type==='salaries'?'sal':(type==='suppliers'?'suppliers':'exp')))); let docs = await this.getData(type); let addBtn = ''; let topHtml = '';
                     if(type === 'products') { let invStart = localStorage.getItem('teyssir_inv_start'); if(!invStart) { invStart = new Date().toISOString(); localStorage.setItem('teyssir_inv_start', invStart); } const diffTime = Math.abs(new Date() - new Date(invStart)); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if(diffDays <= 3) { topHtml += `<div class="inv-warn-box"><i class="fa-solid fa-clock"></i> ${this.t('inv_warn')} (${this.t('inv_msg_days')} ${4 - diffDays})</div>`; } else { this.state.inventoryLocked = true; } addBtn = `<div style="display:flex; gap:5px;"><button id="btnExpired" onclick="app.toggleExpiredView()" class="btn btn-dan" style="width:auto;padding:8px 15px; font-size:12px;">${this.t('btn_exp')}</button><button onclick="app.addProductModal()" class="btn btn-prim" style="width:auto;padding:8px 15px;">+</button></div>`; } else if(type!=='invoices' && type!=='salaries') { addBtn = `<button onclick="app.addTransactionModal('${type}')" class="btn btn-prim" style="width:auto;padding:8px 15px;">+</button>`; }
                     let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h3>${this.t(titleKey)}</h3>${addBtn}</div>` + topHtml;
                     if (['expenses', 'revenues'].includes(type)) { html += `<input id="searchGen" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchGen', 'lst')">`; } else if (type === 'products') { html += `<input id="searchProd" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchProd', 'lst')">`; }
@@ -1128,16 +1197,19 @@
                 document.getElementById('printArea').innerHTML = `<div style="padding:20px; direction:${dir}; font-family:'Tajawal'">${headerHtml}<hr><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>INV:</b> ${id}</span><span>${formattedDate}</span></div><p><b>${this.t('th_client')}:</b> ${c}</p><table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">${headers}${rows}</table><hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span>${this.t('p_tot')}:</span> <span>${t} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('paid')}:</span> <span>${paid} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('remain')}:</span> <span>${debt} MRU</span></div><br><div style="text-align:center; font-size:12px;">Method: ${pm} ${bankInfo}</div><center><small>Teyssir ERP</small></center></div>`; window.print(); 
             },
 
+            // --- REPORTS: ANNUAL FILTER & FIXES ---
             reports: async function(div) {
-                div.innerHTML = `<h3>${this.t('rep')}</h3><div class="card"><div style="margin-bottom:10px; display:flex; align-items:center; gap:10px;"><label style="font-weight:bold; font-size:13px;">تحديد شهر:</label><input type="month" id="rMonth" class="filter-inp" style="width:auto;" onchange="app.setReportMonth()"></div><div style="display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap:wrap;"><input type="date" id="rStart" class="inp" style="margin:0; width:auto;"><span>-</span><input type="date" id="rEnd" class="inp" style="margin:0; width:auto;"><button onclick="app.loadReportData()" class="btn btn-prim" style="width:auto; padding:5px 15px;">${this.t('rep_filter')}</button></div><div class="prod-rep-grid"><div class="stat-box"><span class="stat-lbl">${this.t('total_in')}</span><span id="rIn" class="stat-val" style="color:green">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_out')}</span><span id="rOut" class="stat-val" style="color:red">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('net_cash')}</span><span id="rNet" class="stat-val">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_profit')}</span><span id="rProf" class="stat-val" style="color:var(--accent)">0</span></div></div><div class="charts-container"><div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="cFin"></canvas></div><div class="chart-box"><h4>${this.t('rep_top5')}</h4><canvas id="cTopProd"></canvas></div><div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="cPay"></canvas></div></div><div class="rep-section"><h4>${this.t('rep_prod_title')}</h4><input type="text" id="repProdSearch" class="inp" placeholder="${this.t('rep_prod_select')}" oninput="app.searchReportProduct(this.value)"><div id="repProdResults"></div></div><div class="rep-section"><div style="display:flex; justify-content:space-between; align-items:center;"><h4>${this.t('rep_det_title')}</h4><button onclick="app.printDetailedReport()" class="btn btn-sec" style="width:auto; font-size:12px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="table-scroll" style="max-height:400px; margin-top:10px;"><table id="repDetTable" style="font-size:12px;"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('th_type')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th></tr></thead><tbody></tbody></table></div></div></div>`;
-                const d = new Date(); document.getElementById('rEnd').valueAsDate = d; d.setDate(1); document.getElementById('rStart').valueAsDate = d;
-                setTimeout(() => app.loadReportData(), 100);
+                div.innerHTML = `<h3>${this.t('rep')}</h3><div class="card"><div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;"><label>${this.t('f_year')}:</label><select id="repYear" class="select-box" style="width:100px;" onchange="app.setReportYear(this.value)"><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select></div><div style="display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap:wrap;"><input type="date" id="rStart" class="inp" style="margin:0; width:auto;"><span>-</span><input type="date" id="rEnd" class="inp" style="margin:0; width:auto;"><button onclick="app.loadReportData()" class="btn btn-prim" style="width:auto; padding:5px 15px;">${this.t('rep_filter')}</button></div><div class="prod-rep-grid"><div class="stat-box"><span class="stat-lbl">${this.t('total_in')}</span><span id="rIn" class="stat-val" style="color:green">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_out')}</span><span id="rOut" class="stat-val" style="color:red">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('net_cash')}</span><span id="rNet" class="stat-val">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_profit')}</span><span id="rProf" class="stat-val" style="color:var(--accent)">0</span></div></div><div class="charts-container"><div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="cFin"></canvas></div><div class="chart-box"><h4>${this.t('rep_top5')}</h4><canvas id="cTopProd"></canvas></div><div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="cPay"></canvas></div></div><div class="rep-section"><h4>${this.t('rep_prod_title')}</h4><input type="text" id="repProdSearch" class="inp" placeholder="${this.t('rep_prod_select')}" oninput="app.searchReportProduct(this.value)"><div id="repProdResults"></div></div><div class="rep-section"><div style="display:flex; justify-content:space-between; align-items:center;"><h4>${this.t('rep_det_title')}</h4><button onclick="app.printDetailedReport()" class="btn btn-sec" style="width:auto; font-size:12px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="table-scroll" style="max-height:400px; margin-top:10px;"><table id="repDetTable" style="font-size:12px;"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('th_type')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th></tr></thead><tbody></tbody></table></div></div></div>`;
+                const curYear = new Date().getFullYear(); 
+                document.getElementById('repYear').value = curYear;
+                this.setReportYear(curYear);
             },
 
-            setReportMonth: function() {
-                const m = document.getElementById('rMonth').value; if(!m) return;
-                const [y, mo] = m.split('-'); const start = new Date(y, mo-1, 1); const end = new Date(y, mo, 0); 
-                document.getElementById('rStart').valueAsDate = start; document.getElementById('rEnd').valueAsDate = end;
+            setReportYear: function(y) {
+                const start = new Date(y, 0, 1);
+                const end = new Date(y, 11, 31);
+                document.getElementById('rStart').valueAsDate = start; 
+                document.getElementById('rEnd').valueAsDate = end;
                 app.loadReportData();
             },
 
@@ -1291,16 +1363,11 @@
             renewCompany: async function(id, type) { const newType = document.getElementById('adur').value; if(!confirm("Confirm Renew? ("+newType+")")) return; const doc = await db.collection('activation_codes').doc(id).get(); const data = doc.data(); let baseDate = new Date(); if(data.expiryDate && new Date(data.expiryDate) > baseDate) { baseDate = new Date(data.expiryDate); } const newExpiry = this.addDuration(baseDate, newType); await db.collection('activation_codes').doc(id).update({ expiryDate: newExpiry }); alert("Renewed"); this.nav('admin'); },
             toggleStatus: async function(id, st) { if(!confirm(st==='active' ? 'Disable?' : 'Enable?')) return; await db.collection('activation_codes').doc(id).update({status: st==='active'?'suspended':'active'}); this.nav('admin'); },
             
-            // --- UPDATED DELETE FUNCTION (CONFIRM FIRST, THEN BIO) ---
             delCode: async function(id) {
-                // 1. Ask "Are you sure?" first
                 const userConfirmed = window.confirm("هل أنت متأكد تماماً من حذف كود التفعيل هذا؟ لا يمكن التراجع.");
                 if (!userConfirmed) return;
-
-                // 2. Ask for Bio second
                 this.showLoader();
                 const isBioOk = await this.verifyBiometric();
-
                 if (isBioOk) {
                     try {
                         await db.collection('activation_codes').doc(id).delete();
