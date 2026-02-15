@@ -882,14 +882,34 @@
                 return tRef.id;
             },
 
+            // --- UPDATED TREASURY LOGIC TO FIX BALANCE MATH ---
             treasury: async function(div) {
-                this.refreshTreasury(); 
-                // Ensure fast loading even if offline
+                await this.refreshTreasury(); 
                 const hist = await this.getData('transactions');
-                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
+                // Get all treasury transactions first
+                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                // Recalculate visually to fix offline inconsistencies
+                txs = this.recalcVisualBalances(txs, this.state.cashBalance);
+                
+                const displayTxs = txs.slice(0, 50);
                 const hasHistory = txs.length > 0;
-                div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${(this.state.cashBalance || 0).toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>${this.t('tr_hist')}</h3><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(txs)}</tbody></table></div></div>`;
+                
+                div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${(this.state.cashBalance || 0).toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>${this.t('tr_hist')}</h3><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(displayTxs)}</tbody></table></div></div>`;
                 document.getElementById('tfDate').valueAsDate = new Date();
+            },
+
+            // Helper to fix math visual errors
+            recalcVisualBalances: function(sortedTxs, currentTotal) {
+                let running = currentTotal;
+                return sortedTxs.map(t => {
+                    const tWithBal = { ...t, displayBalance: running };
+                    // Calculate "Previous Balance" for next iteration (working backwards)
+                    const inAmt = t.type === 'cash_in' ? t.amount : 0;
+                    const outAmt = t.type === 'cash_out' ? t.amount : 0;
+                    running = running - inAmt + outAmt;
+                    return tWithBal;
+                });
             },
 
             toggleTreasuryFilters: function() {
@@ -910,7 +930,9 @@
                 return txs.map(t => {
                     const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
                     const inAmt = t.type === 'cash_in' ? t.amount : 0; const outAmt = t.type === 'cash_out' ? t.amount : 0;
-                    return `<tr><td style="font-size:11px;">${dStr}</td><td>${t.note}</td><td>${t.relatedEntity || '-'}</td><td style="color:green; font-weight:bold;">${(inAmt||0).toLocaleString()}</td><td style="color:red; font-weight:bold;">${(outAmt||0).toLocaleString()}</td><td style="font-weight:bold;">${(t.balanceAfter||0).toLocaleString()}</td></tr>`;
+                    // Use calculated displayBalance if available, else stored balanceAfter
+                    const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter;
+                    return `<tr><td style="font-size:11px;">${dStr}</td><td>${t.note}</td><td>${t.relatedEntity || '-'}</td><td style="color:green; font-weight:bold;">${(inAmt||0).toLocaleString()}</td><td style="color:red; font-weight:bold;">${(outAmt||0).toLocaleString()}</td><td style="font-weight:bold;">${(bal||0).toLocaleString()}</td></tr>`;
                 }).join('');
             },
 
@@ -940,29 +962,39 @@
             },
 
             filterTreasury: async function(type, val1, val2) {
-                const txs = await this.getData('transactions');
-                const filtered = txs.filter(t => t.isTreasury);
+                const hist = await this.getData('transactions');
+                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                // Recalculate ALL first to ensure balance logic is correct from top to bottom
+                txs = this.recalcVisualBalances(txs, this.state.cashBalance);
                 
                 let dStart, dEnd;
                 if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } 
                 else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } 
                 else if (type === 'range') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); }
                 
-                const final = filtered.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; });
-                final.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                const final = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; });
                 document.getElementById('trBody').innerHTML = this.renderTreasuryRows(final);
             },
 
             printTreasuryStatement: async function() {
                 const type = document.getElementById('tfType').value; let val1, val2;
                 if (type === 'day') val1 = document.getElementById('tfDate').value; else if (type === 'month') val1 = document.getElementById('tfMonth').value; else { val1 = document.getElementById('tfFrom').value; val2 = document.getElementById('tfTo').value; }
-                const txs = await this.getData('transactions');
-                let filtered = txs.filter(t => t.isTreasury);
                 
-                if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } filtered = filtered.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
+                const hist = await this.getData('transactions');
+                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                txs = this.recalcVisualBalances(txs, this.state.cashBalance); // Fix math
+                
+                let filtered = txs;
+                if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } filtered = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
+                
+                // For PDF, usually chronological order (Oldest first) looks better for statements
                 filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+                
                 const bodyData = [ [{text: this.t('th_date_time'), style: 'tableHeader'}, {text: this.t('tr_desc'), style: 'tableHeader'}, {text: this.t('tr_in'), style: 'tableHeader'}, {text: this.t('tr_out'), style: 'tableHeader'}, {text: this.t('tr_bal_after'), style: 'tableHeader'}] ];
-                filtered.forEach(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; bodyData.push([ {text: dStr, fontSize: 9}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 9, alignment: 'right'}, {text: inAmt, fontSize: 9, color: 'green'}, {text: outAmt, fontSize: 9, color: 'red'}, {text: t.balanceAfter.toLocaleString(), fontSize: 9, bold: true} ]); });
+                filtered.forEach(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; 
+                const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter;
+                bodyData.push([ {text: dStr, fontSize: 9}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 9, alignment: 'right'}, {text: inAmt, fontSize: 9, color: 'green'}, {text: outAmt, fontSize: 9, color: 'red'}, {text: bal.toLocaleString(), fontSize: 9, bold: true} ]); });
                 const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#eeeeee', alignment: 'center' } }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: this.t('tr_hist'), fontSize: 12, alignment: 'center', margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' }, { text: `Current Balance: ${this.state.cashBalance.toLocaleString()} MRU`, bold:true, margin:[0,20,0,0] } ] }; pdfMake.createPdf(docDefinition).open();
             },
 
