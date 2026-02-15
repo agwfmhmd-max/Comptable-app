@@ -641,17 +641,21 @@
                 }, 50);
             },
 
-            // --- FIX FOR OFFLINE DATA ---
+            // --- IMPROVED OFFLINE DATA HANDLING ---
             getData: async function(collection, orderBy = null) {
                 // If offline, force cache retrieval immediately to prevent hanging
                 if (!navigator.onLine) {
                     try {
+                        // Attempt to get from cache first
                         const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
                         const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
                         data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
                         this.cache[collection] = data;
                         return data;
-                    } catch(e) { return []; }
+                    } catch(e) { 
+                        console.warn("Offline fetch failed for", collection, e);
+                        return []; 
+                    }
                 }
 
                 // If online, try default (server), fall back to cache if server fails
@@ -663,6 +667,7 @@
                     this.cache[collection] = data; 
                     return data;
                 } catch (e) {
+                    // Fallback to cache if online fetch fails
                     try {
                         const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
                         const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
@@ -828,12 +833,12 @@
 
             refreshTreasury: async function() {
                 try {
-                    // Fix: Check offline
+                    // Check offline logic first
                     if (!navigator.onLine) {
                         const cachedBal = localStorage.getItem('teyssir_cash_balance');
                         if(cachedBal !== null) this.state.cashBalance = Number(cachedBal);
                         const balEl = document.querySelector('.treasury-balance'); 
-                        if(balEl) balEl.innerText = this.state.cashBalance.toLocaleString() + " MRU";
+                        if(balEl) balEl.innerText = (this.state.cashBalance || 0).toLocaleString() + " MRU";
                         return;
                     }
 
@@ -851,7 +856,7 @@
                     if(cached) this.state.cashBalance = Number(cached);
                 }
                 const balEl = document.querySelector('.treasury-balance'); 
-                if(balEl) balEl.innerText = this.state.cashBalance.toLocaleString() + " MRU";
+                if(balEl) balEl.innerText = (this.state.cashBalance || 0).toLocaleString() + " MRU";
             },
 
             processCashTransaction: async function(batch, amount, type, note, refId, relatedEntity, bankId = null) {
@@ -879,11 +884,11 @@
 
             treasury: async function(div) {
                 this.refreshTreasury(); 
-                // Fix: use getData to support offline
+                // Ensure fast loading even if offline
                 const hist = await this.getData('transactions');
                 let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
                 const hasHistory = txs.length > 0;
-                div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${this.state.cashBalance.toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>${this.t('tr_hist')}</h3><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(txs)}</tbody></table></div></div>`;
+                div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${(this.state.cashBalance || 0).toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>${this.t('tr_hist')}</h3><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(txs)}</tbody></table></div></div>`;
                 document.getElementById('tfDate').valueAsDate = new Date();
             },
 
@@ -1197,12 +1202,18 @@
                 document.getElementById('printArea').innerHTML = `<div style="padding:20px; direction:${dir}; font-family:'Tajawal'">${headerHtml}<hr><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>INV:</b> ${id}</span><span>${formattedDate}</span></div><p><b>${this.t('th_client')}:</b> ${c}</p><table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">${headers}${rows}</table><hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span>${this.t('p_tot')}:</span> <span>${t} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('paid')}:</span> <span>${paid} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('remain')}:</span> <span>${debt} MRU</span></div><br><div style="text-align:center; font-size:12px;">Method: ${pm} ${bankInfo}</div><center><small>Teyssir ERP</small></center></div>`; window.print(); 
             },
 
-            // --- REPORTS: ANNUAL FILTER & FIXES ---
+            // --- REPORTS: ANNUAL FILTER 2026-2036 ---
             reports: async function(div) {
-                div.innerHTML = `<h3>${this.t('rep')}</h3><div class="card"><div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;"><label>${this.t('f_year')}:</label><select id="repYear" class="select-box" style="width:100px;" onchange="app.setReportYear(this.value)"><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select></div><div style="display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap:wrap;"><input type="date" id="rStart" class="inp" style="margin:0; width:auto;"><span>-</span><input type="date" id="rEnd" class="inp" style="margin:0; width:auto;"><button onclick="app.loadReportData()" class="btn btn-prim" style="width:auto; padding:5px 15px;">${this.t('rep_filter')}</button></div><div class="prod-rep-grid"><div class="stat-box"><span class="stat-lbl">${this.t('total_in')}</span><span id="rIn" class="stat-val" style="color:green">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_out')}</span><span id="rOut" class="stat-val" style="color:red">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('net_cash')}</span><span id="rNet" class="stat-val">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_profit')}</span><span id="rProf" class="stat-val" style="color:var(--accent)">0</span></div></div><div class="charts-container"><div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="cFin"></canvas></div><div class="chart-box"><h4>${this.t('rep_top5')}</h4><canvas id="cTopProd"></canvas></div><div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="cPay"></canvas></div></div><div class="rep-section"><h4>${this.t('rep_prod_title')}</h4><input type="text" id="repProdSearch" class="inp" placeholder="${this.t('rep_prod_select')}" oninput="app.searchReportProduct(this.value)"><div id="repProdResults"></div></div><div class="rep-section"><div style="display:flex; justify-content:space-between; align-items:center;"><h4>${this.t('rep_det_title')}</h4><button onclick="app.printDetailedReport()" class="btn btn-sec" style="width:auto; font-size:12px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="table-scroll" style="max-height:400px; margin-top:10px;"><table id="repDetTable" style="font-size:12px;"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('th_type')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th></tr></thead><tbody></tbody></table></div></div></div>`;
-                const curYear = new Date().getFullYear(); 
-                document.getElementById('repYear').value = curYear;
-                this.setReportYear(curYear);
+                let yearOpts = '';
+                for(let y=2026; y<=2036; y++) {
+                    yearOpts += `<option value="${y}" ${y===2026?'selected':''}>${y}</option>`;
+                }
+
+                div.innerHTML = `<h3>${this.t('rep')}</h3><div class="card"><div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;"><label>${this.t('f_year')}:</label><select id="repYear" class="select-box" style="width:100px;" onchange="app.setReportYear(this.value)">${yearOpts}</select></div><div style="display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap:wrap;"><input type="date" id="rStart" class="inp" style="margin:0; width:auto;"><span>-</span><input type="date" id="rEnd" class="inp" style="margin:0; width:auto;"><button onclick="app.loadReportData()" class="btn btn-prim" style="width:auto; padding:5px 15px;">${this.t('rep_filter')}</button></div><div class="prod-rep-grid"><div class="stat-box"><span class="stat-lbl">${this.t('total_in')}</span><span id="rIn" class="stat-val" style="color:green">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_out')}</span><span id="rOut" class="stat-val" style="color:red">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('net_cash')}</span><span id="rNet" class="stat-val">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_profit')}</span><span id="rProf" class="stat-val" style="color:var(--accent)">0</span></div></div><div class="charts-container"><div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="cFin"></canvas></div><div class="chart-box"><h4>${this.t('rep_top5')}</h4><canvas id="cTopProd"></canvas></div><div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="cPay"></canvas></div></div><div class="rep-section"><h4>${this.t('rep_prod_title')}</h4><input type="text" id="repProdSearch" class="inp" placeholder="${this.t('rep_prod_select')}" oninput="app.searchReportProduct(this.value)"><div id="repProdResults"></div></div><div class="rep-section"><div style="display:flex; justify-content:space-between; align-items:center;"><h4>${this.t('rep_det_title')}</h4><button onclick="app.printDetailedReport()" class="btn btn-sec" style="width:auto; font-size:12px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="table-scroll" style="max-height:400px; margin-top:10px;"><table id="repDetTable" style="font-size:12px;"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('th_type')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th></tr></thead><tbody></tbody></table></div></div></div>`;
+                
+                // Select 2026 by default
+                document.getElementById('repYear').value = "2026";
+                this.setReportYear(2026);
             },
 
             setReportYear: function(y) {
@@ -1384,5 +1395,41 @@
         
         window.onload = function() { app.init(); };
     </script>
+
+    <!-- START PROTECTION CODE -->
+    <script>
+    (function() {
+        // منع الزر الأيمن
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // منع اختصارات لوحة المفاتيح
+        document.onkeydown = function(e) {
+            // F12
+            if(e.keyCode == 123) {
+                return false;
+            }
+            // Ctrl+I (DevTools)
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+                return false;
+            }
+            // Ctrl+J (Console)
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+                return false;
+            }
+            // Ctrl+C (Inspect)
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) {
+                return false;
+            }
+            // Ctrl+U (View Source)
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+                return false;
+            }
+        }
+    })();
+    </script>
+    <!-- END PROTECTION CODE -->
+    
 </body>
 </html>
