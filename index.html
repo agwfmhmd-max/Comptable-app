@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -82,9 +83,16 @@
     
     <div id="welcomeModal" class="welcome-modal"><div class="welcome-content"><img src="logo.png" style="width:100px; margin-bottom:15px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0;" data-key="w_title">أهلاً بك في Teyssir ERP</h2><p style="color:#666; font-size:16px;">النظام المالي المتكامل.</p><a href="https://wa.me/22224241012" class="wa-link" style="margin-bottom:20px; justify-content:center;"><i class="fa-brands fa-whatsapp"></i> <span data-key="cont">تواصل للتفعيل</span></a><button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;" data-key="w_btn">ابدأ الآن</button></div></div>
     
-    <div id="blockScreen" class="block-screen"><i class="fa-solid fa-triangle-exclamation block-icon"></i><h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2><p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p><a href="https://wa.me/22224241012" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a><button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button></div>
+    <div id="blockScreen" class="block-screen">
+        <i class="fa-solid fa-triangle-exclamation block-icon"></i>
+        <h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2>
+        <p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p>
+        <a href="https://wa.me/22224241012" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a>
+        <button onclick="app.directPayModal()" class="btn btn-prim" style="margin-top:10px; width:auto; padding:12px 40px; background: #28a745; border:none;"><i class="fa-solid fa-credit-card"></i> الدفع المباشر</button>
+        <button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button>
+    </div>
     
-    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div></form><div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22224241012" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
+    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div><button type="button" onclick="app.directPayModal()" class="btn btn-sec" style="width:100%; background: #28a745; color: white; border: none; margin-bottom: 15px;"><i class="fa-solid fa-credit-card"></i> الدفع المباشر (تجديد/اشتراك)</button></form><div style="margin-top:15px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22224241012" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
     
     <div id="appScreen" class="app-container"><div class="sidebar-overlay" onclick="app.toggleMenu()"></div><header class="top-header"><div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div><div class="header-title">Teyssir ERP</div></header><aside class="sidebar" id="sidebar"><div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);"><img src="logo.png" style="width:70px; border-radius:10px;"><div id="h_name" style="font-weight:bold; color:var(--primary); margin-top:10px;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div><div id="h_role" style="font-size:10px; background:var(--accent); color:white; padding:2px 5px; border-radius:4px; display:inline-block; margin-top:5px;"></div></div><div style="padding: 10px 0; flex:1;">
         <div class="nav-item active" onclick="app.nav('home')" data-perm="all"><i class="fa-solid fa-home"></i> <span data-key="home">الرئيسية</span></div>
@@ -105,14 +113,11 @@
     <div id="printArea" class="print-box"></div>
 
     <script>
-        // --- Security Scripts (Anti-Tamper) ---
-        // Prevent Right Click
         document.addEventListener('contextmenu', function (e) { e.preventDefault(); return false; });
-        // Prevent F12 and Shortcuts
         document.addEventListener('keydown', function (e) {
-            if (e.keyCode == 123) { e.preventDefault(); return false; } // F12
-            if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) { e.preventDefault(); return false; } // Ctrl+Shift+I/J/C
-            if (e.ctrlKey && e.keyCode == 85) { e.preventDefault(); return false; } // Ctrl+U
+            if (e.keyCode == 123) { e.preventDefault(); return false; } 
+            if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) { e.preventDefault(); return false; } 
+            if (e.ctrlKey && e.keyCode == 85) { e.preventDefault(); return false; } 
         });
 
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW failed', err));
@@ -276,10 +281,7 @@
 
             init: function() {
                 this.showLoader(); updateStatus();
-                // --- Auth Init ---
-                auth.signInAnonymously().catch((error) => {
-                    console.error("Auth Error", error);
-                });
+                auth.signInAnonymously().catch((error) => { console.error("Auth Error", error); });
                 
                 if (!localStorage.getItem('welcomeSeen')) document.getElementById('welcomeModal').style.display = 'flex';
                 if (deferredPrompt) deferredPrompt.prompt();
@@ -298,7 +300,6 @@
                         if(cachedBal !== null) this.state.cashBalance = Number(cachedBal);
                         this.monitorSession(s.codeDocId, s); 
                         
-                        // Display role name
                         const roleDisp = this.state.userRole === 'admin' ? 'مدير' : (s.currentUser ? s.currentUser.name : 'موظف');
                         document.getElementById('h_role').innerText = roleDisp;
                         
@@ -308,73 +309,45 @@
                 } else { this.switchScreen('authScreen'); }
             },
             
-            // --- BIOMETRICS FUNCTIONS ---
             setupBiometrics: async function() {
                 if(!window.PublicKeyCredential) return;
                 if(localStorage.getItem('bio_registered')) return;
-                
                 try {
                     const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
                     if(!available) return;
-
                     if(confirm("هل تريد تفعيل الدخول ببصمة الإصبع/الوجه لتأمين عمليات الحذف؟")) {
                         const challenge = new Uint8Array(32);
                         window.crypto.getRandomValues(challenge);
-                        
                         const publicKey = {
                             challenge: challenge,
                             rp: { name: "Teyssir ERP" },
-                            user: {
-                                id: new TextEncoder().encode("admin-" + Date.now()),
-                                name: "admin@teyssir",
-                                displayName: "Super Admin"
-                            },
+                            user: { id: new TextEncoder().encode("admin-" + Date.now()), name: "admin@teyssir", displayName: "Super Admin" },
                             pubKeyCredParams: [{alg: -7, type: "public-key"}],
                             authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
                             timeout: 60000
                         };
-
                         await navigator.credentials.create({ publicKey });
                         localStorage.setItem('bio_registered', 'true');
                         alert("تم تفعيل البصمة بنجاح!");
                     }
-                } catch(e) {
-                    console.error("Bio setup failed", e);
-                }
+                } catch(e) { console.error("Bio setup failed", e); }
             },
 
             verifyBiometric: async function() {
-                // إذا لم يقم المشرف بتفعيل البصمة من قبل، اسمح له بالمرور
                 if (!localStorage.getItem('bio_registered')) {
                     alert("تنبيه: لم يتم تفعيل حماية البصمة لهذا الجهاز. سيتم الحذف بدونها.");
                     return true; 
                 }
-
                 try {
-                    const challenge = new Uint8Array(32);
-                    window.crypto.getRandomValues(challenge);
-
-                    const assertion = await navigator.credentials.get({
-                        publicKey: {
-                            challenge: challenge,
-                            rpId: window.location.hostname,
-                            userVerification: "required",
-                            timeout: 60000
-                        }
-                    });
-
-                    if (assertion) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
+                    const assertion = await navigator.credentials.get({ publicKey: { challenge: challenge, rpId: window.location.hostname, userVerification: "required", timeout: 60000 } });
+                    if (assertion) { return true; } else { return false; }
                 } catch (e) {
                     console.error("Biometric Error:", e);
                     alert("فشل التحقق من البصمة. تأكد من نظافة المستشعر أو أنك تستخدم الجهاز الصحيح.");
                     return false;
                 }
             },
-            // --- END BIOMETRICS FUNCTIONS ---
 
             loadArabicFont: function() {
                 fetch('https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-Regular.ttf')
@@ -457,33 +430,27 @@
                 e.preventDefault(); this.showLoader();
                 const n=document.getElementById('logName').value.trim(), p=document.getElementById('logPhone').value, c=document.getElementById('logCode').value;
                 try {
-                    // Super Admin Login
                     if(p==='46154399' && c==='371915') { 
                         this.state.admin=true; this.state.cid='ADMIN'; 
                         this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true, 'admin', null, []); 
                         this.start('Admin', '46154399'); 
-                        // Prompt Biometrics for Admin
                         setTimeout(() => { this.setupBiometrics(); }, 1000); 
                         return; 
                     }
                     if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
 
-                    // 1. Try Login as Admin (Master Code)
                     const s = await db.collection('activation_codes').where('code','==',c).get();
                     if(!s.empty) {
-                        // It is a Master Code (Admin Login)
                         const doc = s.docs[0]; const d = doc.data(); 
                         if (d.status === 'suspended') { this.showBlockScreen('suspended'); return; }
                         const now = new Date();
                         if (d.expiryDate && now >= new Date(d.expiryDate)) { this.showBlockScreen('expired'); return; }
                         
-                        // STRICT COMPANY NAME AND PHONE CHECK FOR ADMIN
                         if((d.targetPhone && d.targetPhone!==p) || (d.used && d.actualPhone!==p)) throw new Error(this.t('err_login'));
                         if(d.used && d.actualName && d.actualName.trim() !== n) throw new Error("اسم الشركة غير مطابق");
 
                         let cid=d.companyId;
                         if(!d.used) {
-                            // First time using code -> Create Company
                             const r = await db.collection('companies').add({name:n, phone:p, code:c, maxEmployees: d.maxEmployees || 5, createdAt:new Date().toISOString()});
                             cid=r.id; const expiry = this.addDuration(now, d.subscriptionType || 'month');
                             await db.collection('activation_codes').doc(doc.id).update({ used:true, companyId:cid, actualName:n, actualPhone:p, status:'active', usedAt:now.toISOString(), expiryDate: expiry });
@@ -493,20 +460,13 @@
                         this.saveSession(cid, n, p, c, doc.id, false, 'admin', null, []); 
                         this.monitorSession(doc.id, {cid, name:n, phone:p}); this.start(n,p);
                     } else {
-                        // 2. Try Login as Employee (Iterate all companies with same phone)
                         const comps = await db.collection('companies').where('phone','==',p).get();
                         if(comps.empty) throw new Error(this.t('err_login'));
                         
-                        let foundEmployee = null;
-                        let targetCompId = null;
-                        let targetCompData = null;
-                        let activeCodeId = null;
+                        let foundEmployee = null; let targetCompId = null; let targetCompData = null; let activeCodeId = null;
 
-                        // Check ALL companies with this phone number
                         for (const compDoc of comps.docs) {
                             const compData = compDoc.data();
-                            
-                            // Check company status
                             const codes = await db.collection('activation_codes').where('companyId','==',compDoc.id).get();
                             if(codes.empty) continue; 
                             
@@ -516,32 +476,19 @@
                             if (activeCodeData.status === 'suspended') continue;
                             if (activeCodeData.expiryDate && new Date() >= new Date(activeCodeData.expiryDate)) continue;
 
-                            // STRICT COMPANY NAME CHECK FOR EMPLOYEE
                             if (compData.name.trim() !== n) continue;
 
-                            // Now check if employee exists in this valid company
                             const empSnap = await db.collection('companies').doc(compDoc.id).collection('employees').where('pinCode', '==', c).get();
                             if (!empSnap.empty) {
-                                foundEmployee = empSnap.docs[0];
-                                targetCompId = compDoc.id;
-                                targetCompData = compData;
-                                activeCodeId = activeCodeDoc.id;
-                                break; // Success!
+                                foundEmployee = empSnap.docs[0]; targetCompId = compDoc.id; targetCompData = compData; activeCodeId = activeCodeDoc.id; break; 
                             }
                         }
 
-                        if (!foundEmployee) {
-                            throw new Error(this.t('err_login') + " أو اسم الشركة غير مطابق");
-                        }
+                        if (!foundEmployee) { throw new Error(this.t('err_login') + " أو اسم الشركة غير مطابق"); }
                         
                         const empData = foundEmployee.data();
-                        this.state.cid = targetCompId; 
-                        this.state.name = targetCompData.name; 
-                        this.state.phone = targetCompData.phone;
-                        this.state.codeDocId = activeCodeId;
-                        this.state.userRole = 'employee';
-                        this.state.currentUser = { id: foundEmployee.id, name: empData.name };
-                        this.state.permissions = empData.permissions || [];
+                        this.state.cid = targetCompId; this.state.name = targetCompData.name; this.state.phone = targetCompData.phone; this.state.codeDocId = activeCodeId;
+                        this.state.userRole = 'employee'; this.state.currentUser = { id: foundEmployee.id, name: empData.name }; this.state.permissions = empData.permissions || [];
                         
                         this.saveSession(targetCompId, targetCompData.name, targetCompData.phone, c, activeCodeId, false, 'employee', this.state.currentUser, this.state.permissions);
                         this.monitorSession(activeCodeId, {cid:targetCompId, name:targetCompData.name, phone:targetCompData.phone});
@@ -558,7 +505,6 @@
                 document.getElementById('h_phone').innerText=p; 
                 document.getElementById('h_role').innerText = this.state.userRole === 'admin' ? 'مدير' : (this.state.currentUser ? this.state.currentUser.name : 'موظف');
                 
-                // Toggle Users Menu
                 if(this.state.userRole === 'admin') {
                     document.getElementById('navUsers').style.display = 'block';
                     document.getElementById('adminLink').style.display = this.state.admin ? 'flex' : 'none';
@@ -566,11 +512,7 @@
                     document.getElementById('navUsers').style.display = 'none';
                     document.getElementById('adminLink').style.display = 'none';
                 }
-                
-                // Hide sidebar items based on permissions
-                this.applySidebarPermissions();
-
-                this.switchScreen('appScreen'); this.nav('home'); 
+                this.applySidebarPermissions(); this.switchScreen('appScreen'); this.nav('home'); 
             },
 
             applySidebarPermissions: function() {
@@ -598,19 +540,11 @@
             nav: function(page) {
                 if(page === 'admin' && !this.state.admin) return;
                 
-                // Permission Check
-                const pagePermMap = {
-                    'pos': 'pos', 'customers': 'customers', 'inventory': 'inventory', 'suppliers': 'suppliers',
-                    'treasury': 'treasury', 'banks': 'banks', 'expenses': 'expenses', 'revenues': 'revenues',
-                    'invoices': 'invoices', 'salaries': 'salaries', 'reports': 'reports', 'users': 'users'
-                };
-                if(pagePermMap[page] && !this.checkPermission(pagePermMap[page])) {
-                    return alert(this.t('perm_denied'));
-                }
+                const pagePermMap = { 'pos': 'pos', 'customers': 'customers', 'inventory': 'inventory', 'suppliers': 'suppliers', 'treasury': 'treasury', 'banks': 'banks', 'expenses': 'expenses', 'revenues': 'revenues', 'invoices': 'invoices', 'salaries': 'salaries', 'reports': 'reports', 'users': 'users' };
+                if(pagePermMap[page] && !this.checkPermission(pagePermMap[page])) { return alert(this.t('perm_denied')); }
 
                 this.state.currentView = page;
-                const hb = document.getElementById('homeBtn');
-                if(hb) hb.style.display = (page === 'home') ? 'none' : 'flex';
+                const hb = document.getElementById('homeBtn'); if(hb) hb.style.display = (page === 'home') ? 'none' : 'flex';
                 document.getElementById('sidebar').classList.remove('open'); document.querySelector('.sidebar-overlay').classList.remove('show');
                 document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
                 const activeEl = document.querySelector(`.nav-item[onclick="app.nav('${page}')"]`); if(activeEl) activeEl.classList.add('active');
@@ -641,54 +575,41 @@
                 }, 50);
             },
 
-            // --- IMPROVED OFFLINE DATA HANDLING ---
             getData: async function(collection, orderBy = null) {
-                // If offline, force cache retrieval immediately to prevent hanging
                 if (!navigator.onLine) {
                     try {
-                        // Attempt to get from cache first
                         const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
                         const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
                         data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
-                        this.cache[collection] = data;
-                        return data;
-                    } catch(e) { 
-                        console.warn("Offline fetch failed for", collection, e);
-                        return []; 
-                    }
+                        this.cache[collection] = data; return data;
+                    } catch(e) { return []; }
                 }
 
-                // If online, try default (server), fall back to cache if server fails
                 try {
                     let q = db.collection(collection).where('companyId','==',this.state.cid);
                     const snaps = await q.get(); 
                     const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
                     data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
-                    this.cache[collection] = data; 
-                    return data;
+                    this.cache[collection] = data; return data;
                 } catch (e) {
-                    // Fallback to cache if online fetch fails
                     try {
                         const snaps = await db.collection(collection).where('companyId','==',this.state.cid).get({source: 'cache'});
                         const data = snaps.docs.map(d=>({id:d.id, ...d.data()}));
                         data.sort((a,b)=>new Date(b.createdAt || 0)-new Date(a.createdAt || 0));
-                        this.cache[collection] = data;
-                        return data;
+                        this.cache[collection] = data; return data;
                     } catch(e2) { return []; }
                 }
             },
             
             clearCache: function(collection) { if (collection) delete this.cache[collection]; else this.cache = {}; },
 
-            // --- USER MANAGEMENT (For Company Admin) ---
             users: async function(div) {
                 if(this.state.userRole !== 'admin') return alert(this.t('perm_denied'));
                 div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('users')}</h3><button onclick="app.addUserModal()" class="btn btn-prim" style="width:auto;">+</button></div><div class="card"><div class="table-scroll"><table id="usersTbl"><thead><tr><th>${this.t('th_name')}</th><th>PIN</th><th>${this.t('perm')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`;
                 const s = await db.collection('companies').doc(this.state.cid).collection('employees').get();
                 let h = '';
                 s.forEach(doc => {
-                    const d = doc.data();
-                    const permCount = d.permissions ? d.permissions.length : 0;
+                    const d = doc.data(); const permCount = d.permissions ? d.permissions.length : 0;
                     h += `<tr><td>${d.name}</td><td>${d.pinCode} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${d.pinCode}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td>${permCount}</td><td><button onclick="app.delUser('${doc.id}')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
                 div.querySelector('tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>';
@@ -699,63 +620,39 @@
                 try {
                     const compDoc = await db.collection('companies').doc(this.state.cid).get();
                     if (!compDoc.exists) throw new Error("Company data not found");
-                    
                     const limit = compDoc.data().maxEmployees || 5;
                     const current = await db.collection('companies').doc(this.state.cid).collection('employees').get();
-                    
                     this.hideLoader(); 
 
                     if(current.size >= limit) return alert(`${this.t('max_emp')}: ${limit}`);
 
-                    const perms = [
-                        {k:'pos', l:'نقطة البيع'}, {k:'customers', l:'الزبناء'}, {k:'inventory', l:'المخزون'},
-                        {k:'suppliers', l:'الموردين'}, {k:'treasury', l:'الخزينة'}, {k:'banks', l:'البنوك'},
-                        {k:'expenses', l:'المصروفات'}, {k:'revenues', l:'الإيرادات'}, {k:'invoices', l:'الفواتير'},
-                        {k:'salaries', l:'الرواتب'}, {k:'reports', l:'التقارير'}
-                    ];
+                    const perms = [ {k:'pos', l:'نقطة البيع'}, {k:'customers', l:'الزبناء'}, {k:'inventory', l:'المخزون'}, {k:'suppliers', l:'الموردين'}, {k:'treasury', l:'الخزينة'}, {k:'banks', l:'البنوك'}, {k:'expenses', l:'المصروفات'}, {k:'revenues', l:'الإيرادات'}, {k:'invoices', l:'الفواتير'}, {k:'salaries', l:'الرواتب'}, {k:'reports', l:'التقارير'} ];
                     let permHtml = '';
-                    perms.forEach(p => {
-                        permHtml += `<label class="perm-item"><input type="checkbox" name="uperm" value="${p.k}"> ${p.l}</label>`;
-                    });
+                    perms.forEach(p => { permHtml += `<label class="perm-item"><input type="checkbox" name="uperm" value="${p.k}"> ${p.l}</label>`; });
 
                     const html = `<input id="un" class="inp" placeholder="${this.t('th_name')}"><input id="uc" type="tel" class="inp" placeholder="PIN Code (4-6 digits)" maxlength="6"><label style="font-weight:bold;margin-top:10px;display:block;">${this.t('perm')}</label><div class="perm-grid">${permHtml}</div>`;
                     
                     this.showModal(this.t('add_user'), html, async () => {
-                        const n = document.getElementById('un').value;
-                        const c = document.getElementById('uc').value;
-                        const checkboxes = document.querySelectorAll('input[name="uperm"]:checked');
-                        const selectedPerms = Array.from(checkboxes).map(cb => cb.value);
+                        const n = document.getElementById('un').value; const c = document.getElementById('uc').value;
+                        const checkboxes = document.querySelectorAll('input[name="uperm"]:checked'); const selectedPerms = Array.from(checkboxes).map(cb => cb.value);
 
-                        if(!n || !c) return alert("Missing fields");
-                        if(c.length < 4) return alert("PIN too short (Min 4)");
-
+                        if(!n || !c) return alert("Missing fields"); if(c.length < 4) return alert("PIN too short (Min 4)");
                         if (/^(\d)\1+$/.test(c)) return alert("الرمز ضعيف: لا يمكن استخدام أرقام مكررة (مثل 1111)");
-                        const seq = "01234567890123456789";
-                        const revSeq = "98765432109876543210";
+                        const seq = "01234567890123456789"; const revSeq = "98765432109876543210";
                         if (seq.includes(c) || revSeq.includes(c)) return alert("الرمز ضعيف: لا يمكن استخدام أرقام متسلسلة (مثل 1234)");
 
                         const check = await db.collection('companies').doc(this.state.cid).collection('employees').where('pinCode', '==', c).get();
                         if(!check.empty) return alert("PIN already exists");
 
-                        await db.collection('companies').doc(this.state.cid).collection('employees').add({
-                            name: n, pinCode: c, permissions: selectedPerms, createdAt: new Date().toISOString()
-                        });
+                        await db.collection('companies').doc(this.state.cid).collection('employees').add({ name: n, pinCode: c, permissions: selectedPerms, createdAt: new Date().toISOString() });
                         this.nav('users');
                     });
-                } catch (e) {
-                    this.hideLoader();
-                    console.error(e);
-                    alert("Error checking limits: " + e.message);
-                }
+                } catch (e) { this.hideLoader(); console.error(e); alert("Error checking limits: " + e.message); }
             },
 
             delUser: async function(uid) {
-                if(confirm(this.t('confirm_del'))) {
-                    await db.collection('companies').doc(this.state.cid).collection('employees').doc(uid).delete();
-                    this.nav('users');
-                }
+                if(confirm(this.t('confirm_del'))) { await db.collection('companies').doc(this.state.cid).collection('employees').doc(uid).delete(); this.nav('users'); }
             },
-            // --- END USER MANAGEMENT ---
 
             companyInfoModal: function() {
                 const stored = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}');
@@ -798,7 +695,6 @@
                 const items = [ {k:'pos', i:'fa-cart-shopping', a:"app.nav('pos')"}, {k:'cust', i:'fa-users', a:"app.nav('customers')"}, {k:'stock', i:'fa-boxes-stacked', a:"app.nav('inventory')"}, {k:'supp', i:'fa-truck-field', a:"app.nav('suppliers')"}, {k:'treasury', i:'fa-sack-dollar', a:"app.nav('treasury')"}, {k:'banks', i:'fa-building-columns', a:"app.nav('banks')"}, {k:'exp', i:'fa-wallet', a:"app.nav('expenses')"}, {k:'rev', i:'fa-hand-holding-dollar', a:"app.nav('revenues')"}, {k:'inv', i:'fa-file-invoice-dollar', a:"app.nav('invoices')"}, {k:'sal', i:'fa-users-gear', a:"app.nav('salaries')"}, {k:'rep', i:'fa-chart-pie', a:"app.nav('reports')", full: true} ];
                 let h = '<div class="home-grid">'; 
                 items.forEach(it => { 
-                    // Hide home items if no permission
                     const permKeyMap = {'pos':'pos', 'cust':'customers', 'stock':'inventory', 'supp':'suppliers', 'treasury':'treasury', 'banks':'banks', 'exp':'expenses', 'rev':'revenues', 'inv':'invoices', 'sal':'salaries', 'rep':'reports'};
                     if(this.checkPermission(permKeyMap[it.k])) {
                         const fullClass = it.full ? 'full-width' : ''; 
@@ -833,7 +729,6 @@
 
             refreshTreasury: async function() {
                 try {
-                    // Check offline logic first
                     if (!navigator.onLine) {
                         const cachedBal = localStorage.getItem('teyssir_cash_balance');
                         if(cachedBal !== null) this.state.cashBalance = Number(cachedBal);
@@ -882,14 +777,11 @@
                 return tRef.id;
             },
 
-            // --- UPDATED TREASURY LOGIC TO FIX BALANCE MATH ---
             treasury: async function(div) {
                 await this.refreshTreasury(); 
                 const hist = await this.getData('transactions');
-                // Get all treasury transactions first
                 let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
-                // Recalculate visually to fix offline inconsistencies
                 txs = this.recalcVisualBalances(txs, this.state.cashBalance);
                 
                 const displayTxs = txs.slice(0, 50);
@@ -899,12 +791,10 @@
                 document.getElementById('tfDate').valueAsDate = new Date();
             },
 
-            // Helper to fix math visual errors
             recalcVisualBalances: function(sortedTxs, currentTotal) {
                 let running = currentTotal;
                 return sortedTxs.map(t => {
                     const tWithBal = { ...t, displayBalance: running };
-                    // Calculate "Previous Balance" for next iteration (working backwards)
                     const inAmt = t.type === 'cash_in' ? t.amount : 0;
                     const outAmt = t.type === 'cash_out' ? t.amount : 0;
                     running = running - inAmt + outAmt;
@@ -930,7 +820,6 @@
                 return txs.map(t => {
                     const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
                     const inAmt = t.type === 'cash_in' ? t.amount : 0; const outAmt = t.type === 'cash_out' ? t.amount : 0;
-                    // Use calculated displayBalance if available, else stored balanceAfter
                     const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter;
                     return `<tr><td style="font-size:11px;">${dStr}</td><td>${t.note}</td><td>${t.relatedEntity || '-'}</td><td style="color:green; font-weight:bold;">${(inAmt||0).toLocaleString()}</td><td style="color:red; font-weight:bold;">${(outAmt||0).toLocaleString()}</td><td style="font-weight:bold;">${(bal||0).toLocaleString()}</td></tr>`;
                 }).join('');
@@ -965,7 +854,6 @@
                 const hist = await this.getData('transactions');
                 let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
-                // Recalculate ALL first to ensure balance logic is correct from top to bottom
                 txs = this.recalcVisualBalances(txs, this.state.cashBalance);
                 
                 let dStart, dEnd;
@@ -983,12 +871,11 @@
                 
                 const hist = await this.getData('transactions');
                 let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                txs = this.recalcVisualBalances(txs, this.state.cashBalance); // Fix math
+                txs = this.recalcVisualBalances(txs, this.state.cashBalance); 
                 
                 let filtered = txs;
                 if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } filtered = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
                 
-                // For PDF, usually chronological order (Oldest first) looks better for statements
                 filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
                 
                 const bodyData = [ [{text: this.t('th_date_time'), style: 'tableHeader'}, {text: this.t('tr_desc'), style: 'tableHeader'}, {text: this.t('tr_in'), style: 'tableHeader'}, {text: this.t('tr_out'), style: 'tableHeader'}, {text: this.t('tr_bal_after'), style: 'tableHeader'}] ];
@@ -1033,23 +920,19 @@
                 const n = prompt(this.t('prompt_name')); const ph = prompt(this.t('adm_phone')); if(n && ph) { if(!this.isValidPhone(ph)) return alert(this.t('err_phone_len')); const ref = db.collection('customers').doc(); ref.set({companyId:this.state.cid, name:n, phone:ph, balance:0, createdAt:new Date().toISOString()}).catch(e=>console.error(e)); this.clearCache('customers'); document.getElementById('posCustName').value = n; document.getElementById('posCustId').value = ref.id; }
             },
             
-            // --- FIX FOR INVOICE NUMBERING (INV-YYXXXXX) ---
             getNextInvoiceNumber: async function() {
                 const now = new Date();
-                const yearShort = now.getFullYear().toString().substr(-2); // e.g., "26"
+                const yearShort = now.getFullYear().toString().substr(-2);
                 const storageKey = `teyssir_last_inv_${yearShort}`;
                 
-                // Get local last sequence
                 let localSeq = Number(localStorage.getItem(storageKey)) || 0;
                 let nextSeq = localSeq + 1;
 
-                // Sync with server if online to prevent duplication, but prefer higher
                 if (navigator.onLine) {
                     try {
                         const doc = await db.collection('counters').doc(this.state.cid).get();
                         if(doc.exists) {
                             const data = doc.data();
-                            // Check if server year matches current year
                             if (data.year === yearShort) {
                                 nextSeq = Math.max(nextSeq, (data.lastSeq || 0) + 1);
                             }
@@ -1057,11 +940,7 @@
                     } catch(e) { console.log("Counter check skipped"); }
                 }
 
-                // Lock sequence locally
                 localStorage.setItem(storageKey, nextSeq);
-                
-                // Pad to 7 digits total or similar logic. Prompt said INV 2600001
-                // So "INV-" + "26" + "00001"
                 const paddedSeq = String(nextSeq).padStart(5, '0');
                 return { 
                     full: `INV-${yearShort}${paddedSeq}`, 
@@ -1073,7 +952,6 @@
             finalizeInvoice: async function() {
                 if(!this.cart.length) return alert(this.t('empty'));
                 
-                // --- FIX: STRICT NEGATIVE STOCK CHECK ---
                 for (let item of this.cart) {
                     const prod = this.cachedProducts.find(p => p.id === item.id);
                     if (!prod) return alert("Product not found: " + item.n);
@@ -1100,7 +978,6 @@
                     if (cash > 0) { await this.processCashTransaction(batch, cash, 'in', `Sale ${invNum}`, invRef.id, custName); }
                     batch.set(invRef, { companyId: this.state.cid, invNum: invNum, customer: custName, customerId: custId, items: this.cart, total, paid: totalPaid, debt: debt, cashAmount: cash, bankAmount: bank, bankId: bankId, bankName: bankName, profit: profit, createdAt: now });
                     
-                    // Update Server Counter
                     const counterRef = db.collection('counters').doc(this.state.cid); 
                     batch.set(counterRef, { lastSeq: counterData.seq, year: counterData.year }, { merge: true });
                     
@@ -1166,15 +1043,22 @@
                 this.showModal(this.t('p_add'), h, async () => {
                     const mode = document.getElementById('addProdMode').value; const n = document.getElementById('npName').value.trim(); const b = Number(document.getElementById('npBuy').value); const s = Number(document.getElementById('npSell').value); const q = Number(document.getElementById('npQty').value); const exp = document.getElementById('npExpiry').value;
                     if(!n || !b || !s || !q) return alert("Fill all fields"); if(s <= b) return alert(this.t('err_price_logic'));
-                    const batch = db.batch(); const now = new Date().toISOString(); const products = await this.getData('products'); const targetSourceType = mode === 'exist' ? 'opening' : 'purchase';
-                    const existingProduct = products.find(p => p.name.trim().toLowerCase() === n.trim().toLowerCase() && p.sellPrice === s && p.sourceType === targetSourceType);
-                    let targetId = null; if(existingProduct) { targetId = existingProduct.id; batch.update(db.collection('products').doc(targetId), { stock: firebase.firestore.FieldValue.increment(q), buyPrice: b, expiryDate: exp }); } else { const pRef = db.collection('products').doc(); targetId = pRef.id; batch.set(pRef, { companyId:this.state.cid, name:n, buyPrice:b, sellPrice:s, stock:q, expiryDate: exp, sourceType: targetSourceType, createdAt:now }); }
+                    const batch = db.batch(); const now = new Date().toISOString(); const products = await this.getData('products'); 
+                    
+                    const existingProduct = products.find(p => p.name.trim().toLowerCase() === n.trim().toLowerCase() && p.sellPrice === s);
+                    let targetId = null; 
+                    if(existingProduct) { 
+                        targetId = existingProduct.id; 
+                        batch.update(db.collection('products').doc(targetId), { stock: firebase.firestore.FieldValue.increment(q), buyPrice: b, expiryDate: exp || existingProduct.expiryDate }); 
+                    } else { 
+                        const targetSourceType = mode === 'exist' ? 'opening' : 'purchase';
+                        const pRef = db.collection('products').doc(); targetId = pRef.id; batch.set(pRef, { companyId:this.state.cid, name:n, buyPrice:b, sellPrice:s, stock:q, expiryDate: exp, sourceType: targetSourceType, createdAt:now }); 
+                    }
                     
                     if (mode === 'exist') { 
                         const tRef = db.collection('transactions').doc(); 
                         batch.set(tRef, { companyId: this.state.cid, type: 'opening_stock', refId: targetId, amount: 0, note: `Opening Stock: ${n} (${q})`, createdAt: now }); 
                         
-                        // FIX: Do NOT await here, so offline mode doesn't hang the UI
                         batch.commit().catch(e=>console.error(e)); 
                         
                         this.clearCache('products'); 
@@ -1195,7 +1079,7 @@
                 document.getElementById('addProdMode').value = mode; document.getElementById('modeExist').classList.toggle('active', mode === 'exist'); document.getElementById('modeBuy').classList.toggle('active', mode === 'buy');
                 const detailsDiv = document.getElementById('purchaseDetails'); if (mode === 'exist') detailsDiv.style.display = 'none'; else detailsDiv.style.display = 'block';
             },
-            
+
             printStockPurchase: function(d) {
                 const dir = this.state.lang==='ar'?'rtl':'ltr'; const localInfo = JSON.parse(localStorage.getItem('teyssir_company_info') || '{}'); const compName = localInfo.name || this.state.name; const formattedDate = this.formatDate(new Date().toISOString()); const typeTxt = d.type === 'direct' ? this.t('purch_direct') : this.t('purch_credit');
                 const content = `<div style="padding:20px; direction:${dir}; font-family:'Tajawal', sans-serif;"><h2 style="text-align:center; margin:0;">${compName}</h2><h3 style="text-align:center; background:#eee; padding:5px;">${this.t('purch_rec')}</h3><p>${this.t('th_date')}: ${formattedDate}</p><p>${this.t('purch_type')}: ${typeTxt}</p>${d.suppName !== '-' ? `<p>${this.t('th_supp')}: ${d.suppName}</p>` : ''}<hr><table style="width:100%; border-collapse:collapse; margin-top:10px;"><tr><th style="border:1px solid #000; padding:5px;">${this.t('tbl_prod')}</th><th style="border:1px solid #000; padding:5px;">${this.t('tbl_qty')}</th><th style="border:1px solid #000; padding:5px;">${this.t('tbl_tot')}</th></tr><tr><td style="border:1px solid #000; padding:5px;">${d.name}</td><td style="border:1px solid #000; padding:5px;">${d.qty}</td><td style="border:1px solid #000; padding:5px;">${d.total}</td></tr></table><div style="margin-top:10px; font-weight:bold;"><p>${this.t('paid')}: ${d.paid}</p><p>${this.t('remain')}: ${d.debt}</p></div></div>`;
@@ -1203,11 +1087,7 @@
             },
 
             toggleSuppInputs: function() { const m = document.getElementById('npMethod').value; const c = document.getElementById('npCash'); const b = document.getElementById('npBank'); const bd = document.getElementById('npBankDiv'); if(m === 'cash') { c.style.display='block'; b.style.display='none'; bd.style.display='none'; b.value=0; } else if (m === 'bank') { c.style.display='none'; b.style.display='block'; bd.style.display='block'; c.value=0; } else { c.style.display='block'; b.style.display='block'; bd.style.display='block'; } },
-            
-            quickAddSupplier: async function() { 
-                const n = prompt(this.t('prompt_name')); const p = prompt(this.t('adm_phone')); if(n) { try { const ref = db.collection('suppliers').doc(); ref.set({ companyId: this.state.cid, name: n, phone: p||'', balance: 0, createdAt: new Date().toISOString() }).catch(e=>console.error(e)); this.clearCache('suppliers'); document.getElementById('npSuppName').value = n; document.getElementById('npSuppId').value = ref.id; } catch(e) { alert(e.message); } } 
-            },
-            
+            quickAddSupplier: async function() { const n = prompt(this.t('prompt_name')); const p = prompt(this.t('adm_phone')); if(n) { try { const ref = db.collection('suppliers').doc(); ref.set({ companyId: this.state.cid, name: n, phone: p||'', balance: 0, createdAt: new Date().toISOString() }).catch(e=>console.error(e)); this.clearCache('suppliers'); document.getElementById('npSuppName').value = n; document.getElementById('npSuppId').value = ref.id; } catch(e) { alert(e.message); } } },
             togglePurchaseType: function(val) { document.getElementById('directPayDiv').style.display = val === 'none' ? 'block' : 'none'; document.getElementById('suppPayDiv').style.display = val === 'none' ? 'none' : 'block'; },
             editProd: async function(id, b, os) { let ns = prompt(this.t('prompt_new_price'), os); if(!ns) return; ns=Number(ns); if(ns<=b) return alert(this.t('err_price_logic')); await db.collection('products').doc(id).update({sellPrice:ns}); this.clearCache('products'); this.nav('inventory'); },
             del: async function(id, col) { if(confirm(this.t('confirm_del'))) { await db.collection(col).doc(id).delete(); this.clearCache(col); this.nav(col==='products'?'inventory':(col==='customers'?'customers':(col==='suppliers'?'suppliers':(col==='banks'?'banks':'salaries')))); } },
@@ -1246,25 +1126,17 @@
                 document.getElementById('printArea').innerHTML = `<div style="padding:20px; direction:${dir}; font-family:'Tajawal'">${headerHtml}<hr><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>INV:</b> ${id}</span><span>${formattedDate}</span></div><p><b>${this.t('th_client')}:</b> ${c}</p><table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">${headers}${rows}</table><hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span>${this.t('p_tot')}:</span> <span>${t} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('paid')}:</span> <span>${paid} MRU</span></div><div style="display:flex; justify-content:space-between;"><span>${this.t('remain')}:</span> <span>${debt} MRU</span></div><br><div style="text-align:center; font-size:12px;">Method: ${pm} ${bankInfo}</div><center><small>Teyssir ERP</small></center></div>`; window.print(); 
             },
 
-            // --- REPORTS: ANNUAL FILTER 2026-2036 ---
             reports: async function(div) {
                 let yearOpts = '';
-                for(let y=2026; y<=2036; y++) {
-                    yearOpts += `<option value="${y}" ${y===2026?'selected':''}>${y}</option>`;
-                }
-
+                for(let y=2026; y<=2036; y++) { yearOpts += `<option value="${y}" ${y===2026?'selected':''}>${y}</option>`; }
                 div.innerHTML = `<h3>${this.t('rep')}</h3><div class="card"><div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;"><label>${this.t('f_year')}:</label><select id="repYear" class="select-box" style="width:100px;" onchange="app.setReportYear(this.value)">${yearOpts}</select></div><div style="display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap:wrap;"><input type="date" id="rStart" class="inp" style="margin:0; width:auto;"><span>-</span><input type="date" id="rEnd" class="inp" style="margin:0; width:auto;"><button onclick="app.loadReportData()" class="btn btn-prim" style="width:auto; padding:5px 15px;">${this.t('rep_filter')}</button></div><div class="prod-rep-grid"><div class="stat-box"><span class="stat-lbl">${this.t('total_in')}</span><span id="rIn" class="stat-val" style="color:green">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_out')}</span><span id="rOut" class="stat-val" style="color:red">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('net_cash')}</span><span id="rNet" class="stat-val">0</span></div><div class="stat-box"><span class="stat-lbl">${this.t('total_profit')}</span><span id="rProf" class="stat-val" style="color:var(--accent)">0</span></div></div><div class="charts-container"><div class="chart-box"><h4>${this.t('chart_fin')}</h4><canvas id="cFin"></canvas></div><div class="chart-box"><h4>${this.t('rep_top5')}</h4><canvas id="cTopProd"></canvas></div><div class="chart-box"><h4>${this.t('chart_pay')}</h4><canvas id="cPay"></canvas></div></div><div class="rep-section"><h4>${this.t('rep_prod_title')}</h4><input type="text" id="repProdSearch" class="inp" placeholder="${this.t('rep_prod_select')}" oninput="app.searchReportProduct(this.value)"><div id="repProdResults"></div></div><div class="rep-section"><div style="display:flex; justify-content:space-between; align-items:center;"><h4>${this.t('rep_det_title')}</h4><button onclick="app.printDetailedReport()" class="btn btn-sec" style="width:auto; font-size:12px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="table-scroll" style="max-height:400px; margin-top:10px;"><table id="repDetTable" style="font-size:12px;"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('th_type')}</th><th>${this.t('th_note')}</th><th>${this.t('th_amount')}</th></tr></thead><tbody></tbody></table></div></div></div>`;
-                
-                // Select 2026 by default
                 document.getElementById('repYear').value = "2026";
                 this.setReportYear(2026);
             },
 
             setReportYear: function(y) {
-                const start = new Date(y, 0, 1);
-                const end = new Date(y, 11, 31);
-                document.getElementById('rStart').valueAsDate = start; 
-                document.getElementById('rEnd').valueAsDate = end;
+                const start = new Date(y, 0, 1); const end = new Date(y, 11, 31);
+                document.getElementById('rStart').valueAsDate = start; document.getElementById('rEnd').valueAsDate = end;
                 app.loadReportData();
             },
 
@@ -1273,13 +1145,7 @@
                 this.showLoader();
                 try {
                     const txs = await this.getData('transactions'); 
-                    // Exclude transfers and treasury logs from General Report
-                    const filteredTxs = txs.filter(x => { 
-                        const d = new Date(x.createdAt); 
-                        const isDateMatch = d >= s && d <= e; 
-                        const isExcluded = x.isTreasury === true || x.type === 'deposit' || x.type === 'withdrawal' || x.type === 'opening_balance';
-                        return isDateMatch && !isExcluded;
-                    }); 
+                    const filteredTxs = txs.filter(x => { const d = new Date(x.createdAt); const isDateMatch = d >= s && d <= e; const isExcluded = x.isTreasury === true || x.type === 'deposit' || x.type === 'withdrawal' || x.type === 'opening_balance'; return isDateMatch && !isExcluded; }); 
                     this.reportData.transactions = filteredTxs;
                     
                     let income = 0, expense = 0, profit = 0; let cashIn = 0, bankIn = 0;
@@ -1290,25 +1156,9 @@
                     this.reportData.productStats = {}; Object.keys(aggregatedSales).forEach(pid => { this.reportData.productStats[pid] = { ...aggregatedSales[pid], currentStock: productMap[pid] ? productMap[pid].stock : 0 }; });
                     
                     filteredTxs.forEach(t => { 
-                        if(t.type === 'sale') { 
-                            let actualPaid = 0;
-                            if(typeof t.paid !== 'undefined') actualPaid = t.paid;
-                            else actualPaid = (t.cashAmount || 0) + (t.bankAmount || 0);
-                            income += Number(actualPaid); 
-                        } 
+                        if(t.type === 'sale') { let actualPaid = 0; if(typeof t.paid !== 'undefined') actualPaid = t.paid; else actualPaid = (t.cashAmount || 0) + (t.bankAmount || 0); income += Number(actualPaid); } 
                         else if (t.type === 'revenue' || t.type === 'debt_payment') { income += t.amount; } 
-                        
-                        // Handle Expense / Purchase paid amount
-                        if(t.type === 'purchase_stock') {
-                            // Only count what was paid, not the debt
-                            let actualPaid = 0;
-                            if(typeof t.paid !== 'undefined') actualPaid = t.paid;
-                            else actualPaid = (t.cashAmount || 0) + (t.bankAmount || 0);
-                            expense += Number(actualPaid);
-                        } else if(t.type === 'expense' || t.type === 'salary_payment' || t.type === 'supplier_payment') { 
-                            expense += t.amount; 
-                        } 
-                        
+                        if(t.type === 'purchase_stock') { let actualPaid = 0; if(typeof t.paid !== 'undefined') actualPaid = t.paid; else actualPaid = (t.cashAmount || 0) + (t.bankAmount || 0); expense += Number(actualPaid); } else if(t.type === 'expense' || t.type === 'salary_payment' || t.type === 'supplier_payment') { expense += t.amount; } 
                         if(t.cashAmount) cashIn += t.cashAmount; if(t.bankAmount) bankIn += t.bankAmount; 
                     });
                     
@@ -1328,14 +1178,8 @@
                     const tbody = document.querySelector('#repDetTable tbody'); let tableRows = '';
                     filteredTxs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                     filteredTxs.forEach(t => { 
-                        const date = new Date(t.createdAt).toLocaleString(); 
-                        const amountColor = (t.type.includes('sale') || t.type === 'revenue' || t.type === 'debt_payment') ? 'green' : 'red'; 
-                        
-                        let displayAmount = t.amount;
-                        if(t.type === 'sale' || t.type === 'purchase_stock') {
-                             displayAmount = t.paid || ((t.cashAmount||0) + (t.bankAmount||0));
-                        }
-
+                        const date = new Date(t.createdAt).toLocaleString(); const amountColor = (t.type.includes('sale') || t.type === 'revenue' || t.type === 'debt_payment') ? 'green' : 'red'; 
+                        let displayAmount = t.amount; if(t.type === 'sale' || t.type === 'purchase_stock') { displayAmount = t.paid || ((t.cashAmount||0) + (t.bankAmount||0)); }
                         tableRows += `<tr><td>${date}</td><td>${t.type}</td><td>${t.note || '-'}</td><td style="color:${amountColor}; font-weight:bold; direction:ltr; text-align:right;">${displayAmount.toLocaleString()}</td></tr>`; 
                     });
                     tbody.innerHTML = tableRows || '<tr><td colspan="4" style="text-align:center">-</td></tr>';
@@ -1355,32 +1199,219 @@
                 const bodyData = [ [{text: this.t('th_date_time'), style: 'tableHeader'}, {text: this.t('th_type'), style: 'tableHeader'}, {text: this.t('th_note'), style: 'tableHeader'}, {text: this.t('th_amount'), style: 'tableHeader'}] ];
                 txs.forEach(t => { 
                     const d = new Date(t.createdAt).toLocaleString(); const color = (t.type.includes('sale') || t.type === 'revenue' || t.type === 'debt_payment') ? 'green' : 'red'; 
-                    let displayAmount = t.amount;
-                    if(t.type === 'sale' || t.type === 'purchase_stock') {
-                         displayAmount = t.paid || ((t.cashAmount||0) + (t.bankAmount||0));
-                    }
+                    let displayAmount = t.amount; if(t.type === 'sale' || t.type === 'purchase_stock') { displayAmount = t.paid || ((t.cashAmount||0) + (t.bankAmount||0)); }
                     bodyData.push([ {text: d, fontSize: 9}, {text: t.type, fontSize: 9}, {text: t.note || '-', fontSize: 9}, {text: displayAmount.toLocaleString(), fontSize: 9, color: color, alignment: 'right'} ]); 
                 });
                 const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#eeeeee', alignment: 'center' } }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: this.t('rep_det_title'), fontSize: 12, alignment: 'center', margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', 'auto', '*', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' } ] }; pdfMake.createPdf(docDefinition).open();
             },
 
+            // ==========================================
+            // نظام الدفع المباشر وربط Supabase
+            // ==========================================
+           directPayModal: function() {
+                const banksOpt = `
+                    <option value="">-- اختر البنك --</option>
+                    <option value="بنكيلي">بنكيلي</option>
+                    <option value="السداد">السداد</option>
+                    <option value="مصرفي">مصرفي</option>
+                    <option value="كليك">كليك (Click)</option>
+                    <option value="Bimbank">Bimbank</option>
+                    <option value="غزة أبي">غزة أبي</option>
+                    <option value="رصيدي">رصيدي</option>
+                    <option value="أمانتي">أمانتي</option>
+                    <option value="Mouripost">Mouripost</option>
+                    <option value="Moov money">Moov money</option>
+                    <option value="BCI PAY">BCI PAY</option>
+                `;
+                
+                const html = `
+                    <div style="text-align:right;">
+                        <input id="dpName" class="inp" placeholder="اسم الشركة" required>
+                        <input id="dpPhone" type="tel" class="inp" placeholder="رقم الهاتف" required maxlength="8">
+                        <input id="dpWa" type="tel" class="inp" placeholder="رقم الواتساب للتواصل" required maxlength="8">
+                        <label>نوع الاشتراك</label>
+                        <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
+                            <option value="month">شهري (200 أوقية)</option>
+                            <option value="year">سنوي (2000 أوقية)</option>
+                        </select>
+                        <label>عدد المستخدمين (الحد الأقصى)</label>
+                        <input id="dpUsers" type="number" class="inp" value="3" min="1" oninput="app.calcDirectPay()">
+                        <div style="background:#f0fdf4; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bbf7d0;">
+                            <span style="display:block; font-size:12px; color:#166534;">الإجمالي المطلوب:</span>
+                            <span id="dpTotalDisplay" style="font-size:24px; font-weight:bold; color:#15803d;">250 MRU</span>
+                        </div>
+                        <label>اختر بنك الدفع</label>
+                        <select id="dpBank" class="select-box" onchange="app.showBankNumber()">
+                            ${banksOpt}
+                        </select>
+                        <div id="dpBankInfo" style="display:none; background:#eff6ff; padding:15px; border-radius:8px; text-align:center; margin-bottom:10px; border:1px solid #bfdbfe;">
+                            <p style="margin:0; font-size:14px; color:#1e3a8a;">يرجى تحويل المبلغ إلى الرقم:</p>
+                            <h2 id="dpBankNumber" style="margin:5px 0; color:#1d4ed8; letter-spacing:2px;"></h2>
+                        </div>
+                        <label>صورة إيصال التحويل (لقطة شاشة)</label>
+                        <input type="file" id="dpReceipt" accept="image/*" class="inp" style="padding:10px;">
+                    </div>
+                `;
+
+                this.showModal("طلب اشتراك / تجديد", html, async () => {
+                    await this.submitDirectPay();
+                });
+                
+                document.getElementById('modalActionBtn').innerText = "تأكيد وإرسال الطلب";
+            },
+
+            calcDirectPay: function() {
+                const type = document.getElementById('dpType').value;
+                const users = parseInt(document.getElementById('dpUsers').value) || 1;
+                
+                let base = type === 'year' ? 2000 : 200;
+                let userCost = 0;
+                
+                if (users >= 1 && users <= 3) userCost = 50;
+                else if (users >= 4 && users <= 7) userCost = 100;
+                else if (users >= 8 && users <= 10) userCost = 150;
+                else if (users > 10) {
+                    let extra = users - 10;
+                    userCost = 150 + (Math.ceil(extra / 3) * 50);
+                }
+                
+                const total = base + userCost;
+                document.getElementById('dpTotalDisplay').innerText = total + " MRU";
+                document.getElementById('dpTotalDisplay').dataset.val = total;
+            },
+
+            showBankNumber: function() {
+                const bank = document.getElementById('dpBank').value;
+                const infoDiv = document.getElementById('dpBankInfo');
+                const numDisplay = document.getElementById('dpBankNumber');
+                
+                if(!bank) { infoDiv.style.display = 'none'; return; }
+                
+                const group1 = ["بنكيلي", "السداد", "مصرفي", "كليك", "Bimbank", "غزة أبي", "رصيدي", "أمانتي", "Mouripost"];
+                if(group1.includes(bank)) { numDisplay.innerText = "20479962"; } else { numDisplay.innerText = "46154399"; }
+                infoDiv.style.display = 'block';
+            },
+            submitDirectPay: async function() {
+                const name = document.getElementById('dpName').value;
+                const phone = document.getElementById('dpPhone').value;
+                const wa = document.getElementById('dpWa').value;
+                const type = document.getElementById('dpType').value;
+                const users = document.getElementById('dpUsers').value;
+                const bank = document.getElementById('dpBank').value;
+                const total = document.getElementById('dpTotalDisplay').dataset.val;
+                const fileInput = document.getElementById('dpReceipt');
+                
+                if(!name || !phone || !wa || !bank) return alert("يرجى تعبئة جميع الحقول المطلوبة واختيار البنك.");
+                if(!fileInput.files || fileInput.files.length === 0) return alert("يرجى إرفاق صورة إيصال التحويل.");
+                
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${phone}.${fileExt}`;
+
+                const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
+                const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
+                
+                if(!window.supabaseClient) { window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+
+                try {
+                    const { data: uploadData, error: uploadError } = await window.supabaseClient.storage.from('receipts').upload(fileName, file);
+                    if(uploadError) throw new Error("فشل رفع الصورة: " + uploadError.message);
+
+                    const { data: urlData } = window.supabaseClient.storage.from('receipts').getPublicUrl(fileName);
+                    const receiptUrl = urlData.publicUrl;
+
+                    const { error: dbError } = await window.supabaseClient.from('payment_requests').insert([{
+                        company_name: name, phone: phone, whatsapp: wa, sub_type: type, users_count: parseInt(users), bank_name: bank, total_amount: parseFloat(total), receipt_url: receiptUrl, status: 'pending'
+                    }]);
+
+                    if(dbError) throw new Error("فشل حفظ الطلب: " + dbError.message);
+
+                    alert("✅ تم إرسال طلبك بنجاح! سيتم مراجعته وإرسال كود التفعيل عبر الواتساب قريباً.");
+                } catch(e) {
+                    console.error(e);
+                    alert(e.message);
+                    throw e; 
+                }
+            },
+
+            // ==========================================
+            // لوحة المشرف: إدارة طلبات الدفع
+            // ==========================================
             admin: async function(div) { 
-                div.innerHTML = `<div class="card"><input id="an" class="inp" placeholder="Name"><input id="ap" class="inp" placeholder="Phone"><select id="adur" class="select-box"><option value="day">${this.t('sub_day')}</option><option value="week">${this.t('sub_week')}</option><option value="month" selected>${this.t('sub_month')}</option><option value="year">${this.t('sub_year')}</option></select><input id="amax" type="number" class="inp" placeholder="${this.t('max_emp')}" value="5"><button onclick="app.gen()" class="btn btn-prim">${this.t('adm_gen')}</button></div><div style="margin-bottom:10px;"><input id="adminSearch" class="inp" placeholder="Search Company or Phone..." onkeyup="app.filterAdminTable()"></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`; 
+                div.innerHTML = `
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button onclick="app.adminViewCodes()" class="btn btn-prim" style="flex:1">إدارة الأكواد</button>
+                    <button onclick="app.adminPaymentRequests()" class="btn btn-sec" style="flex:1; background:#28a745; color:white; border:none;"><i class="fa-solid fa-bell"></i> طلبات الدفع</button>
+                </div>
+                <div id="adminWorkArea"></div>
+                `; 
+                this.adminViewCodes();
+            },
+
+            adminViewCodes: async function() {
+                const area = document.getElementById('adminWorkArea');
+                area.innerHTML = `<div class="card"><input id="an" class="inp" placeholder="Name"><input id="ap" class="inp" placeholder="Phone"><select id="adur" class="select-box"><option value="day">${this.t('sub_day')}</option><option value="week">${this.t('sub_week')}</option><option value="month" selected>${this.t('sub_month')}</option><option value="year">${this.t('sub_year')}</option></select><input id="amax" type="number" class="inp" placeholder="${this.t('max_emp')}" value="5"><button onclick="app.gen()" class="btn btn-prim">${this.t('adm_gen')}</button></div><div style="margin-bottom:10px;"><input id="adminSearch" class="inp" placeholder="Search Company or Phone..." onkeyup="app.filterAdminTable()"></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`; 
                 const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(50).get(); let h=`<tr><th>${this.t('adm_time')}</th><th>${this.t('adm_code')}</th><th>${this.t('adm_comp')}</th><th>${this.t('adm_phone')}</th><th>Limit</th><th>Expires</th><th>${this.t('adm_act')}</th></tr>`, b=''; s.forEach(d=>{ const v=d.data(); const comp = v.actualName || v.targetCompanyName || '-'; const ph = v.actualPhone || v.targetPhone || '-'; const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; const stopBtnText = v.status === 'active' ? 'إيقاف' : 'تفعيل'; const maxE = v.maxEmployees || 5; b+=`<tr><td>${this.formatDate(v.createdAt)}</td><td style="font-family:monospace;font-weight:bold">${v.code} <i class="fa-regular fa-copy" onclick="app.copyToClipboard('${v.code}')" style="cursor:pointer; margin-right:5px; color:var(--primary)" title="Copy"></i></td><td class="admin-comp">${comp}</td><td class="admin-phone" style="color:var(--primary);font-weight:bold">${ph}</td><td>${maxE} <i class="fa-solid fa-pen" style="cursor:pointer;color:blue;font-size:10px" onclick="app.editLimit('${d.id}', '${v.companyId}', ${maxE})"></i></td><td style="color:${new Date(v.expiryDate)<new Date()?'red':'var(--success)'}">${expDate}</td><td><button onclick="app.adminViewUsers('${v.companyId}', '${comp}')" class="btn btn-prim" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;"><i class="fa-solid fa-users"></i></button> <button onclick="app.renewCompany('${d.id}', '${v.subscriptionType||'month'}')" class="btn btn-sec" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_renew')}</button> <button onclick="app.toggleStatus('${d.id}', '${v.status}')" class="btn btn-warn" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${stopBtnText}</button> <button onclick="app.delCode('${d.id}')" class="btn btn-dan" style="padding:5px;font-size:11px; display:inline-block; width:auto; margin:0 2px;">${this.t('adm_del')}</button></td></tr>`; }); document.querySelector('#at thead').innerHTML=h; document.querySelector('#at tbody').innerHTML=b; 
             },
-            
+
+            adminPaymentRequests: async function() {
+                const area = document.getElementById('adminWorkArea');
+                area.innerHTML = `<h3>طلبات الدفع المعلقة (Supabase)</h3><div class="card"><div class="table-scroll"><table id="reqTable"><thead><tr><th>التاريخ</th><th>الشركة</th><th>الهاتف</th><th>الواتساب</th><th>البنك</th><th>المبلغ</th><th>النوع/مستخدمين</th><th>الإيصال</th><th>إجراء</th></tr></thead><tbody id="reqBody"><tr><td colspan="9" style="text-align:center">جاري التحميل...</td></tr></tbody></table></div></div>`;
+                
+                const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
+                const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
+                if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+                try {
+                    const { data, error } = await window.supabaseClient.from('payment_requests').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+                    if(error) throw error;
+                    
+                    const tbody = document.getElementById('reqBody');
+                    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">لا توجد طلبات معلقة</td></tr>'; return; }
+
+                    let rows = '';
+                    data.forEach(r => {
+                        const date = new Date(r.created_at).toLocaleDateString(); const sub = r.sub_type === 'year' ? 'سنوي' : 'شهري';
+                        rows += `<tr><td>${date}</td><td style="font-weight:bold">${r.company_name}</td><td>${r.phone}</td><td>${r.whatsapp}</td><td>${r.bank_name}</td><td style="color:green;font-weight:bold">${r.total_amount}</td><td>${sub} / ${r.users_count}</td><td><a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline;">عرض الصورة</a></td><td><button onclick="app.approvePayment('${r.id}', '${r.company_name}', '${r.phone}', '${r.whatsapp}', '${r.sub_type}', ${r.users_count})" class="btn btn-prim" style="padding:5px 10px; font-size:12px; width:auto;">قبول وإرسال</button> <button onclick="app.rejectPayment('${r.id}')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; width:auto; margin-right:5px;">رفض</button></td></tr>`;
+                    });
+                    tbody.innerHTML = rows;
+                } catch(e) { alert("خطأ في جلب الطلبات: " + e.message); }
+            },
+
+            approvePayment: async function(reqId, name, phone, wa, type, users) {
+                if(!confirm(`هل أنت متأكد من قبول الطلب وإنشاء كود للشركة: ${name}؟`)) return;
+                this.showLoader();
+                try {
+                    const newCode = this.randomStr(8);
+                    await db.collection('activation_codes').add({ code: newCode, targetCompanyName: name, targetPhone: phone, status: 'active', used: false, createdAt: new Date().toISOString(), subscriptionType: type, maxEmployees: users });
+
+                    const { error } = await window.supabaseClient.from('payment_requests').update({ status: 'approved' }).eq('id', reqId);
+                    if(error) throw error;
+
+                    const msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل: ${newCode}\nرابط الدخول: ${window.location.href}`);
+                    window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
+                    this.adminPaymentRequests();
+                } catch(e) { alert("خطأ: " + e.message); }
+                this.hideLoader();
+            },
+
+            rejectPayment: async function(reqId) {
+                if(!confirm("هل أنت متأكد من رفض وحذف هذا الطلب؟")) return;
+                this.showLoader();
+                try {
+                    await window.supabaseClient.from('payment_requests').update({ status: 'rejected' }).eq('id', reqId);
+                    this.adminPaymentRequests();
+                } catch(e) { alert("خطأ: " + e.message); }
+                this.hideLoader();
+            },
+
             editLimit: async function(codeDocId, companyId, currentVal) {
                 const newVal = prompt("أدخل الحد الأقصى الجديد للموظفين:", currentVal);
                 if(newVal && !isNaN(newVal)) {
-                    const limit = parseInt(newVal);
-                    const batch = db.batch();
+                    const limit = parseInt(newVal); const batch = db.batch();
                     batch.update(db.collection('activation_codes').doc(codeDocId), { maxEmployees: limit });
-                    if(companyId) {
-                        batch.update(db.collection('companies').doc(companyId), { maxEmployees: limit });
-                    }
-                    await batch.commit();
-                    alert("تم تحديث العدد");
-                    this.nav('admin');
+                    if(companyId) { batch.update(db.collection('companies').doc(companyId), { maxEmployees: limit }); }
+                    await batch.commit(); alert("تم تحديث العدد"); this.nav('admin');
                 }
             },
 
@@ -1390,21 +1421,11 @@
                 try {
                     const snaps = await db.collection('companies').doc(companyId).collection('employees').get();
                     let html = `<h4 style="color:var(--primary)">${compName}</h4><table style="width:100%;text-align:center;font-size:12px;"><thead><tr><th>الاسم</th><th>PIN</th><th>الصلاحيات</th></tr></thead><tbody>`;
-                    
-                    if(snaps.empty) {
-                        html += `<tr><td colspan="3">لا يوجد موظفين</td></tr>`;
-                    } else {
-                        snaps.forEach(doc => {
-                            const d = doc.data();
-                            html += `<tr><td>${d.name}</td><td>${d.pinCode}</td><td>${d.permissions ? d.permissions.length : 0}</td></tr>`;
-                        });
-                    }
+                    if(snaps.empty) { html += `<tr><td colspan="3">لا يوجد موظفين</td></tr>`; } else { snaps.forEach(doc => { const d = doc.data(); html += `<tr><td>${d.name}</td><td>${d.pinCode}</td><td>${d.permissions ? d.permissions.length : 0}</td></tr>`; }); }
                     html += `</tbody></table>`;
                     this.showModal("مستخدمو الشركة", html, async ()=>{ document.getElementById('genericModal').style.display='none'; });
                     document.getElementById('modalActionBtn').style.display = 'none';
-                } catch(e) {
-                    alert("خطأ: " + e.message);
-                }
+                } catch(e) { alert("خطأ: " + e.message); }
                 this.hideLoader();
             },
 
@@ -1424,14 +1445,7 @@
                 this.showLoader();
                 const isBioOk = await this.verifyBiometric();
                 if (isBioOk) {
-                    try {
-                        await db.collection('activation_codes').doc(id).delete();
-                        alert("✅ تم حذف الكود بنجاح.");
-                        this.nav('admin');
-                    } catch (error) {
-                        console.error("Delete Error:", error);
-                        alert("❌ حدث خطأ من السيرفر: " + error.message);
-                    }
+                    try { await db.collection('activation_codes').doc(id).delete(); alert("✅ تم حذف الكود بنجاح."); this.nav('admin'); } catch (error) { console.error("Delete Error:", error); alert("❌ حدث خطأ من السيرفر: " + error.message); }
                 }
                 this.hideLoader();
             }
@@ -1439,6 +1453,25 @@
         
         window.onload = function() { app.init(); };
     </script>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- START PROTECTION CODE -->
+    <script>
+    (function() {
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        }
+    })();
+    </script>
+    <!-- END PROTECTION CODE -->
+    
 
     <!-- START PROTECTION CODE -->
     <script>
