@@ -69,6 +69,10 @@
         .perm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .perm-item { display: flex; align-items: center; gap: 5px; font-size: 12px; background: #f9f9f9; padding: 8px; border-radius: 5px; }
         .nav-item.disabled-link { opacity: 0.3; pointer-events: none; display: none !important; }
+        
+        .promo-box { display:flex; gap:5px; margin-bottom:15px; }
+        .promo-input { flex:1; padding:10px; border:1px solid #ccc; border-radius:5px; }
+        .promo-btn { padding:10px 15px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -87,11 +91,11 @@
         <h2 id="blockTitle" class="block-title">انتهى الاشتراك</h2>
         <p id="blockMsg" class="block-msg">يرجى التواصل للتجديد.</p>
         <a href="https://wa.me/22224241012" class="wa-link" style="width:auto; padding:12px 40px;"><i class="fa-brands fa-whatsapp"></i> <span data-key="pay_now">تواصل للتجديد</span></a>
-        <button onclick="app.directPayModal()" class="btn btn-prim" style="margin-top:10px; width:auto; padding:12px 40px; background: #28a745; border:none;"><i class="fa-solid fa-credit-card"></i> الدفع المباشر</button>
+        <button onclick="app.directPayModal()" class="btn btn-prim" style="margin-top:10px; width:auto; padding:12px 40px; background: #28a745; border:none;"><i class="fa-solid fa-credit-card"></i> <span data-key="dp_direct_btn">الدفع المباشر</span></button>
         <button onclick="app.logout()" class="btn btn-dan" style="margin-top:20px; width:auto;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="logout">خروج</span></button>
     </div>
     
-    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div><button type="button" onclick="app.directPayModal()" class="btn btn-sec" style="width:100%; background: #28a745; color: white; border: none; margin-bottom: 15px;"><i class="fa-solid fa-credit-card"></i> الدفع المباشر (تجديد/اشتراك)</button></form><div style="margin-top:15px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22224241012" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
+    <div id="authScreen" class="auth-wrap"><div class="auth-card"><img src="logo.png" alt="Logo" style="width:100px; margin-bottom:20px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0; margin-bottom: 25px; font-weight: 800;" data-key="title">Teyssir ERP</h2><div id="installBtn" onclick="app.installPWA()"><i class="fa-solid fa-download"></i> <span data-key="t_install">تثبيت التطبيق</span></div><form onsubmit="app.login(event)"><input id="logName" class="inp" data-ph="comp" placeholder="اسم الشركة" required><input id="logPhone" type="tel" class="inp" data-ph="phone" placeholder="رقم الهاتف" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);"><input id="logCode" type="password" class="inp" data-ph="code" placeholder="رمز التفعيل / كود الموظف" required><div style="display:flex; gap:10px; margin-bottom:15px;"><button type="submit" id="logBtn" class="btn btn-prim" style="flex:1" data-key="btn">دخول</button><button type="button" onclick="app.startTrial()" class="btn btn-sec" style="flex:1" data-key="btn_trial">تجربة (3 أيام)</button></div><button type="button" onclick="app.directPayModal()" class="btn btn-sec" style="width:100%; background: #28a745; color: white; border: none; margin-bottom: 15px;"><i class="fa-solid fa-credit-card"></i> <span data-key="dp_direct_btn_full">الدفع المباشر (تجديد/اشتراك)</span></button></form><div style="margin-top:15px; border-top:1px solid var(--border); padding-top:20px;"><p style="margin:0 0 10px; color:var(--text-light); font-size:0.9em;" data-key="get">للحصول على الرمز:</p><a href="https://wa.me/22224241012" class="wa-link"><i class="fa-brands fa-whatsapp" style="font-size:1.2em"></i> <span data-key="cont">تواصل مع المطور</span></a></div></div></div>
     
     <div id="appScreen" class="app-container"><div class="sidebar-overlay" onclick="app.toggleMenu()"></div><header class="top-header"><div class="menu-btn" onclick="app.toggleMenu()"><i class="fa-solid fa-bars"></i></div><div class="header-title">Teyssir ERP</div></header><aside class="sidebar" id="sidebar"><div style="padding: 25px; text-align:center; background: #fcfcfc; border-bottom: 1px solid var(--border);"><img src="logo.png" style="width:70px; border-radius:10px;"><div id="h_name" style="font-weight:bold; color:var(--primary); margin-top:10px;"></div><div id="h_phone" style="font-size:12px; color:#888;"></div><div id="h_role" style="font-size:10px; background:var(--accent); color:white; padding:2px 5px; border-radius:4px; display:inline-block; margin-top:5px;"></div></div><div style="padding: 10px 0; flex:1;">
         <div class="nav-item active" onclick="app.nav('home')" data-perm="all"><i class="fa-solid fa-home"></i> <span data-key="home">الرئيسية</span></div>
@@ -202,7 +206,17 @@
                 rep_det_pdf: "طباعة التقرير التفصيلي",
                 th_type: "النوع",
                 users: "المستخدمين", perm: "الصلاحيات", max_emp: "الحد الأقصى للموظفين",
-                add_user: "إضافة موظف", role: "الدور", perm_denied: "ليس لديك صلاحية للدخول لهذه الصفحة"
+                add_user: "إضافة موظف", role: "الدور", perm_denied: "ليس لديك صلاحية للدخول لهذه الصفحة",
+                
+                // Direct Pay Translation Keys
+                dp_title: "طلب اشتراك / تجديد", dp_req_type: "نوع الطلب", dp_new: "اشتراك جديد (لشركة جديدة)", dp_renew: "تجديد اشتراك (لشركة مسجلة مسبقاً)",
+                dp_ext_code: "رمز التفعيل الحالي (الذي تستخدمه للدخول)", dp_comp: "اسم الشركة", dp_phone: "رقم الهاتف", dp_wa: "رقم الواتساب للتواصل",
+                dp_sub_type: "نوع الاشتراك", dp_month: "شهري (200 أوقية جديدة)", dp_year: "سنوي (2000 أوقية جديدة)",
+                dp_users: "عدد المستخدمين (الحد الأقصى)", dp_total: "الإجمالي المطلوب:", dp_bank: "اختر بنك الدفع",
+                dp_receipt: "صورة إيصال التحويل (لقطة شاشة)", promo_code: "كود التخفيض (اختياري)", promo_apply: "تطبيق الخصم", promo_err: "كود التخفيض غير صحيح أو منتهي",
+                promo_success: "تم تطبيق التخفيض بنجاح!", invalid_renew_code: "رمز التفعيل الذي أدخلته غير موجود. تأكد من الرمز الصحيح وحاول مرة أخرى.",
+                dp_direct_btn: "الدفع المباشر", dp_direct_btn_full: "الدفع المباشر (تجديد/اشتراك)", dp_submit_btn: "تأكيد وإرسال الطلب",
+                dp_bank_info: "يرجى تحويل المبلغ إلى الرقم:"
             },
             fr: {
                 title: "Teyssir ERP", comp:"Nom Société", phone:"Téléphone", code:"Code Activation",
@@ -268,12 +282,22 @@
                 rep_net: "Net", rep_top5: "Top 5 Produits", rep_det_title: "Rapport Détaillé",
                 rep_det_pdf: "Imprimer PDF", th_type: "Type",
                 users: "Utilisateurs", perm: "Permissions", max_emp: "Max Employés",
-                add_user: "Ajouter Utilisateur", role: "Rôle", perm_denied: "Accès Refusé"
+                add_user: "Ajouter Utilisateur", role: "Rôle", perm_denied: "Accès Refusé",
+                
+                // Direct Pay Translation Keys
+                dp_title: "Demande de Paiement", dp_req_type: "Type de demande", dp_new: "Nouvel Abonnement", dp_renew: "Renouvellement",
+                dp_ext_code: "Code d'activation actuel", dp_comp: "Nom de la société", dp_phone: "Téléphone", dp_wa: "Numéro WhatsApp",
+                dp_sub_type: "Type d'abonnement", dp_month: "Mensuel (200 MRU)", dp_year: "Annuel (2000 MRU)",
+                dp_users: "Nombre d'utilisateurs max", dp_total: "Total requis:", dp_bank: "Choisir la banque",
+                dp_receipt: "Reçu de paiement (Capture d'écran)", promo_code: "Code Promo", promo_apply: "Appliquer", promo_err: "Code Promo invalide ou expiré",
+                promo_success: "Code promo appliqué !", invalid_renew_code: "Le code d'activation saisi est introuvable. Vérifiez et réessayez.",
+                dp_direct_btn: "Paiement Direct", dp_direct_btn_full: "Paiement Direct (Abonnement/Renouv.)", dp_submit_btn: "Confirmer et Envoyer",
+                dp_bank_info: "Veuillez transférer le montant au numéro :"
             }
         };
 
         const app = {
-            state: { cid:null, name:'', phone:'', admin:false, lang:'ar', codeDocId: null, expiryDate: null, currentView: 'home', cashBalance: 0, inventoryLocked: false, userRole: 'admin', currentUser: null, permissions: [] },
+            state: { cid:null, name:'', phone:'', admin:false, lang:'ar', codeDocId: null, expiryDate: null, currentView: 'home', cashBalance: 0, inventoryLocked: false, userRole: 'admin', currentUser: null, permissions: [], currentPromo: null },
             cart: [], cachedProducts: [], listeners: [], cache: {},
             charts: {}, 
             reportData: { transactions: [], productStats: {}, aggregatedSales: {} },
@@ -419,8 +443,8 @@
             toggleLang: function() {
                 this.state.lang = this.state.lang==='ar'?'fr':'ar'; const l = this.state.lang; const d = dict[l];
                 document.documentElement.dir = l==='ar'?'rtl':'ltr'; 
-                document.querySelectorAll('[data-key]').forEach(el => el.innerText = d[el.getAttribute('data-key')]);
-                document.querySelectorAll('[data-ph]').forEach(el => el.placeholder = d[el.getAttribute('data-ph')]);
+                document.querySelectorAll('[data-key]').forEach(el => el.innerText = d[el.getAttribute('data-key')] || el.innerText);
+                document.querySelectorAll('[data-ph]').forEach(el => el.placeholder = d[el.getAttribute('data-ph')] || el.placeholder);
                 if(this.state.cid) this.nav(this.state.currentView);
             },
             toggleMenu: function() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('show'); },
@@ -1205,12 +1229,11 @@
             },
 
             // ==========================================
-            // نظام الدفع المباشر وربط Supabase
-            // ==========================================
-          // ==========================================
-            // نظام الدفع المباشر وربط Supabase
+            // نظام الدفع المباشر وربط Supabase وأكواد التخفيض
             // ==========================================
             directPayModal: function() {
+                this.state.currentPromo = null; // إعادة تعيين الكود عند فتح النافذة
+                
                 const banksOpt = `
                     <option value="">-- اختر البنك --</option>
                     <option value="بنكيلي">بنكيلي</option>
@@ -1227,58 +1250,90 @@
                 `;
                 
                 const html = `
-                    <div style="text-align:right;">
-                        <label style="font-weight:bold; color:var(--primary);">نوع الطلب</label>
+                    <div style="text-align:${this.state.lang==='ar'?'right':'left'};">
+                        <label style="font-weight:bold; color:var(--primary);">${this.t('dp_req_type')}</label>
                         <select id="dpReqCategory" class="select-box" onchange="app.toggleRenewInput()" style="background:#e0f2fe; border-color:#93c5fd;">
-                            <option value="new">اشتراك جديد (شركة جديدة)</option>
-                            <option value="renew">تجديد اشتراك (لشركة مسجلة مسبقاً)</option>
+                            <option value="new">${this.t('dp_new')}</option>
+                            <option value="renew">${this.t('dp_renew')}</option>
                         </select>
 
                         <div id="dpExistingCodeDiv" style="display:none; background:#fef3c7; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #fde68a;">
-                            <label style="font-size:13px; color:#92400e;">رمز التفعيل الحالي (الذي تستخدمه للدخول)</label>
-                            <input id="dpExistingCode" type="text" class="inp" placeholder="أدخل رمز التفعيل الحالي للشركة" style="margin-bottom:0;">
+                            <label style="font-size:13px; color:#92400e;">${this.t('dp_ext_code')}</label>
+                            <input id="dpExistingCode" type="text" class="inp" placeholder="${this.t('dp_ext_code')}" style="margin-bottom:0;">
                         </div>
 
                         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
 
-                        <input id="dpName" class="inp" placeholder="اسم الشركة" required>
-                        <input id="dpPhone" type="tel" class="inp" placeholder="رقم الهاتف" required maxlength="8">
-                        <input id="dpWa" type="tel" class="inp" placeholder="رقم الواتساب للتواصل" required maxlength="8">
+                        <input id="dpName" class="inp" placeholder="${this.t('dp_comp')}" required>
+                        <input id="dpPhone" type="tel" class="inp" placeholder="${this.t('dp_phone')}" required maxlength="8">
+                        <input id="dpWa" type="tel" class="inp" placeholder="${this.t('dp_wa')}" required maxlength="8">
                         
-                        <label>نوع الاشتراك</label>
-                       <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
-    <option value="month">شهري (200 أوقية جديدة)</option>
-    <option value="year">سنوي (2000 أوقية جديدة)</option>
-</select>
-                        <label>عدد المستخدمين (الحد الأقصى)</label>
+                        <label>${this.t('dp_sub_type')}</label>
+                        <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
+                            <option value="month">${this.t('dp_month')}</option>
+                            <option value="year">${this.t('dp_year')}</option>
+                        </select>
+                        <label>${this.t('dp_users')}</label>
                         <input id="dpUsers" type="number" class="inp" value="3" min="1" oninput="app.calcDirectPay()">
-                        <div style="background:#f0fdf4; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bbf7d0;">
-                            <span style="display:block; font-size:12px; color:#166534;">الإجمالي المطلوب:</span>
-                         <span id="dpTotalDisplay" style="font-size:24px; font-weight:bold; color:#15803d;">250 أوقية جديدة</span>
+                        
+                        <div class="promo-box">
+                            <input id="dpPromoCode" type="text" class="promo-input" placeholder="${this.t('promo_code')}">
+                            <button onclick="app.applyPromoCode()" class="promo-btn">${this.t('promo_apply')}</button>
                         </div>
-                        <label>اختر بنك الدفع</label>
+                        <div id="promoMsg" style="color:var(--success); font-weight:bold; font-size:12px; margin-bottom:10px; display:none;"></div>
+
+                        <div style="background:#f0fdf4; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bbf7d0;">
+                            <span style="display:block; font-size:12px; color:#166534;">${this.t('dp_total')}</span>
+                            <span id="dpTotalDisplay" style="font-size:24px; font-weight:bold; color:#15803d;">250 ${this.state.lang==='ar'?'أوقية جديدة':'MRU'}</span>
+                        </div>
+                        <label>${this.t('dp_bank')}</label>
                         <select id="dpBank" class="select-box" onchange="app.showBankNumber()">
                             ${banksOpt}
                         </select>
                         <div id="dpBankInfo" style="display:none; background:#eff6ff; padding:15px; border-radius:8px; text-align:center; margin-bottom:10px; border:1px solid #bfdbfe;">
-                            <p style="margin:0; font-size:14px; color:#1e3a8a;">يرجى تحويل المبلغ إلى الرقم:</p>
+                            <p style="margin:0; font-size:14px; color:#1e3a8a;">${this.t('dp_bank_info')}</p>
                             <h2 id="dpBankNumber" style="margin:5px 0; color:#1d4ed8; letter-spacing:2px;"></h2>
                         </div>
-                        <label>صورة إيصال التحويل (لقطة شاشة)</label>
+                        <label>${this.t('dp_receipt')}</label>
                         <input type="file" id="dpReceipt" accept="image/*" class="inp" style="padding:10px;">
                     </div>
                 `;
 
-                this.showModal("طلب اشتراك / تجديد", html, async () => {
+                this.showModal(this.t('dp_title'), html, async () => {
                     await this.submitDirectPay();
                 });
                 
-                document.getElementById('modalActionBtn').innerText = "تأكيد وإرسال الطلب";
+                document.getElementById('modalActionBtn').innerText = this.t('dp_submit_btn');
             },
 
             toggleRenewInput: function() {
                 const type = document.getElementById('dpReqCategory').value;
                 document.getElementById('dpExistingCodeDiv').style.display = type === 'renew' ? 'block' : 'none';
+            },
+
+            applyPromoCode: async function() {
+                const code = document.getElementById('dpPromoCode').value.trim();
+                const msgBox = document.getElementById('promoMsg');
+                if(!code) return;
+                
+                this.showLoader();
+                try {
+                    const snap = await db.collection('promo_codes').where('code', '==', code).get();
+                    if(snap.empty) {
+                        msgBox.innerText = this.t('promo_err');
+                        msgBox.style.color = "var(--danger)";
+                        msgBox.style.display = "block";
+                        this.state.currentPromo = null;
+                    } else {
+                        const promoData = snap.docs[0].data();
+                        this.state.currentPromo = { id: snap.docs[0].id, discount: promoData.discountPercent };
+                        msgBox.innerText = `${this.t('promo_success')} (${promoData.discountPercent}% OFF)`;
+                        msgBox.style.color = "var(--success)";
+                        msgBox.style.display = "block";
+                    }
+                    this.calcDirectPay();
+                } catch (e) { console.error(e); }
+                this.hideLoader();
             },
 
             calcDirectPay: function() {
@@ -1296,8 +1351,15 @@
                     userCost = 150 + (Math.ceil(extra / 3) * 50);
                 }
                 
-                const total = base + userCost;
-               document.getElementById('dpTotalDisplay').innerText = total + " أوقية جديدة";
+                let total = base + userCost;
+                
+                if(this.state.currentPromo) {
+                    const discount = total * (this.state.currentPromo.discount / 100);
+                    total = total - discount;
+                }
+                
+                const currStr = this.state.lang === 'ar' ? 'أوقية جديدة' : 'MRU';
+                document.getElementById('dpTotalDisplay').innerText = total + " " + currStr;
                 document.getElementById('dpTotalDisplay').dataset.val = total;
             },
 
@@ -1325,10 +1387,28 @@
                 const total = document.getElementById('dpTotalDisplay').dataset.val;
                 const fileInput = document.getElementById('dpReceipt');
                 
-                if(reqCategory === 'renew' && !existingCode.trim()) return alert("يرجى إدخال رمز التفعيل الحالي لتتمكن من تجديد الاشتراك.");
+                // تحقق قوي من صحة الكود في قاعدة البيانات قبل الاستمرار في حالة "التجديد"
+                if(reqCategory === 'renew') {
+                    if(!existingCode.trim()) return alert("يرجى إدخال رمز التفعيل الحالي لتتمكن من تجديد الاشتراك.");
+                    this.showLoader();
+                    try {
+                        const codesRef = db.collection('activation_codes');
+                        const snap = await codesRef.where('code', '==', existingCode.trim()).get();
+                        if(snap.empty) {
+                            this.hideLoader();
+                            return alert(this.t('invalid_renew_code'));
+                        }
+                    } catch(e) {
+                        this.hideLoader();
+                        return alert("حدث خطأ أثناء التحقق من الكود: " + e.message);
+                    }
+                    this.hideLoader();
+                }
+
                 if(!name || !phone || !wa || !bank) return alert("يرجى تعبئة جميع الحقول المطلوبة واختيار البنك.");
                 if(!fileInput.files || fileInput.files.length === 0) return alert("يرجى إرفاق صورة إيصال التحويل.");
                 
+                this.showLoader();
                 const file = fileInput.files[0];
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Date.now()}_${phone}.${fileExt}`;
@@ -1356,7 +1436,8 @@
                         receipt_url: receiptUrl, 
                         status: 'pending',
                         request_category: reqCategory,
-                        existing_code: reqCategory === 'renew' ? existingCode.trim() : null
+                        existing_code: reqCategory === 'renew' ? existingCode.trim() : null,
+                        promo_applied: this.state.currentPromo ? this.state.currentPromo.discount + "%" : null
                     }]);
 
                     if(dbError) throw new Error("فشل حفظ الطلب: " + dbError.message);
@@ -1367,20 +1448,82 @@
                     alert(e.message);
                     throw e; 
                 }
+                this.hideLoader();
             },
 
             // ==========================================
-            // لوحة المشرف: إدارة طلبات الدفع
+            // لوحة المشرف: إدارة الأكواد وطلبات الدفع وأكواد التخفيض
             // ==========================================
             admin: async function(div) { 
                 div.innerHTML = `
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <button onclick="app.adminViewCodes()" class="btn btn-prim" style="flex:1">إدارة الأكواد</button>
-                    <button onclick="app.adminPaymentRequests()" class="btn btn-sec" style="flex:1; background:#28a745; color:white; border:none;"><i class="fa-solid fa-bell"></i> طلبات الدفع</button>
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+                    <button onclick="app.adminViewCodes()" class="btn btn-prim" style="flex:1; min-width:100px;">إدارة الأكواد</button>
+                    <button onclick="app.adminPaymentRequests()" class="btn btn-sec" style="flex:1; background:#28a745; color:white; border:none; min-width:100px;"><i class="fa-solid fa-bell"></i> طلبات الدفع</button>
+                    <button onclick="app.adminViewPromoCodes()" class="btn btn-sec" style="flex:1; background:#8b5cf6; color:white; border:none; min-width:100px;"><i class="fa-solid fa-tags"></i> التخفيضات</button>
                 </div>
                 <div id="adminWorkArea"></div>
                 `; 
                 this.adminViewCodes();
+            },
+
+            adminViewPromoCodes: async function() {
+                const area = document.getElementById('adminWorkArea');
+                area.innerHTML = `
+                <div class="card">
+                    <h4>إضافة كود تخفيض</h4>
+                    <div style="display:flex; gap:10px;">
+                        <input id="newPromoCode" class="inp" placeholder="الكود (مثال: KSA2024)">
+                        <input id="newPromoPercent" type="number" class="inp" placeholder="النسبة % (مثال: 20)">
+                    </div>
+                    <button onclick="app.addPromoCode()" class="btn btn-prim" style="background:#8b5cf6;">إضافة الكود</button>
+                </div>
+                <div class="card">
+                    <h4>الأكواد الفعالة</h4>
+                    <div class="table-scroll">
+                        <table id="promoTable">
+                            <thead><tr><th>الكود</th><th>النسبة %</th><th>تاريخ الإضافة</th><th>إجراء</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>`;
+                
+                const snap = await db.collection('promo_codes').orderBy('createdAt','desc').get();
+                let rows = '';
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    rows += `<tr>
+                        <td style="font-weight:bold; color:var(--primary);">${data.code}</td>
+                        <td style="color:green; font-weight:bold;">${data.discountPercent}%</td>
+                        <td>${new Date(data.createdAt).toLocaleDateString()}</td>
+                        <td><button onclick="app.deletePromoCode('${doc.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+                document.querySelector('#promoTable tbody').innerHTML = rows || '<tr><td colspan="4" style="text-align:center;">لا توجد أكواد تخفيض</td></tr>';
+            },
+
+            addPromoCode: async function() {
+                const code = document.getElementById('newPromoCode').value.trim();
+                const percent = Number(document.getElementById('newPromoPercent').value);
+                if(!code || !percent) return alert("أدخل الكود ونسبة الخصم");
+                
+                this.showLoader();
+                try {
+                    await db.collection('promo_codes').add({
+                        code: code, discountPercent: percent, createdAt: new Date().toISOString()
+                    });
+                    this.adminViewPromoCodes();
+                } catch(e) { alert(e.message); }
+                this.hideLoader();
+            },
+
+            deletePromoCode: async function(id) {
+                if(!confirm("حذف هذا الكود؟")) return;
+                this.showLoader();
+                try {
+                    await db.collection('promo_codes').doc(id).delete();
+                    this.adminViewPromoCodes();
+                } catch(e) { alert(e.message); }
+                this.hideLoader();
             },
 
             adminViewCodes: async function() {
@@ -1391,7 +1534,7 @@
 
             adminPaymentRequests: async function() {
                 const area = document.getElementById('adminWorkArea');
-                area.innerHTML = `<h3>طلبات الدفع المعلقة (Supabase)</h3><div class="card"><div class="table-scroll"><table id="reqTable"><thead><tr><th>التاريخ</th><th>النوع</th><th>الشركة</th><th>الهاتف</th><th>الواتساب</th><th>البنك</th><th>المبلغ</th><th>مدة/مستخدمين</th><th>الإيصال</th><th>إجراء</th></tr></thead><tbody id="reqBody"><tr><td colspan="10" style="text-align:center">جاري التحميل...</td></tr></tbody></table></div></div>`;
+                area.innerHTML = `<h3>طلبات الدفع المعلقة (Supabase)</h3><div class="card"><div class="table-scroll"><table id="reqTable"><thead><tr><th>التاريخ</th><th>النوع</th><th>الشركة</th><th>الهاتف</th><th>الواتساب</th><th>البنك</th><th>المبلغ</th><th>الخصم</th><th>مدة/مستخدمين</th><th>الإيصال</th><th>إجراء</th></tr></thead><tbody id="reqBody"><tr><td colspan="11" style="text-align:center">جاري التحميل...</td></tr></tbody></table></div></div>`;
                 
                 const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
                 const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
@@ -1402,14 +1545,15 @@
                     if(error) throw error;
                     
                     const tbody = document.getElementById('reqBody');
-                    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center">لا توجد طلبات معلقة</td></tr>'; return; }
+                    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center">لا توجد طلبات معلقة</td></tr>'; return; }
 
                     let rows = '';
                     data.forEach(r => {
                         const date = new Date(r.created_at).toLocaleDateString(); 
                         const sub = r.sub_type === 'year' ? 'سنوي' : 'شهري';
                         const reqCatStr = r.request_category === 'renew' ? `<span style="color:#d97706; font-weight:bold; font-size:11px; background:#fef3c7; padding:2px 5px; border-radius:4px;">تجديد<br><small>${r.existing_code||'-'}</small></span>` : `<span style="color:#166534; font-weight:bold; font-size:11px; background:#dcfce7; padding:2px 5px; border-radius:4px;">جديد</span>`;
-                        
+                        const promoStr = r.promo_applied ? `<span style="color:var(--primary); font-size:10px; font-weight:bold;">${r.promo_applied}</span>` : '-';
+
                         rows += `<tr>
                             <td style="font-size:11px;">${date}</td>
                             <td>${reqCatStr}</td>
@@ -1418,6 +1562,7 @@
                             <td>${r.whatsapp}</td>
                             <td>${r.bank_name}</td>
                             <td style="color:green;font-weight:bold">${r.total_amount}</td>
+                            <td>${promoStr}</td>
                             <td style="font-size:12px;">${sub} / ${r.users_count}</td>
                             <td><a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline; font-size:12px;">عرض</a></td>
                             <td>
@@ -1436,7 +1581,6 @@
                 try {
                     let msg = "";
 
-                    // -- حالة تجديد الاشتراك --
                     if (reqCategory === 'renew') {
                         const codesRef = db.collection('activation_codes');
                         const snapshot = await codesRef.where('code', '==', existingCode).get();
@@ -1448,14 +1592,12 @@
                         const doc = snapshot.docs[0];
                         const data = doc.data();
                         
-                        // حساب تاريخ الانتهاء الجديد انطلاقاً من التاريخ المتبقي أو من اليوم إذا كان منتهياً
                         let baseDate = new Date();
                         if(data.expiryDate && new Date(data.expiryDate) > baseDate) {
                             baseDate = new Date(data.expiryDate);
                         }
                         const newExpiry = this.addDuration(baseDate, type); 
 
-                        // تحديث الكود
                         await codesRef.doc(doc.id).update({
                             expiryDate: newExpiry,
                             maxEmployees: users
@@ -1464,7 +1606,6 @@
                         msg = encodeURIComponent(`مرحباً بك مجدداً من Teyssir ERP\nتم استلام دفعتك وتجديد اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n⏳ تم تمديد صلاحية نظامك.\n🔑 الرمز الخاص بك كما هو: ${existingCode}\nرابط الدخول: ${window.location.href}`);
 
                     } 
-                    // -- حالة الاشتراك الجديد --
                     else {
                         const newCode = this.randomStr(8);
                         await db.collection('activation_codes').add({ 
@@ -1481,11 +1622,9 @@
                         msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل الجديد: ${newCode}\nرابط الدخول: ${window.location.href}`);
                     }
 
-                    // تحديث الحالة في Supabase
                     const { error } = await window.supabaseClient.from('payment_requests').update({ status: 'approved' }).eq('id', reqId);
                     if(error) throw error;
 
-                    // فتح واتساب
                     window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
                     this.adminPaymentRequests();
                 } catch(e) { 
