@@ -1246,15 +1246,15 @@
                         <input id="dpWa" type="tel" class="inp" placeholder="رقم الواتساب للتواصل" required maxlength="8">
                         
                         <label>نوع الاشتراك</label>
-                        <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
-                            <option value="month">شهري (200 أوقية)</option>
-                            <option value="year">سنوي (2000 أوقية)</option>
-                        </select>
+                       <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
+    <option value="month">شهري (200 أوقية جديدة)</option>
+    <option value="year">سنوي (2000 أوقية جديدة)</option>
+</select>
                         <label>عدد المستخدمين (الحد الأقصى)</label>
                         <input id="dpUsers" type="number" class="inp" value="3" min="1" oninput="app.calcDirectPay()">
                         <div style="background:#f0fdf4; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bbf7d0;">
                             <span style="display:block; font-size:12px; color:#166534;">الإجمالي المطلوب:</span>
-                            <span id="dpTotalDisplay" style="font-size:24px; font-weight:bold; color:#15803d;">250 MRU</span>
+                         <span id="dpTotalDisplay" style="font-size:24px; font-weight:bold; color:#15803d;">250 أوقية جديدة</span>
                         </div>
                         <label>اختر بنك الدفع</label>
                         <select id="dpBank" class="select-box" onchange="app.showBankNumber()">
@@ -1297,7 +1297,7 @@
                 }
                 
                 const total = base + userCost;
-                document.getElementById('dpTotalDisplay').innerText = total + " MRU";
+               document.getElementById('dpTotalDisplay').innerText = total + " أوقية جديدة";
                 document.getElementById('dpTotalDisplay').dataset.val = total;
             },
 
