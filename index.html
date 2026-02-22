@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1208,7 +1207,10 @@
             // ==========================================
             // نظام الدفع المباشر وربط Supabase
             // ==========================================
-           directPayModal: function() {
+          // ==========================================
+            // نظام الدفع المباشر وربط Supabase
+            // ==========================================
+            directPayModal: function() {
                 const banksOpt = `
                     <option value="">-- اختر البنك --</option>
                     <option value="بنكيلي">بنكيلي</option>
@@ -1226,9 +1228,23 @@
                 
                 const html = `
                     <div style="text-align:right;">
+                        <label style="font-weight:bold; color:var(--primary);">نوع الطلب</label>
+                        <select id="dpReqCategory" class="select-box" onchange="app.toggleRenewInput()" style="background:#e0f2fe; border-color:#93c5fd;">
+                            <option value="new">اشتراك جديد (شركة جديدة)</option>
+                            <option value="renew">تجديد اشتراك (لشركة مسجلة مسبقاً)</option>
+                        </select>
+
+                        <div id="dpExistingCodeDiv" style="display:none; background:#fef3c7; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #fde68a;">
+                            <label style="font-size:13px; color:#92400e;">رمز التفعيل الحالي (الذي تستخدمه للدخول)</label>
+                            <input id="dpExistingCode" type="text" class="inp" placeholder="أدخل رمز التفعيل الحالي للشركة" style="margin-bottom:0;">
+                        </div>
+
+                        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+
                         <input id="dpName" class="inp" placeholder="اسم الشركة" required>
                         <input id="dpPhone" type="tel" class="inp" placeholder="رقم الهاتف" required maxlength="8">
                         <input id="dpWa" type="tel" class="inp" placeholder="رقم الواتساب للتواصل" required maxlength="8">
+                        
                         <label>نوع الاشتراك</label>
                         <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
                             <option value="month">شهري (200 أوقية)</option>
@@ -1258,6 +1274,11 @@
                 });
                 
                 document.getElementById('modalActionBtn').innerText = "تأكيد وإرسال الطلب";
+            },
+
+            toggleRenewInput: function() {
+                const type = document.getElementById('dpReqCategory').value;
+                document.getElementById('dpExistingCodeDiv').style.display = type === 'renew' ? 'block' : 'none';
             },
 
             calcDirectPay: function() {
@@ -1291,7 +1312,10 @@
                 if(group1.includes(bank)) { numDisplay.innerText = "20479962"; } else { numDisplay.innerText = "46154399"; }
                 infoDiv.style.display = 'block';
             },
+
             submitDirectPay: async function() {
+                const reqCategory = document.getElementById('dpReqCategory').value;
+                const existingCode = document.getElementById('dpExistingCode').value;
                 const name = document.getElementById('dpName').value;
                 const phone = document.getElementById('dpPhone').value;
                 const wa = document.getElementById('dpWa').value;
@@ -1301,6 +1325,7 @@
                 const total = document.getElementById('dpTotalDisplay').dataset.val;
                 const fileInput = document.getElementById('dpReceipt');
                 
+                if(reqCategory === 'renew' && !existingCode.trim()) return alert("يرجى إدخال رمز التفعيل الحالي لتتمكن من تجديد الاشتراك.");
                 if(!name || !phone || !wa || !bank) return alert("يرجى تعبئة جميع الحقول المطلوبة واختيار البنك.");
                 if(!fileInput.files || fileInput.files.length === 0) return alert("يرجى إرفاق صورة إيصال التحويل.");
                 
@@ -1321,12 +1346,22 @@
                     const receiptUrl = urlData.publicUrl;
 
                     const { error: dbError } = await window.supabaseClient.from('payment_requests').insert([{
-                        company_name: name, phone: phone, whatsapp: wa, sub_type: type, users_count: parseInt(users), bank_name: bank, total_amount: parseFloat(total), receipt_url: receiptUrl, status: 'pending'
+                        company_name: name, 
+                        phone: phone, 
+                        whatsapp: wa, 
+                        sub_type: type, 
+                        users_count: parseInt(users), 
+                        bank_name: bank, 
+                        total_amount: parseFloat(total), 
+                        receipt_url: receiptUrl, 
+                        status: 'pending',
+                        request_category: reqCategory,
+                        existing_code: reqCategory === 'renew' ? existingCode.trim() : null
                     }]);
 
                     if(dbError) throw new Error("فشل حفظ الطلب: " + dbError.message);
 
-                    alert("✅ تم إرسال طلبك بنجاح! سيتم مراجعته وإرسال كود التفعيل عبر الواتساب قريباً.");
+                    alert("✅ تم إرسال طلبك بنجاح! سيتم مراجعته والتواصل معك عبر الواتساب قريباً.");
                 } catch(e) {
                     console.error(e);
                     alert(e.message);
@@ -1356,7 +1391,7 @@
 
             adminPaymentRequests: async function() {
                 const area = document.getElementById('adminWorkArea');
-                area.innerHTML = `<h3>طلبات الدفع المعلقة (Supabase)</h3><div class="card"><div class="table-scroll"><table id="reqTable"><thead><tr><th>التاريخ</th><th>الشركة</th><th>الهاتف</th><th>الواتساب</th><th>البنك</th><th>المبلغ</th><th>النوع/مستخدمين</th><th>الإيصال</th><th>إجراء</th></tr></thead><tbody id="reqBody"><tr><td colspan="9" style="text-align:center">جاري التحميل...</td></tr></tbody></table></div></div>`;
+                area.innerHTML = `<h3>طلبات الدفع المعلقة (Supabase)</h3><div class="card"><div class="table-scroll"><table id="reqTable"><thead><tr><th>التاريخ</th><th>النوع</th><th>الشركة</th><th>الهاتف</th><th>الواتساب</th><th>البنك</th><th>المبلغ</th><th>مدة/مستخدمين</th><th>الإيصال</th><th>إجراء</th></tr></thead><tbody id="reqBody"><tr><td colspan="10" style="text-align:center">جاري التحميل...</td></tr></tbody></table></div></div>`;
                 
                 const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
                 const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
@@ -1367,31 +1402,95 @@
                     if(error) throw error;
                     
                     const tbody = document.getElementById('reqBody');
-                    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">لا توجد طلبات معلقة</td></tr>'; return; }
+                    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center">لا توجد طلبات معلقة</td></tr>'; return; }
 
                     let rows = '';
                     data.forEach(r => {
-                        const date = new Date(r.created_at).toLocaleDateString(); const sub = r.sub_type === 'year' ? 'سنوي' : 'شهري';
-                        rows += `<tr><td>${date}</td><td style="font-weight:bold">${r.company_name}</td><td>${r.phone}</td><td>${r.whatsapp}</td><td>${r.bank_name}</td><td style="color:green;font-weight:bold">${r.total_amount}</td><td>${sub} / ${r.users_count}</td><td><a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline;">عرض الصورة</a></td><td><button onclick="app.approvePayment('${r.id}', '${r.company_name}', '${r.phone}', '${r.whatsapp}', '${r.sub_type}', ${r.users_count})" class="btn btn-prim" style="padding:5px 10px; font-size:12px; width:auto;">قبول وإرسال</button> <button onclick="app.rejectPayment('${r.id}')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; width:auto; margin-right:5px;">رفض</button></td></tr>`;
+                        const date = new Date(r.created_at).toLocaleDateString(); 
+                        const sub = r.sub_type === 'year' ? 'سنوي' : 'شهري';
+                        const reqCatStr = r.request_category === 'renew' ? `<span style="color:#d97706; font-weight:bold; font-size:11px; background:#fef3c7; padding:2px 5px; border-radius:4px;">تجديد<br><small>${r.existing_code||'-'}</small></span>` : `<span style="color:#166534; font-weight:bold; font-size:11px; background:#dcfce7; padding:2px 5px; border-radius:4px;">جديد</span>`;
+                        
+                        rows += `<tr>
+                            <td style="font-size:11px;">${date}</td>
+                            <td>${reqCatStr}</td>
+                            <td style="font-weight:bold">${r.company_name}</td>
+                            <td>${r.phone}</td>
+                            <td>${r.whatsapp}</td>
+                            <td>${r.bank_name}</td>
+                            <td style="color:green;font-weight:bold">${r.total_amount}</td>
+                            <td style="font-size:12px;">${sub} / ${r.users_count}</td>
+                            <td><a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline; font-size:12px;">عرض</a></td>
+                            <td>
+                                <button onclick="app.approvePayment('${r.id}', '${r.company_name}', '${r.phone}', '${r.whatsapp}', '${r.sub_type}', ${r.users_count}, '${r.request_category || 'new'}', '${r.existing_code || ''}')" class="btn btn-prim" style="padding:5px; font-size:11px; width:auto; margin-bottom:2px;">قبول</button> 
+                                <button onclick="app.rejectPayment('${r.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;">رفض</button>
+                            </td>
+                        </tr>`;
                     });
                     tbody.innerHTML = rows;
                 } catch(e) { alert("خطأ في جلب الطلبات: " + e.message); }
             },
 
-            approvePayment: async function(reqId, name, phone, wa, type, users) {
-                if(!confirm(`هل أنت متأكد من قبول الطلب وإنشاء كود للشركة: ${name}؟`)) return;
+            approvePayment: async function(reqId, name, phone, wa, type, users, reqCategory, existingCode) {
+                if(!confirm(`هل أنت متأكد من قبول الطلب لشركة: ${name}؟`)) return;
                 this.showLoader();
                 try {
-                    const newCode = this.randomStr(8);
-                    await db.collection('activation_codes').add({ code: newCode, targetCompanyName: name, targetPhone: phone, status: 'active', used: false, createdAt: new Date().toISOString(), subscriptionType: type, maxEmployees: users });
+                    let msg = "";
 
+                    // -- حالة تجديد الاشتراك --
+                    if (reqCategory === 'renew') {
+                        const codesRef = db.collection('activation_codes');
+                        const snapshot = await codesRef.where('code', '==', existingCode).get();
+
+                        if (snapshot.empty) {
+                            throw new Error("رمز التفعيل الحالي غير موجود في قاعدة البيانات! تأكد من أن الرمز صحيح، أو ارفض الطلب واطلب من العميل إدخال الرمز الصحيح.");
+                        }
+
+                        const doc = snapshot.docs[0];
+                        const data = doc.data();
+                        
+                        // حساب تاريخ الانتهاء الجديد انطلاقاً من التاريخ المتبقي أو من اليوم إذا كان منتهياً
+                        let baseDate = new Date();
+                        if(data.expiryDate && new Date(data.expiryDate) > baseDate) {
+                            baseDate = new Date(data.expiryDate);
+                        }
+                        const newExpiry = this.addDuration(baseDate, type); 
+
+                        // تحديث الكود
+                        await codesRef.doc(doc.id).update({
+                            expiryDate: newExpiry,
+                            maxEmployees: users
+                        });
+
+                        msg = encodeURIComponent(`مرحباً بك مجدداً من Teyssir ERP\nتم استلام دفعتك وتجديد اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n⏳ تم تمديد صلاحية نظامك.\n🔑 الرمز الخاص بك كما هو: ${existingCode}\nرابط الدخول: ${window.location.href}`);
+
+                    } 
+                    // -- حالة الاشتراك الجديد --
+                    else {
+                        const newCode = this.randomStr(8);
+                        await db.collection('activation_codes').add({ 
+                            code: newCode, 
+                            targetCompanyName: name, 
+                            targetPhone: phone, 
+                            status: 'active', 
+                            used: false, 
+                            createdAt: new Date().toISOString(), 
+                            subscriptionType: type, 
+                            maxEmployees: users 
+                        });
+
+                        msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل الجديد: ${newCode}\nرابط الدخول: ${window.location.href}`);
+                    }
+
+                    // تحديث الحالة في Supabase
                     const { error } = await window.supabaseClient.from('payment_requests').update({ status: 'approved' }).eq('id', reqId);
                     if(error) throw error;
 
-                    const msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل: ${newCode}\nرابط الدخول: ${window.location.href}`);
+                    // فتح واتساب
                     window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
                     this.adminPaymentRequests();
-                } catch(e) { alert("خطأ: " + e.message); }
+                } catch(e) { 
+                    alert("خطأ: " + e.message); 
+                }
                 this.hideLoader();
             },
 
@@ -1401,30 +1500,6 @@
                 try {
                     await window.supabaseClient.from('payment_requests').update({ status: 'rejected' }).eq('id', reqId);
                     this.adminPaymentRequests();
-                } catch(e) { alert("خطأ: " + e.message); }
-                this.hideLoader();
-            },
-
-            editLimit: async function(codeDocId, companyId, currentVal) {
-                const newVal = prompt("أدخل الحد الأقصى الجديد للموظفين:", currentVal);
-                if(newVal && !isNaN(newVal)) {
-                    const limit = parseInt(newVal); const batch = db.batch();
-                    batch.update(db.collection('activation_codes').doc(codeDocId), { maxEmployees: limit });
-                    if(companyId) { batch.update(db.collection('companies').doc(companyId), { maxEmployees: limit }); }
-                    await batch.commit(); alert("تم تحديث العدد"); this.nav('admin');
-                }
-            },
-
-            adminViewUsers: async function(companyId, compName) {
-                if(!companyId) return alert("لم يتم إنشاء شركة لهذا الكود بعد");
-                this.showLoader();
-                try {
-                    const snaps = await db.collection('companies').doc(companyId).collection('employees').get();
-                    let html = `<h4 style="color:var(--primary)">${compName}</h4><table style="width:100%;text-align:center;font-size:12px;"><thead><tr><th>الاسم</th><th>PIN</th><th>الصلاحيات</th></tr></thead><tbody>`;
-                    if(snaps.empty) { html += `<tr><td colspan="3">لا يوجد موظفين</td></tr>`; } else { snaps.forEach(doc => { const d = doc.data(); html += `<tr><td>${d.name}</td><td>${d.pinCode}</td><td>${d.permissions ? d.permissions.length : 0}</td></tr>`; }); }
-                    html += `</tbody></table>`;
-                    this.showModal("مستخدمو الشركة", html, async ()=>{ document.getElementById('genericModal').style.display='none'; });
-                    document.getElementById('modalActionBtn').style.display = 'none';
                 } catch(e) { alert("خطأ: " + e.message); }
                 this.hideLoader();
             },
