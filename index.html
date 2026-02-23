@@ -1644,6 +1644,82 @@
             },
 
             copyToClipboard: function(text) { navigator.clipboard.writeText(text).then(() => { alert("تم نسخ الكود: " + text); }).catch(err => { console.error('Failed to copy: ', err); }); },
+            // دالة تعديل الحد الأقصى للمستخدمين
+            editLimit: async function(codeId, companyId, currentLimit) {
+                let newLimit = prompt("أدخل الحد الأقصى الجديد لعدد المستخدمين:", currentLimit);
+                if (!newLimit) return;
+                newLimit = parseInt(newLimit);
+                if (isNaN(newLimit) || newLimit < 1) return alert("يرجى إدخال رقم صحيح أكبر من 0");
+
+                this.showLoader();
+                try {
+                    const batch = db.batch();
+                    // تحديث الحد في الأكواد
+                    batch.update(db.collection('activation_codes').doc(codeId), { maxEmployees: newLimit });
+                    
+                    // تحديث الحد في الشركة إذا كانت مسجلة بالفعل
+                    if (companyId && companyId !== 'undefined') {
+                        batch.update(db.collection('companies').doc(companyId), { maxEmployees: newLimit });
+                    }
+                    
+                    await batch.commit();
+                    this.adminViewCodes(); // تحديث الجدول
+                } catch (e) {
+                    alert("حدث خطأ: " + e.message);
+                }
+                this.hideLoader();
+            },
+
+            // دالة عرض مستخدمي الشركة للمشرف
+            adminViewUsers: async function(companyId, companyName) {
+                if (!companyId || companyId === 'undefined') {
+                    return alert("هذه الشركة لم تقم بتسجيل الدخول بعد. لا يوجد مستخدمين لعرضهم.");
+                }
+                
+                this.showLoader();
+                try {
+                    const snap = await db.collection('companies').doc(companyId).collection('employees').get();
+                    
+                    let html = `<div class="table-scroll" style="max-height: 300px;">
+                                <table style="width:100%; text-align:center; font-size:14px;">
+                                <thead>
+                                    <tr style="background:#eee;">
+                                        <th>اسم الموظف</th>
+                                        <th>الرمز (PIN)</th>
+                                        <th>عدد الصلاحيات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    if (snap.empty) {
+                        html += `<tr><td colspan="3" style="padding:15px; color:red;">لا يوجد موظفين مسجلين في هذه الشركة</td></tr>`;
+                    } else {
+                        snap.forEach(doc => {
+                            const d = doc.data();
+                            const permsCount = d.permissions ? d.permissions.length : 0;
+                            html += `<tr>
+                                <td style="font-weight:bold; color:var(--primary);">${d.name}</td>
+                                <td style="letter-spacing: 2px;">${d.pinCode}</td>
+                                <td>${permsCount}</td>
+                            </tr>`;
+                        });
+                    }
+                    html += `</tbody></table></div>`;
+                    
+                    this.hideLoader();
+                    
+                    // عرض النافذة المنبثقة
+                    this.showModal(`مستخدمي شركة: ${companyName}`, html, () => {
+                        document.getElementById('genericModal').style.display = 'none';
+                    });
+                    // إخفاء زر الحفظ لأنها نافذة للعرض فقط
+                    document.getElementById('modalActionBtn').style.display = 'none';
+                    
+                } catch (e) {
+                    this.hideLoader();
+                    alert("حدث خطأ في جلب المستخدمين: " + e.message);
+                }
+            },
             filterAdminTable: function() { const input = document.getElementById('adminSearch'); const filter = input.value.toLowerCase(); const table = document.getElementById('at'); const tr = table.getElementsByTagName('tr'); for (let i = 1; i < tr.length; i++) { const compTd = tr[i].querySelector('.admin-comp'); const phoneTd = tr[i].querySelector('.admin-phone'); if (compTd || phoneTd) { const compTxt = compTd ? (compTd.textContent || compTd.innerText) : ''; const phoneTxt = phoneTd ? (phoneTd.textContent || phoneTd.innerText) : ''; if (compTxt.toLowerCase().indexOf(filter) > -1 || phoneTxt.indexOf(filter) > -1) { tr[i].style.display = ""; } else { tr[i].style.display = "none"; } } } },
             gen: async function() { 
                 const n=document.getElementById('an').value, p=document.getElementById('ap').value, dur=document.getElementById('adur').value; 
