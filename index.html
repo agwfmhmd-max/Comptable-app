@@ -1304,6 +1304,7 @@
                 });
                 
                 document.getElementById('modalActionBtn').innerText = this.t('dp_submit_btn');
+this.calcDirectPay(); // هذا السطر يضمن حساب المبلغ وتخزينه لحظة فتح النافذة
             },
 
             toggleRenewInput: function() {
@@ -1320,16 +1321,34 @@
                 try {
                     const snap = await db.collection('promo_codes').where('code', '==', code).get();
                     if(snap.empty) {
-                        msgBox.innerText = this.t('promo_err');
-                        msgBox.style.color = "var(--danger)";
-                        msgBox.style.display = "block";
+                        msgBox.innerText = "كود التخفيض غير صحيح.";
+                        msgBox.style.color = "var(--danger)"; msgBox.style.display = "block";
                         this.state.currentPromo = null;
                     } else {
                         const promoData = snap.docs[0].data();
-                        this.state.currentPromo = { id: snap.docs[0].id, discount: promoData.discountPercent };
-                        msgBox.innerText = `${this.t('promo_success')} (${promoData.discountPercent}% OFF)`;
-                        msgBox.style.color = "var(--success)";
-                        msgBox.style.display = "block";
+                        const promoId = snap.docs[0].id;
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const expDate = promoData.expiryDate ? new Date(promoData.expiryDate) : null;
+
+                        // فحص تاريخ الانتهاء
+                        if (expDate && expDate < today) {
+                            msgBox.innerText = "عذراً، هذا الكود منتهي الصلاحية.";
+                            msgBox.style.color = "var(--danger)"; msgBox.style.display = "block";
+                            this.state.currentPromo = null;
+                        } 
+                        // فحص الحد الأقصى للاستخدام
+                        else if (promoData.maxUsage && (promoData.currentUsage || 0) >= promoData.maxUsage) {
+                            msgBox.innerText = "عذراً، تم استنفاد الحد الأقصى لاستخدام هذا الكود.";
+                            msgBox.style.color = "var(--danger)"; msgBox.style.display = "block";
+                            this.state.currentPromo = null;
+                        } 
+                        // نجاح الفحص
+                        else {
+                            this.state.currentPromo = { id: promoId, discount: promoData.discountPercent };
+                            msgBox.innerText = `${this.t('promo_success')} (${promoData.discountPercent}% OFF)`;
+                            msgBox.style.color = "var(--success)";
+                            msgBox.style.display = "block";
+                        }
                     }
                     this.calcDirectPay();
                 } catch (e) { console.error(e); }
@@ -1384,7 +1403,12 @@
                 const type = document.getElementById('dpType').value;
                 const users = document.getElementById('dpUsers').value;
                 const bank = document.getElementById('dpBank').value;
-                const total = document.getElementById('dpTotalDisplay').dataset.val;
+                let total = document.getElementById('dpTotalDisplay').dataset.val;
+// إذا كان المبلغ فارغاً لأي سبب، قم بحسابه فوراً قبل الإرسال
+if (!total || total === "undefined" || isNaN(total)) {
+    this.calcDirectPay();
+    total = document.getElementById('dpTotalDisplay').dataset.val;
+}
                 const fileInput = document.getElementById('dpReceipt');
                 
                 // تحقق قوي من صحة الكود في قاعدة البيانات قبل الاستمرار في حالة "التجديد"
@@ -1437,12 +1461,20 @@
                         status: 'pending',
                         request_category: reqCategory,
                         existing_code: reqCategory === 'renew' ? existingCode.trim() : null,
-                        promo_applied: this.state.currentPromo ? this.state.currentPromo.discount + "%" : null
+                        promo_applied: this.state.currentPromo ? Number(this.state.currentPromo.discount) : null
                     }]);
 
                     if(dbError) throw new Error("فشل حفظ الطلب: " + dbError.message);
 
+                    // إذا استخدم العميل كود خصم، قم بزيادة عداد الاستخدام بواحد
+                    if (this.state.currentPromo && this.state.currentPromo.id) {
+                        await db.collection('promo_codes').doc(this.state.currentPromo.id).update({
+                            currentUsage: firebase.firestore.FieldValue.increment(1)
+                        });
+                    }
+
                     alert("✅ تم إرسال طلبك بنجاح! سيتم مراجعته والتواصل معك عبر الواتساب قريباً.");
+                    document.getElementById('genericModal').style.display = 'none'; // إغلاق النافذة
                 } catch(e) {
                     console.error(e);
                     alert(e.message);
@@ -1466,14 +1498,18 @@
                 this.adminViewCodes();
             },
 
-            adminViewPromoCodes: async function() {
+           adminViewPromoCodes: async function() {
                 const area = document.getElementById('adminWorkArea');
                 area.innerHTML = `
                 <div class="card">
                     <h4>إضافة كود تخفيض</h4>
-                    <div style="display:flex; gap:10px;">
-                        <input id="newPromoCode" class="inp" placeholder="الكود (مثال: KSA2024)">
-                        <input id="newPromoPercent" type="number" class="inp" placeholder="النسبة % (مثال: 20)">
+                    <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+                        <input id="newPromoCode" class="inp" placeholder="الكود (مثال: KSA2024)" style="flex:1; min-width:150px;">
+                        <input id="newPromoPercent" type="number" class="inp" placeholder="النسبة % (مثال: 20)" style="flex:1; min-width:100px;">
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+                        <input id="newPromoLimit" type="number" class="inp" placeholder="مرات الاستخدام (مثال: 50)" style="flex:1; min-width:150px;">
+                        <input id="newPromoExpiry" type="date" class="inp" style="flex:1; min-width:150px;">
                     </div>
                     <button onclick="app.addPromoCode()" class="btn btn-prim" style="background:#8b5cf6;">إضافة الكود</button>
                 </div>
@@ -1481,7 +1517,7 @@
                     <h4>الأكواد الفعالة</h4>
                     <div class="table-scroll">
                         <table id="promoTable">
-                            <thead><tr><th>الكود</th><th>النسبة %</th><th>تاريخ الإضافة</th><th>إجراء</th></tr></thead>
+                            <thead><tr><th>الكود</th><th>النسبة %</th><th>الاستخدام</th><th>تاريخ الانتهاء</th><th>إجراء</th></tr></thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -1489,35 +1525,77 @@
                 
                 const snap = await db.collection('promo_codes').orderBy('createdAt','desc').get();
                 let rows = '';
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
                 snap.forEach(doc => {
                     const data = doc.data();
+                    const maxU = data.maxUsage || 0;
+                    const currU = data.currentUsage || 0;
+                    const expDate = data.expiryDate ? new Date(data.expiryDate) : null;
+                    const expStr = data.expiryDate ? expDate.toLocaleDateString('en-GB') : '-';
+                    
+                    const isExpired = expDate && expDate < today;
+                    const isExhausted = currU >= maxU;
+                    const statusColor = (isExpired || isExhausted) ? 'red' : 'green';
+
                     rows += `<tr>
                         <td style="font-weight:bold; color:var(--primary);">${data.code}</td>
-                        <td style="color:green; font-weight:bold;">${data.discountPercent}%</td>
-                        <td>${new Date(data.createdAt).toLocaleDateString()}</td>
-                        <td><button onclick="app.deletePromoCode('${doc.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;"><i class="fa-solid fa-trash"></i></button></td>
+                        <td style="color:var(--primary); font-weight:bold;">${data.discountPercent}%</td>
+                        <td style="color:${isExhausted ? 'red' : 'inherit'}; font-weight:bold;">${currU} / ${maxU}</td>
+                        <td style="color:${statusColor}; font-weight:bold;">${expStr}</td>
+                        <td>
+                            <button onclick="app.editPromoCode('${doc.id}', ${maxU}, '${data.expiryDate || ''}')" class="btn btn-warn" style="padding:5px; font-size:11px; width:auto;"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="app.deletePromoCode('${doc.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     </tr>`;
                 });
-                document.querySelector('#promoTable tbody').innerHTML = rows || '<tr><td colspan="4" style="text-align:center;">لا توجد أكواد تخفيض</td></tr>';
+                document.querySelector('#promoTable tbody').innerHTML = rows || '<tr><td colspan="5" style="text-align:center;">لا توجد أكواد تخفيض</td></tr>';
             },
-
             addPromoCode: async function() {
                 const code = document.getElementById('newPromoCode').value.trim();
                 const percent = Number(document.getElementById('newPromoPercent').value);
-                if(!code || !percent) return alert("أدخل الكود ونسبة الخصم");
+                const limit = Number(document.getElementById('newPromoLimit').value);
+                const expiry = document.getElementById('newPromoExpiry').value;
+
+                if(!code || !percent || !limit || !expiry) return alert("يرجى تعبئة جميع الحقول (الكود، النسبة، عدد الاستخدام، تاريخ الانتهاء)");
                 
                 this.showLoader();
                 try {
+                    // التأكد أن الكود غير موجود مسبقاً
+                    const check = await db.collection('promo_codes').where('code','==',code).get();
+                    if(!check.empty) throw new Error("هذا الكود موجود مسبقاً!");
+
                     await db.collection('promo_codes').add({
-                        code: code, discountPercent: percent, createdAt: new Date().toISOString()
+                        code: code, discountPercent: percent, maxUsage: limit, currentUsage: 0, expiryDate: expiry, createdAt: new Date().toISOString()
                     });
                     this.adminViewPromoCodes();
                 } catch(e) { alert(e.message); }
                 this.hideLoader();
             },
 
+            editPromoCode: async function(id, currentLimit, currentExpiry) {
+                const newLimit = prompt("أدخل الحد الأقصى الجديد لعدد مرات الاستخدام:", currentLimit);
+                if (newLimit === null) return;
+                const newExpiry = prompt("أدخل تاريخ الانتهاء الجديد (صيغة YYYY-MM-DD):", currentExpiry);
+                if (newExpiry === null) return;
+
+                if (isNaN(newLimit) || newLimit < 1) return alert("الحد الأقصى يجب أن يكون رقماً صحيحاً.");
+                if (!newExpiry) return alert("التاريخ مطلوب.");
+
+                this.showLoader();
+                try {
+                    await db.collection('promo_codes').doc(id).update({
+                        maxUsage: Number(newLimit),
+                        expiryDate: newExpiry
+                    });
+                    this.adminViewPromoCodes();
+                } catch(e) { alert("خطأ: " + e.message); }
+                this.hideLoader();
+            },
+
             deletePromoCode: async function(id) {
-                if(!confirm("حذف هذا الكود؟")) return;
+                if(!confirm("حذف هذا الكود نهائياً؟")) return;
                 this.showLoader();
                 try {
                     await db.collection('promo_codes').doc(id).delete();
@@ -1525,7 +1603,6 @@
                 } catch(e) { alert(e.message); }
                 this.hideLoader();
             },
-
             adminViewCodes: async function() {
                 const area = document.getElementById('adminWorkArea');
                 area.innerHTML = `<div class="card"><input id="an" class="inp" placeholder="Name"><input id="ap" class="inp" placeholder="Phone"><select id="adur" class="select-box"><option value="day">${this.t('sub_day')}</option><option value="week">${this.t('sub_week')}</option><option value="month" selected>${this.t('sub_month')}</option><option value="year">${this.t('sub_year')}</option></select><input id="amax" type="number" class="inp" placeholder="${this.t('max_emp')}" value="5"><button onclick="app.gen()" class="btn btn-prim">${this.t('adm_gen')}</button></div><div style="margin-bottom:10px;"><input id="adminSearch" class="inp" placeholder="Search Company or Phone..." onkeyup="app.filterAdminTable()"></div><div class="card"><div class="table-scroll"><table id="at"><thead></thead><tbody></tbody></table></div></div>`; 
@@ -1552,7 +1629,7 @@
                         const date = new Date(r.created_at).toLocaleDateString(); 
                         const sub = r.sub_type === 'year' ? 'سنوي' : 'شهري';
                         const reqCatStr = r.request_category === 'renew' ? `<span style="color:#d97706; font-weight:bold; font-size:11px; background:#fef3c7; padding:2px 5px; border-radius:4px;">تجديد<br><small>${r.existing_code||'-'}</small></span>` : `<span style="color:#166534; font-weight:bold; font-size:11px; background:#dcfce7; padding:2px 5px; border-radius:4px;">جديد</span>`;
-                        const promoStr = r.promo_applied ? `<span style="color:var(--primary); font-size:10px; font-weight:bold;">${r.promo_applied}</span>` : '-';
+                        const promoStr = r.promo_applied ? `<span style="color:var(--primary); font-size:10px; font-weight:bold;">${r.promo_applied}%</span>` : '-';
 
                         rows += `<tr>
                             <td style="font-size:11px;">${date}</td>
@@ -1561,7 +1638,7 @@
                             <td>${r.phone}</td>
                             <td>${r.whatsapp}</td>
                             <td>${r.bank_name}</td>
-                            <td style="color:green;font-weight:bold">${r.total_amount}</td>
+                            <td style="color:green;font-weight:bold">${r.total_amount || 0}</td>
                             <td>${promoStr}</td>
                             <td style="font-size:12px;">${sub} / ${r.users_count}</td>
                             <td><a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline; font-size:12px;">عرض</a></td>
