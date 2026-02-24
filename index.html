@@ -1550,7 +1550,10 @@ if (!total || total === "undefined" || isNaN(total)) {
                         </td>
                     </tr>`;
                 });
-                document.querySelector('#promoTable tbody').innerHTML = rows || '<tr><td colspan="5" style="text-align:center;">لا توجد أكواد تخفيض</td></tr>';
+                const tbody = document.querySelector('#promoTable tbody');
+if (tbody) { // صمام الأمان
+    tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center;">لا توجد أكواد تخفيض</td></tr>';
+}
             },
             addPromoCode: async function() {
                 const code = document.getElementById('newPromoCode').value.trim();
