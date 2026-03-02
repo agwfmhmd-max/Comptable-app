@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mda-erp-v13'; // قمت بتغيير الاسم لفرض التحديث
+const CACHE_NAME = 'mda-erp-v14'; // قمت بتغيير الاسم لفرض التحديث
 
 self.addEventListener('install', (e) => {
   self.skipWaiting(); // هذا السطر يجبر المتصفح على تثبيت التحديث فوراً
