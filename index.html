@@ -453,13 +453,21 @@
                 e.preventDefault(); this.showLoader();
                 const n=document.getElementById('logName').value.trim(), p=document.getElementById('logPhone').value, c=document.getElementById('logCode').value;
                 try {
-                    if(p==='46154399' && c==='371915') { 
-                        this.state.admin=true; this.state.cid='ADMIN'; 
-                        this.saveSession('ADMIN', 'Admin', '46154399', '371915', null, true, 'admin', null, []); 
-                        this.start('Admin', '46154399'); 
+                    // --- فحص دخول المشرف من قاعدة البيانات بأمان ---
+                    const adminCheck = await db.collection('admins').where('phone', '==', p).where('pin', '==', c).get();
+                    if (!adminCheck.empty) {
+                        const adminData = adminCheck.docs[0].data();
+                        this.state.admin = true; 
+                        this.state.cid = 'ADMIN'; 
+                        const adminName = adminData.name || n || 'Admin';
+                        this.saveSession('ADMIN', adminName, p, c, null, true, 'admin', null, []); 
+                        this.start(adminName, p); 
                         setTimeout(() => { this.setupBiometrics(); }, 1000); 
-                        return; 
+                        return; // التوقف هنا والدخول كمدير
                     }
+                    // --- نهاية فحص المشرف ---
+
+                    // التحقق من طول رقم هاتف المستخدم العادي
                     if(!this.isValidPhone(p)) { this.hideLoader(); return alert(this.t('err_phone_len')); }
 
                     const s = await db.collection('activation_codes').where('code','==',c).get();
@@ -1621,7 +1629,7 @@ if (tbody) { // صمام الأمان
                 if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
                 try {
-                    const { data, error } = await window.supabaseClient.from('payment_requests').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+                    const { data, error } = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
                     if(error) throw error;
                     
                     const tbody = document.getElementById('reqBody');
@@ -1702,7 +1710,7 @@ if (tbody) { // صمام الأمان
                         msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل الجديد: ${newCode}\nرابط الدخول: ${window.location.href}`);
                     }
 
-                    const { error } = await window.supabaseClient.from('payment_requests').update({ status: 'approved' }).eq('id', reqId);
+                    const { error } = await window.supabaseClient.rpc('admin_update_request', { secret_pass: 'TeyssirSecure99!', req_id: reqId, new_status: 'approved' });
                     if(error) throw error;
 
                     window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
@@ -1717,7 +1725,7 @@ if (tbody) { // صمام الأمان
                 if(!confirm("هل أنت متأكد من رفض وحذف هذا الطلب؟")) return;
                 this.showLoader();
                 try {
-                    await window.supabaseClient.from('payment_requests').update({ status: 'rejected' }).eq('id', reqId);
+                    await window.supabaseClient.rpc('admin_update_request', { secret_pass: 'TeyssirSecure99!', req_id: reqId, new_status: 'rejected' });
                     this.adminPaymentRequests();
                 } catch(e) { alert("خطأ: " + e.message); }
                 this.hideLoader();
