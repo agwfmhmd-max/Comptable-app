@@ -872,7 +872,7 @@
                 return tRef.id;
             },
 
-            treasury: async function(div) {
+       treasury: async function(div) {
                 await this.refreshTreasury(); 
                 const hist = await this.getData('transactions');
                 let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -882,102 +882,91 @@
                 const displayTxs = txs.slice(0, 50);
                 const hasHistory = txs.length > 0;
                 
-                div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${(this.state.cashBalance || 0).toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>${this.t('tr_hist')}</h3><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF</button></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(displayTxs)}</tbody></table></div></div>`;
+                div.innerHTML = `<div class="treasury-card"><div>${this.t('tr_balance')}</div><div class="treasury-balance">${(this.state.cashBalance || 0).toLocaleString()} MRU</div><div class="treasury-actions">${!hasHistory && this.state.cashBalance === 0 ? `<button onclick="app.addOpeningBalance()" class="treasury-btn"><i class="fa-solid fa-plus-circle"></i> ${this.t('tr_open')}</button>` : ''}<button onclick="app.depositToBankModal()" class="treasury-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${this.t('tr_dep')}</button></div></div><div class="card"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;"><h3 style="margin:0;">${this.t('tr_hist')}</h3><div style="display:flex; gap:10px;"><button onclick="app.reportTreasuryModal()" class="btn btn-prim" style="width:auto; padding:5px 15px; background:#0ea5e9; border:none;"><i class="fa-solid fa-chart-bar"></i> تقرير مفصل (يومي/شهري/سنوي)</button><button onclick="app.printTreasuryStatement()" class="btn btn-sec" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-file-pdf"></i> PDF شامل</button></div></div><div class="filters-bar" style="justify-content:flex-start; margin-top:10px;"><label style="font-weight:bold; font-size:13px;">${this.t('filter_by')}:</label><select id="tfType" class="select-box" style="width:120px; margin:0;" onchange="app.toggleTreasuryFilters()"><option value="day">${this.t('f_day')}</option><option value="month">${this.t('f_month')}</option><option value="range">${this.t('f_range')}</option></select><div id="tfDayDiv" class="tr-date-group"><input type="date" id="tfDate" class="filter-inp"></div><div id="tfMonthDiv" class="tr-date-group" style="display:none;"><input type="month" id="tfMonth" class="filter-inp"></div><div id="tfRangeDiv" class="tr-date-group" style="display:none;"><input type="date" id="tfFrom" class="filter-inp"><span>-</span><input type="date" id="tfTo" class="filter-inp"></div><button onclick="app.applyTreasuryFilter()" class="btn btn-prim" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-filter"></i></button></div><div class="table-scroll"><table id="treasuryTbl"><thead><tr><th>${this.t('th_date_time')}</th><th>${this.t('tr_desc')}</th><th>${this.t('th_client')}/${this.t('th_supp')}</th><th>${this.t('tr_in')}</th><th>${this.t('tr_out')}</th><th>${this.t('tr_bal_after')}</th></tr></thead><tbody id="trBody">${this.renderTreasuryRows(displayTxs)}</tbody></table></div></div>`;
                 document.getElementById('tfDate').valueAsDate = new Date();
             },
 
             recalcVisualBalances: function(sortedTxs, currentTotal) {
                 let running = currentTotal;
-                return sortedTxs.map(t => {
-                    const tWithBal = { ...t, displayBalance: running };
-                    const inAmt = t.type === 'cash_in' ? t.amount : 0;
-                    const outAmt = t.type === 'cash_out' ? t.amount : 0;
-                    running = running - inAmt + outAmt;
-                    return tWithBal;
-                });
+                return sortedTxs.map(t => { const tWithBal = { ...t, displayBalance: running }; const inAmt = t.type === 'cash_in' ? t.amount : 0; const outAmt = t.type === 'cash_out' ? t.amount : 0; running = running - inAmt + outAmt; return tWithBal; });
             },
 
             toggleTreasuryFilters: function() {
-                const type = document.getElementById('tfType').value;
-                document.getElementById('tfDayDiv').style.display = type === 'day' ? 'flex' : 'none';
-                document.getElementById('tfMonthDiv').style.display = type === 'month' ? 'flex' : 'none';
-                document.getElementById('tfRangeDiv').style.display = type === 'range' ? 'flex' : 'none';
+                const type = document.getElementById('tfType').value; document.getElementById('tfDayDiv').style.display = type === 'day' ? 'flex' : 'none'; document.getElementById('tfMonthDiv').style.display = type === 'month' ? 'flex' : 'none'; document.getElementById('tfRangeDiv').style.display = type === 'range' ? 'flex' : 'none';
             },
 
             applyTreasuryFilter: async function() {
-                const type = document.getElementById('tfType').value; let val1 = null, val2 = null;
-                if (type === 'day') val1 = document.getElementById('tfDate').value; else if (type === 'month') val1 = document.getElementById('tfMonth').value; else { val1 = document.getElementById('tfFrom').value; val2 = document.getElementById('tfTo').value; }
-                if (!val1) return; app.filterTreasury(type, val1, val2);
+                const type = document.getElementById('tfType').value; let val1 = null, val2 = null; if (type === 'day') val1 = document.getElementById('tfDate').value; else if (type === 'month') val1 = document.getElementById('tfMonth').value; else { val1 = document.getElementById('tfFrom').value; val2 = document.getElementById('tfTo').value; } if (!val1) return; app.filterTreasury(type, val1, val2);
             },
 
             renderTreasuryRows: function(txs) {
                 if(!txs || txs.length === 0) return `<tr><td colspan="6" style="text-align:center">-</td></tr>`;
-                return txs.map(t => {
-                    const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
-                    const inAmt = t.type === 'cash_in' ? t.amount : 0; const outAmt = t.type === 'cash_out' ? t.amount : 0;
-                    const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter;
-                    return `<tr><td style="font-size:11px;">${dStr}</td><td>${t.note}</td><td>${t.relatedEntity || '-'}</td><td style="color:green; font-weight:bold;">${(inAmt||0).toLocaleString()}</td><td style="color:red; font-weight:bold;">${(outAmt||0).toLocaleString()}</td><td style="font-weight:bold;">${(bal||0).toLocaleString()}</td></tr>`;
-                }).join('');
+                return txs.map(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`; const inAmt = t.type === 'cash_in' ? t.amount : 0; const outAmt = t.type === 'cash_out' ? t.amount : 0; const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter; return `<tr><td style="font-size:11px;">${dStr}</td><td>${t.note}</td><td>${t.relatedEntity || '-'}</td><td style="color:green; font-weight:bold;">${(inAmt||0).toLocaleString()}</td><td style="color:red; font-weight:bold;">${(outAmt||0).toLocaleString()}</td><td style="font-weight:bold;">${(bal||0).toLocaleString()}</td></tr>`; }).join('');
             },
 
             addOpeningBalance: function() {
-                let amount = prompt(this.t('tr_open')); if (!amount) return; amount = Number(amount); if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
-                const batch = db.batch(); this.processCashTransaction(batch, amount, 'in', 'Opening Balance', null, 'System');
-                batch.commit().then(() => { this.nav('treasury'); }).catch(e => alert(e.message));
+                let amount = prompt(this.t('tr_open')); if (!amount) return; amount = Number(amount); if (isNaN(amount) || amount <= 0) return alert("Invalid amount"); const batch = db.batch(); this.processCashTransaction(batch, amount, 'in', 'Opening Balance', null, 'System'); batch.commit().then(() => { this.nav('treasury'); }).catch(e => alert(e.message));
             },
 
             depositToBankModal: async function() {
                 const banks = await this.getData('banks'); let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
-                this.showModal(this.t('tr_dep'), `<label>${this.t('prompt_amount')}</label><input type="number" id="depAmount" class="inp"><label>${this.t('select_bank')}</label><select id="depBankId" class="select-box">${bOpts}</select><input id="depNote" class="inp" placeholder="${this.t('prompt_note')}">`, async () => {
-                    const amt = Number(document.getElementById('depAmount').value); const bid = document.getElementById('depBankId').value; const note = document.getElementById('depNote').value;
-                    const bName = banks.find(b => b.id === bid)?.name || 'Bank'; if(!amt || !bid) return alert("Missing fields");
-                    const batch = db.batch();
-                    try { await this.processCashTransaction(batch, amt, 'out', `Deposit to ${bName} ${note}`, null, bName, bid); const bRef = db.collection('banks').doc(bid); batch.update(bRef, { balance: firebase.firestore.FieldValue.increment(amt) }); const btRef = db.collection('transactions').doc(); batch.set(btRef, { companyId: this.state.cid, type: 'deposit', amount: amt, bankAmount: amt, bankId: bid, note: `Deposit from Treasury`, createdAt: new Date().toISOString() }); batch.commit().catch(e => console.log("Sync pending")); this.clearCache('banks'); this.nav('treasury'); } catch(e) { alert(e.message); }
-                });
+                this.showModal(this.t('tr_dep'), `<label>${this.t('prompt_amount')}</label><input type="number" id="depAmount" class="inp"><label>${this.t('select_bank')}</label><select id="depBankId" class="select-box">${bOpts}</select><input id="depNote" class="inp" placeholder="${this.t('prompt_note')}">`, async () => { const amt = Number(document.getElementById('depAmount').value); const bid = document.getElementById('depBankId').value; const note = document.getElementById('depNote').value; const bName = banks.find(b => b.id === bid)?.name || 'Bank'; if(!amt || !bid) return alert("Missing fields"); const batch = db.batch(); try { await this.processCashTransaction(batch, amt, 'out', `Deposit to ${bName} ${note}`, null, bName, bid); const bRef = db.collection('banks').doc(bid); batch.update(bRef, { balance: firebase.firestore.FieldValue.increment(amt) }); const btRef = db.collection('transactions').doc(); batch.set(btRef, { companyId: this.state.cid, type: 'deposit', amount: amt, bankAmount: amt, bankId: bid, note: `Deposit from Treasury`, createdAt: new Date().toISOString() }); batch.commit().catch(e => console.log("Sync pending")); this.clearCache('banks'); this.nav('treasury'); } catch(e) { alert(e.message); } });
             },
 
             withdrawFromBankModal: async function(bid, bName) {
-                this.showModal(`${this.t('tr_with')}: ${bName}`, `<label>${this.t('prompt_amount')}</label><input type="number" id="wdAmount" class="inp"><input id="wdNote" class="inp" placeholder="${this.t('prompt_note')}">`, async () => {
-                    const amt = Number(document.getElementById('wdAmount').value); const note = document.getElementById('wdNote').value; if(!amt) return alert("Missing amount");
-                    const banks = await this.getData('banks'); const bank = banks.find(b => b.id === bid); if (!bank || bank.balance < amt) return alert(this.t('err_insufficient_bank'));
-                    const batch = db.batch();
-                    try { await this.processCashTransaction(batch, amt, 'in', `Withdraw from ${bName} ${note}`, null, bName, bid); const bRef = db.collection('banks').doc(bid); batch.update(bRef, { balance: firebase.firestore.FieldValue.increment(-amt) }); const btRef = db.collection('transactions').doc(); batch.set(btRef, { companyId: this.state.cid, type: 'withdrawal', amount: amt, bankAmount: amt, bankId: bid, note: `Withdrawal to Treasury`, createdAt: new Date().toISOString() }); batch.commit().catch(e => console.log("Sync pending")); this.clearCache('banks'); this.nav('banks'); } catch(e) { alert(e.message); }
-                });
+                this.showModal(`${this.t('tr_with')}: ${bName}`, `<label>${this.t('prompt_amount')}</label><input type="number" id="wdAmount" class="inp"><input id="wdNote" class="inp" placeholder="${this.t('prompt_note')}">`, async () => { const amt = Number(document.getElementById('wdAmount').value); const note = document.getElementById('wdNote').value; if(!amt) return alert("Missing amount"); const banks = await this.getData('banks'); const bank = banks.find(b => b.id === bid); if (!bank || bank.balance < amt) return alert(this.t('err_insufficient_bank')); const batch = db.batch(); try { await this.processCashTransaction(batch, amt, 'in', `Withdraw from ${bName} ${note}`, null, bName, bid); const bRef = db.collection('banks').doc(bid); batch.update(bRef, { balance: firebase.firestore.FieldValue.increment(-amt) }); const btRef = db.collection('transactions').doc(); batch.set(btRef, { companyId: this.state.cid, type: 'withdrawal', amount: amt, bankAmount: amt, bankId: bid, note: `Withdrawal to Treasury`, createdAt: new Date().toISOString() }); batch.commit().catch(e => console.log("Sync pending")); this.clearCache('banks'); this.nav('banks'); } catch(e) { alert(e.message); } });
             },
 
             filterTreasury: async function(type, val1, val2) {
-                const hist = await this.getData('transactions');
-                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
-                txs = this.recalcVisualBalances(txs, this.state.cashBalance);
-                
-                let dStart, dEnd;
-                if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } 
-                else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } 
-                else if (type === 'range') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); }
-                
-                const final = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; });
-                document.getElementById('trBody').innerHTML = this.renderTreasuryRows(final);
+                const hist = await this.getData('transactions'); let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); txs = this.recalcVisualBalances(txs, this.state.cashBalance); let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else if (type === 'range') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } const final = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); document.getElementById('trBody').innerHTML = this.renderTreasuryRows(final);
             },
 
             printTreasuryStatement: async function() {
-                const type = document.getElementById('tfType').value; let val1, val2;
-                if (type === 'day') val1 = document.getElementById('tfDate').value; else if (type === 'month') val1 = document.getElementById('tfMonth').value; else { val1 = document.getElementById('tfFrom').value; val2 = document.getElementById('tfTo').value; }
-                
-                const hist = await this.getData('transactions');
-                let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                txs = this.recalcVisualBalances(txs, this.state.cashBalance); 
-                
-                let filtered = txs;
-                if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } filtered = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); }
-                
-                filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-                
-                const bodyData = [ [{text: this.t('th_date_time'), style: 'tableHeader'}, {text: this.t('tr_desc'), style: 'tableHeader'}, {text: this.t('tr_in'), style: 'tableHeader'}, {text: this.t('tr_out'), style: 'tableHeader'}, {text: this.t('tr_bal_after'), style: 'tableHeader'}] ];
-                filtered.forEach(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; 
-                const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter;
-                bodyData.push([ {text: dStr, fontSize: 9}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 9, alignment: 'right'}, {text: inAmt, fontSize: 9, color: 'green'}, {text: outAmt, fontSize: 9, color: 'red'}, {text: bal.toLocaleString(), fontSize: 9, bold: true} ]); });
-                const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#eeeeee', alignment: 'center' } }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: this.t('tr_hist'), fontSize: 12, alignment: 'center', margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' }, { text: `Current Balance: ${this.state.cashBalance.toLocaleString()} MRU`, bold:true, margin:[0,20,0,0] } ] }; pdfMake.createPdf(docDefinition).open();
+                const type = document.getElementById('tfType').value; let val1, val2; if (type === 'day') val1 = document.getElementById('tfDate').value; else if (type === 'month') val1 = document.getElementById('tfMonth').value; else { val1 = document.getElementById('tfFrom').value; val2 = document.getElementById('tfTo').value; } const hist = await this.getData('transactions'); let txs = hist.filter(t => t.isTreasury).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); txs = this.recalcVisualBalances(txs, this.state.cashBalance); let filtered = txs; if (val1) { let dStart, dEnd; if (type === 'day') { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val1); dEnd.setHours(23,59,59,999); } else if (type === 'month') { const [y, m] = val1.split('-'); dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); } else { dStart = new Date(val1); dStart.setHours(0,0,0,0); dEnd = new Date(val2); dEnd.setHours(23,59,59,999); } filtered = txs.filter(t => { const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }); } filtered.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)); const bodyData = [ [{text: this.t('th_date_time'), style: 'tableHeader'}, {text: this.t('tr_desc'), style: 'tableHeader'}, {text: this.t('tr_in'), style: 'tableHeader'}, {text: this.t('tr_out'), style: 'tableHeader'}, {text: this.t('tr_bal_after'), style: 'tableHeader'}] ]; filtered.forEach(t => { const d = new Date(t.createdAt); const dStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; const bal = (t.displayBalance !== undefined) ? t.displayBalance : t.balanceAfter; bodyData.push([ {text: dStr, fontSize: 9}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 9, alignment: 'right'}, {text: inAmt, fontSize: 9, color: 'green'}, {text: outAmt, fontSize: 9, color: 'red'}, {text: bal.toLocaleString(), fontSize: 9, bold: true} ]); }); const docDefinition = { pageSize: 'A4', pageMargins: [20, 20, 20, 20], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#eeeeee', alignment: 'center' } }, content: [ { text: this.state.name, fontSize: 14, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: this.t('tr_hist'), fontSize: 12, alignment: 'center', margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' }, { text: `Current Balance: ${this.state.cashBalance.toLocaleString()} MRU`, bold:true, margin:[0,20,0,0] } ] }; pdfMake.createPdf(docDefinition).open();
+            },
+
+            reportTreasuryModal: function() {
+                const today = new Date().toISOString().split('T')[0];
+                const thisMonth = today.substring(0,7);
+                const thisYear = today.substring(0,4);
+
+                const html = `<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-bottom:15px;"><label style="font-size:12px; font-weight:bold;">اختر نوع التقرير والفترة</label><div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:5px;"><select id="rtType" class="select-box" style="margin:0; width:auto;" onchange="document.getElementById('rtDayDiv').style.display = this.value==='day'?'block':'none'; document.getElementById('rtMonthDiv').style.display = this.value==='month'?'block':'none'; document.getElementById('rtYearDiv').style.display = this.value==='year'?'block':'none';"><option value="day">يومي</option><option value="month">شهري</option><option value="year">سنوي</option></select><div id="rtDayDiv"><input type="date" id="rtDate" class="inp" value="${today}" style="margin:0;"></div><div id="rtMonthDiv" style="display:none;"><input type="month" id="rtMonth" class="inp" value="${thisMonth}" style="margin:0;"></div><div id="rtYearDiv" style="display:none;"><input type="number" id="rtYear" class="inp" value="${thisYear}" style="margin:0; width:100px;"></div><button onclick="app.calcReportTreasury()" class="btn btn-prim" style="width:auto; padding:10px;"><i class="fa-solid fa-search"></i> عرض</button><button onclick="app.printReportTreasuryPdf()" class="btn btn-sec" style="width:auto; padding:10px; background:#ef4444; color:white; border:none;"><i class="fa-solid fa-file-pdf"></i> تحميل PDF</button></div></div><div class="prod-rep-grid" style="grid-template-columns: 1fr 1fr 1fr;"><div class="stat-box"><span class="stat-lbl">إجمالي الوارد</span><span id="rtIn" class="stat-val" style="color:#10b981">0</span></div><div class="stat-box"><span class="stat-lbl">إجمالي الصادر</span><span id="rtOut" class="stat-val" style="color:#ef4444">0</span></div><div class="stat-box"><span class="stat-lbl">الصافي للفترة</span><span id="rtNet" class="stat-val" style="color:var(--primary)">0</span></div></div><div class="table-scroll" style="max-height:300px; margin-top:15px; border:1px solid #eee;"><table id="rtTable" style="font-size:12px; width:100%; text-align:center;"><thead style="background:#f8fafc;"><tr><th>التاريخ/الوقت</th><th>البيان</th><th>وارد (+)</th><th>صادر (-)</th></tr></thead><tbody id="rtBody"><tr><td colspan="4" style="text-align:center; padding:15px;">اختر الفترة واضغط عرض...</td></tr></tbody></table></div>`;
+                this.showModal("تقرير الخزينة المفصل", html, () => {}); document.getElementById('modalActionBtn').style.display = 'none'; this.calcReportTreasury(); 
+            },
+
+            calcReportTreasury: async function() {
+                const type = document.getElementById('rtType').value;
+                let dStart, dEnd, displayDateText;
+
+                if (type === 'day') {
+                    const v = document.getElementById('rtDate').value; if(!v) return;
+                    dStart = new Date(v); dStart.setHours(0,0,0,0); dEnd = new Date(v); dEnd.setHours(23,59,59,999); displayDateText = v;
+                } else if (type === 'month') {
+                    const v = document.getElementById('rtMonth').value; if(!v) return;
+                    const [y, m] = v.split('-');
+                    dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); displayDateText = v;
+                } else {
+                    const v = document.getElementById('rtYear').value; if(!v) return;
+                    dStart = new Date(v, 0, 1); dStart.setHours(0,0,0,0); dEnd = new Date(v, 11, 31); dEnd.setHours(23,59,59,999); displayDateText = v;
+                }
+
+                try {
+                    const hist = await this.getData('transactions');
+                    const txs = hist.filter(t => { if(!t.isTreasury) return false; const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    let totalIn = 0; let totalOut = 0; let tbody = '';
+                    if(txs.length === 0) { tbody = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#666;">لا توجد أي حركات مالية في هذه الفترة.</td></tr>'; } else { txs.forEach(t => { const dt = new Date(t.createdAt); const timeStr = type==='day' ? dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : `${dt.getDate()}/${dt.getMonth()+1} ${dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'})}`; const inAmt = t.type === 'cash_in' ? t.amount : 0; const outAmt = t.type === 'cash_out' ? t.amount : 0; totalIn += inAmt; totalOut += outAmt; tbody += `<tr><td>${timeStr}</td><td>${t.note} ${t.relatedEntity ? `(${t.relatedEntity})` : ''}</td><td style="color:#10b981; font-weight:bold;">${inAmt > 0 ? inAmt.toLocaleString() : '-'}</td><td style="color:#ef4444; font-weight:bold;">${outAmt > 0 ? outAmt.toLocaleString() : '-'}</td></tr>`; }); }
+                    document.getElementById('rtIn').innerText = totalIn.toLocaleString(); document.getElementById('rtOut').innerText = totalOut.toLocaleString(); document.getElementById('rtNet').innerText = (totalIn - totalOut).toLocaleString(); document.getElementById('rtBody').innerHTML = tbody;
+                    this.state.currentTreasuryReport = { date: displayDateText, type: type, in: totalIn, out: totalOut, net: (totalIn - totalOut), txs: txs };
+                } catch(e) { console.error(e); alert("حدث خطأ في جلب البيانات."); }
+            },
+
+            printReportTreasuryPdf: function() {
+                const data = this.state.currentTreasuryReport; if(!data || !data.txs || data.txs.length === 0) return alert("لا توجد بيانات لطباعتها!");
+                const typeName = data.type === 'day' ? 'يومي' : (data.type === 'month' ? 'شهري' : 'سنوي');
+                const bodyData = [ [{text: 'التاريخ/الوقت', style: 'tableHeader'}, {text: 'البيان (التفاصيل)', style: 'tableHeader'}, {text: 'وارد (+)', style: 'tableHeader'}, {text: 'صادر (-)', style: 'tableHeader'}] ];
+                data.txs.forEach(t => { const dt = new Date(t.createdAt); const timeStr = data.type==='day' ? dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : `${dt.getDate()}/${dt.getMonth()+1} ${dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'})}`; const inAmt = t.type === 'cash_in' ? t.amount.toLocaleString() : ''; const outAmt = t.type === 'cash_out' ? t.amount.toLocaleString() : ''; bodyData.push([ {text: timeStr, fontSize: 10, alignment: 'center'}, {text: t.note + (t.relatedEntity ? ` (${t.relatedEntity})` : ''), fontSize: 10, alignment: 'right'}, {text: inAmt, fontSize: 10, color: 'green', alignment: 'center'}, {text: outAmt, fontSize: 10, color: 'red', alignment: 'center'} ]); });
+                bodyData.push([ {text: 'الإجمالي النهائي', colSpan: 2, bold: true, alignment: 'left', fillColor: '#f1f5f9', fontSize: 11}, {}, {text: data.in.toLocaleString(), bold: true, color: 'green', alignment: 'center', fillColor: '#dcfce7', fontSize: 11}, {text: data.out.toLocaleString(), bold: true, color: 'red', alignment: 'center', fillColor: '#fee2e2', fontSize: 11} ]);
+                const docDefinition = { pageSize: 'A4', pageMargins: [20, 30, 20, 30], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#1a4585', color: 'white', alignment: 'center', margin: [0, 5, 0, 5] } }, content: [ { text: this.state.name, fontSize: 18, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: `كشف الخزينة المخصص (${typeName})`, fontSize: 14, alignment: 'center', color: '#666', margin: [0,0,0,5] }, { text: `تاريخ التقرير: ${data.date}`, fontSize: 12, alignment: 'center', bold: true, margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' }, { text: `الصافي لهذه الفترة: ${data.net.toLocaleString()} MRU`, fontSize: 12, bold: true, alignment: 'right', margin: [0, 20, 0, 0] } ] }; pdfMake.createPdf(docDefinition).download(`Treasury_Report_${data.date}.pdf`);
             },
 
             pos: async function(div) {
@@ -1019,42 +1008,26 @@
                 const now = new Date();
                 const yearShort = now.getFullYear().toString().substr(-2);
                 const storageKey = `teyssir_last_inv_${yearShort}`;
-                
                 let localSeq = Number(localStorage.getItem(storageKey)) || 0;
                 let nextSeq = localSeq + 1;
-
                 if (navigator.onLine) {
                     try {
                         const doc = await db.collection('counters').doc(this.state.cid).get();
-                        if(doc.exists) {
-                            const data = doc.data();
-                            if (data.year === yearShort) {
-                                nextSeq = Math.max(nextSeq, (data.lastSeq || 0) + 1);
-                            }
-                        }
+                        if(doc.exists) { const data = doc.data(); if (data.year === yearShort) { nextSeq = Math.max(nextSeq, (data.lastSeq || 0) + 1); } }
                     } catch(e) { console.log("Counter check skipped"); }
                 }
-
                 localStorage.setItem(storageKey, nextSeq);
                 const paddedSeq = String(nextSeq).padStart(5, '0');
-                return { 
-                    full: `INV-${yearShort}${paddedSeq}`, 
-                    seq: nextSeq,
-                    year: yearShort 
-                };
+                return { full: `INV-${yearShort}${paddedSeq}`, seq: nextSeq, year: yearShort };
             },
 
             finalizeInvoice: async function() {
                 if(!this.cart.length) return alert(this.t('empty'));
-                
                 for (let item of this.cart) {
                     const prod = this.cachedProducts.find(p => p.id === item.id);
                     if (!prod) return alert("Product not found: " + item.n);
-                    if (prod.stock < item.q) {
-                        return alert(`عذراً، الكمية غير متوفرة للمنتج: ${item.n} (المتوفر: ${prod.stock})`);
-                    }
+                    if (prod.stock < item.q) { return alert(`عذراً، الكمية غير متوفرة للمنتج: ${item.n} (المتوفر: ${prod.stock})`); }
                 }
-
                 let custId = document.getElementById('posCustId').value; let custName = document.getElementById('posCustName').value;
                 const total = Number(document.getElementById('cartTotal').innerText); const cash = Number(document.getElementById('payCash').value); const bank = Number(document.getElementById('payBank').value); const bankId = document.getElementById('posBankId').value; const bankName = document.getElementById('posBankName').value; const payMethod = document.getElementById('posPayMethod').value;
                 let isWalkIn = false;
@@ -1099,13 +1072,70 @@
                 if (s && s.length > 0) { 
                     s.forEach(b => { 
                         const safeBal = (b.balance !== undefined && b.balance !== null) ? Number(b.balance) : 0; 
-                        h += `<tr><td>${b.name}</td><td>${safeBal.toLocaleString()}</td><td><button onclick="app.withdrawFromBankModal('${b.id}','${b.name}')" class="btn btn-sec" style="padding:5px; font-size:12px;">${this.t('tr_with')}</button> <button onclick="app.viewStatement('${b.id}','bank','${b.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('stmt')}</button> <button onclick="app.del('${b.id}', 'banks')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`; 
+                        h += `<tr><td>${b.name}</td><td>${safeBal.toLocaleString()}</td><td><button onclick="app.reportBankModal('${b.id}','${b.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px; background:#0ea5e9; border:none; margin-right:2px;"><i class="fa-solid fa-chart-bar"></i> تقرير</button><button onclick="app.withdrawFromBankModal('${b.id}','${b.name}')" class="btn btn-sec" style="padding:5px; font-size:12px; margin-right:2px;">${this.t('tr_with')}</button><button onclick="app.viewStatement('${b.id}','bank','${b.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px; margin-right:2px;">${this.t('stmt')}</button><button onclick="app.del('${b.id}', 'banks')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`; 
                     }); 
                 } 
                 const tbody = div.querySelector('#bnkTbl tbody'); 
                 if(tbody) tbody.innerHTML = h || '<tr><td colspan="3">-</td></tr>'; 
             },
+
             addBankModal: function() { this.showModal(this.t('banks'), `<input id="nbName" class="inp" placeholder="${this.t('th_name')}"><input type="number" id="nbBal" class="inp" placeholder="${this.t('balance')}">`, async () => { const n = document.getElementById('nbName').value; const b = Number(document.getElementById('nbBal').value); if(n) { const batch = db.batch(); const now = new Date().toISOString(); const bankRef = db.collection('banks').doc(); batch.set(bankRef, {companyId:this.state.cid, name:n, balance:b||0, createdAt:now}); if(b > 0) { const transRef = db.collection('transactions').doc(); batch.set(transRef, { companyId: this.state.cid, type: 'opening_balance', bankId: bankRef.id, amount: b, bankAmount: b, cashAmount: 0, method: 'bank', note: 'Opening Balance', createdAt: now }); } batch.commit().catch(e=>console.error(e)); this.clearCache('banks'); this.clearCache('transactions'); this.nav('banks'); } }); },
+
+            reportBankModal: function(bankId, bankName) {
+                const today = new Date().toISOString().split('T')[0];
+                const thisMonth = today.substring(0,7);
+                const thisYear = today.substring(0,4);
+
+                const html = `<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-bottom:15px;"><label style="font-size:12px; font-weight:bold;">اختر نوع التقرير والفترة</label><div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:5px;"><select id="rbType" class="select-box" style="margin:0; width:auto;" onchange="document.getElementById('rbDayDiv').style.display = this.value==='day'?'block':'none'; document.getElementById('rbMonthDiv').style.display = this.value==='month'?'block':'none'; document.getElementById('rbYearDiv').style.display = this.value==='year'?'block':'none';"><option value="day">يومي</option><option value="month">شهري</option><option value="year">سنوي</option></select><div id="rbDayDiv"><input type="date" id="rbDate" class="inp" value="${today}" style="margin:0;"></div><div id="rbMonthDiv" style="display:none;"><input type="month" id="rbMonth" class="inp" value="${thisMonth}" style="margin:0;"></div><div id="rbYearDiv" style="display:none;"><input type="number" id="rbYear" class="inp" value="${thisYear}" style="margin:0; width:100px;"></div><button onclick="app.calcReportBank('${bankId}')" class="btn btn-prim" style="width:auto; padding:10px;"><i class="fa-solid fa-search"></i> عرض</button><button onclick="app.printReportBankPdf('${bankName}')" class="btn btn-sec" style="width:auto; padding:10px; background:#ef4444; color:white; border:none;"><i class="fa-solid fa-file-pdf"></i> تحميل PDF</button></div></div><div class="prod-rep-grid" style="grid-template-columns: 1fr 1fr 1fr;"><div class="stat-box"><span class="stat-lbl">إجمالي الوارد</span><span id="rbIn" class="stat-val" style="color:#10b981">0</span></div><div class="stat-box"><span class="stat-lbl">إجمالي الصادر</span><span id="rbOut" class="stat-val" style="color:#ef4444">0</span></div><div class="stat-box"><span class="stat-lbl">الصافي للفترة</span><span id="rbNet" class="stat-val" style="color:var(--primary)">0</span></div></div><div class="table-scroll" style="max-height:300px; margin-top:15px; border:1px solid #eee;"><table id="rbTable" style="font-size:12px; width:100%; text-align:center;"><thead style="background:#f8fafc;"><tr><th>التاريخ/الوقت</th><th>البيان</th><th>وارد (+)</th><th>صادر (-)</th></tr></thead><tbody id="rbBody"><tr><td colspan="4" style="text-align:center; padding:15px;">اختر الفترة واضغط عرض...</td></tr></tbody></table></div>`;
+                this.showModal(`تقرير مفصل للبنك: ${bankName}`, html, () => {}); document.getElementById('modalActionBtn').style.display = 'none'; this.calcReportBank(bankId); 
+            },
+
+            calcReportBank: async function(bankId) {
+                const type = document.getElementById('rbType').value;
+                let dStart, dEnd, displayDateText;
+
+                if (type === 'day') {
+                    const v = document.getElementById('rbDate').value; if(!v) return;
+                    dStart = new Date(v); dStart.setHours(0,0,0,0); dEnd = new Date(v); dEnd.setHours(23,59,59,999); displayDateText = v;
+                } else if (type === 'month') {
+                    const v = document.getElementById('rbMonth').value; if(!v) return;
+                    const [y, m] = v.split('-');
+                    dStart = new Date(y, m-1, 1); dStart.setHours(0,0,0,0); dEnd = new Date(y, m, 0); dEnd.setHours(23,59,59,999); displayDateText = v;
+                } else {
+                    const v = document.getElementById('rbYear').value; if(!v) return;
+                    dStart = new Date(v, 0, 1); dStart.setHours(0,0,0,0); dEnd = new Date(v, 11, 31); dEnd.setHours(23,59,59,999); displayDateText = v;
+                }
+
+                try {
+                    const hist = await this.getData('transactions');
+                    const txs = hist.filter(t => { const isRelated = (t.bankId === bankId) || (t.fromBankId === bankId) || (t.toBankId === bankId); if(!isRelated) return false; const tDate = new Date(t.createdAt); return tDate >= dStart && tDate <= dEnd; }).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    let totalIn = 0; let totalOut = 0; let tbody = '';
+                    if(txs.length === 0) { tbody = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#666;">لا توجد أي حركات في هذا البنك للفترة المحددة.</td></tr>'; } else {
+                        txs.forEach(t => {
+                            const dt = new Date(t.createdAt); const timeStr = type==='day' ? dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : `${dt.getDate()}/${dt.getMonth()+1} ${dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'})}`;
+                            let inAmt = 0; let outAmt = 0; let desc = t.type + (t.note ? ` (${t.note})` : '');
+                            if (t.type === 'bank_transfer') { if (t.toBankId === bankId) inAmt = t.amount; else outAmt = t.amount; } else if (t.bankAmount > 0) { if (['sale', 'revenue', 'debt_payment', 'opening_balance', 'deposit'].includes(t.type)) inAmt = t.bankAmount; else outAmt = t.bankAmount; }
+                            totalIn += inAmt; totalOut += outAmt; tbody += `<tr><td>${timeStr}</td><td>${desc}</td><td style="color:#10b981; font-weight:bold;">${inAmt > 0 ? inAmt.toLocaleString() : '-'}</td><td style="color:#ef4444; font-weight:bold;">${outAmt > 0 ? outAmt.toLocaleString() : '-'}</td></tr>`;
+                        });
+                    }
+                    document.getElementById('rbIn').innerText = totalIn.toLocaleString(); document.getElementById('rbOut').innerText = totalOut.toLocaleString(); document.getElementById('rbNet').innerText = (totalIn - totalOut).toLocaleString(); document.getElementById('rbBody').innerHTML = tbody;
+                    this.state.currentBankReport = { date: displayDateText, type: type, in: totalIn, out: totalOut, net: (totalIn - totalOut), txs: txs, bankId: bankId };
+                } catch(e) { console.error(e); alert("حدث خطأ في جلب البيانات."); }
+            },
+
+            printReportBankPdf: function(bankName) {
+                const data = this.state.currentBankReport; if(!data || !data.txs || data.txs.length === 0) return alert("لا توجد بيانات لطباعتها!");
+                const typeName = data.type === 'day' ? 'يومي' : (data.type === 'month' ? 'شهري' : 'سنوي');
+                const bodyData = [ [{text: 'التاريخ/الوقت', style: 'tableHeader'}, {text: 'البيان (التفاصيل)', style: 'tableHeader'}, {text: 'وارد (+)', style: 'tableHeader'}, {text: 'صادر (-)', style: 'tableHeader'}] ];
+                data.txs.forEach(t => {
+                    const dt = new Date(t.createdAt); const timeStr = data.type==='day' ? dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : `${dt.getDate()}/${dt.getMonth()+1} ${dt.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'})}`;
+                    let inAmt = 0; let outAmt = 0; let desc = t.type + (t.note ? ` (${t.note})` : '');
+                    if (t.type === 'bank_transfer') { if (t.toBankId === data.bankId) inAmt = t.amount; else outAmt = t.amount; } else if (t.bankAmount > 0) { if (['sale', 'revenue', 'debt_payment', 'opening_balance', 'deposit'].includes(t.type)) inAmt = t.bankAmount; else outAmt = t.bankAmount; }
+                    bodyData.push([ {text: timeStr, fontSize: 10, alignment: 'center'}, {text: desc, fontSize: 10, alignment: 'right'}, {text: inAmt > 0 ? inAmt.toLocaleString() : '', fontSize: 10, color: 'green', alignment: 'center'}, {text: outAmt > 0 ? outAmt.toLocaleString() : '', fontSize: 10, color: 'red', alignment: 'center'} ]);
+                });
+                bodyData.push([ {text: 'الإجمالي النهائي', colSpan: 2, bold: true, alignment: 'left', fillColor: '#f1f5f9', fontSize: 11}, {}, {text: data.in.toLocaleString(), bold: true, color: 'green', alignment: 'center', fillColor: '#dcfce7', fontSize: 11}, {text: data.out.toLocaleString(), bold: true, color: 'red', alignment: 'center', fillColor: '#fee2e2', fontSize: 11} ]);
+                const docDefinition = { pageSize: 'A4', pageMargins: [20, 30, 20, 30], defaultStyle: { font: 'Tajawal', fontSize: 10, direction: 'rtl' }, styles: { tableHeader: { bold: true, fillColor: '#1a4585', color: 'white', alignment: 'center', margin: [0, 5, 0, 5] } }, content: [ { text: this.state.name, fontSize: 18, bold: true, alignment: 'center', margin: [0,0,0,5] }, { text: `كشف حساب للبنك (${typeName}): ${bankName}`, fontSize: 14, alignment: 'center', color: '#666', margin: [0,0,0,5] }, { text: `تاريخ التقرير: ${data.date}`, fontSize: 12, alignment: 'center', bold: true, margin: [0,0,0,20] }, { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto'], body: bodyData }, layout: 'lightHorizontalLines' }, { text: `صافي حركة البنك للفترة: ${data.net.toLocaleString()} MRU`, fontSize: 12, bold: true, alignment: 'right', margin: [0, 20, 0, 0] } ] }; pdfMake.createPdf(docDefinition).download(`Bank_Report_${bankName}_${data.date}.pdf`);
+            },
 
             listSuppliers: async function(div) { div.innerHTML = `<div style="display:flex; justify-content:space-between;"><h3>${this.t('supp')}</h3><button onclick="app.addSuppModal()" class="btn btn-prim" style="width:auto;">+</button></div><input id="searchSupp" class="inp" placeholder="${this.t('search')}" onkeyup="app.filterTable('searchSupp', 'supTbl')"><div class="card"><div class="table-scroll"><table id="supTbl"><thead><tr><th>${this.t('th_name')}</th><th>${this.t('adm_phone')}</th><th>${this.t('supp_bal')}</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>`; const s = await this.getData('suppliers'); s.sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance)); let h=''; s.forEach(b => { h += `<tr><td>${b.name}</td><td>${b.phone||'-'}</td><td style="color:${b.balance>0?'red':'green'}">${(b.balance || 0).toLocaleString()}</td><td><button onclick="app.paySupplierDebt('${b.id}','${b.name}')" class="btn btn-sec" style="padding:5px; font-size:12px;">${this.t('pay_supp')}</button> <button onclick="app.viewStatement('${b.id}','supplier','${b.name}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">${this.t('stmt')}</button> <button onclick="app.del('${b.id}', 'suppliers')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.querySelector('#supTbl tbody').innerHTML = h || '<tr><td colspan="4">-</td></tr>'; },
             addSuppModal: function() { this.showModal(this.t('new_supp'), `<input id="nsName" class="inp" placeholder="${this.t('th_name')}"><input id="nsPhone" class="inp" placeholder="${this.t('adm_phone')}">`, async () => { const n=document.getElementById('nsName').value, p=document.getElementById('nsPhone').value; if(n) { const ref = db.collection('suppliers').doc(); ref.set({companyId:this.state.cid, name:n, phone:p, balance:0, createdAt:new Date().toISOString()}).catch(e=>console.error(e)); this.clearCache('suppliers'); this.nav('suppliers'); } }); },
@@ -1118,42 +1148,42 @@
 
             addExpenseModal: async function() {
                 const banks = await this.getData('banks');
-                let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`;
+                let bOpts = `<option value="">-- اختر البنك --</option>`;
                 banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
 
                 const html = `
-                    <label style="font-size:12px; font-weight:bold;">${this.t('exp_type')}</label>
+                    <label style="font-size:12px; font-weight:bold;">نوع المصروف</label>
                     <select id="expCategory" class="select-box" onchange="app.handleExpenseCategoryChange()">
-                        <option value="">-- ${this.t('exp_type')} --</option>
-                        <option value="الماء">${this.t('exp_water')}</option>
-                        <option value="الكهرباء">${this.t('exp_elec')}</option>
-                        <option value="الضريبة">${this.t('exp_tax')}</option>
-                        <option value="الإيجار">${this.t('exp_rent')}</option>
-                        <option value="عمولة التحويلات البنكية">${this.t('exp_bank_com')}</option>
-                        <option value="عمولة السحب">${this.t('exp_draw_com')}</option>
-                        <option value="أخرى">${this.t('exp_other')}</option>
+                        <option value="">-- اختر النوع --</option>
+                        <option value="الماء">الماء</option>
+                        <option value="الكهرباء">الكهرباء</option>
+                        <option value="الضريبة">الضريبة</option>
+                        <option value="الإيجار">الإيجار</option>
+                        <option value="عمولة التحويلات البنكية">عمولة التحويلات البنكية</option>
+                        <option value="عمولة السحب">عمولة السحب</option>
+                        <option value="أخرى">أخرى</option>
                     </select>
 
                     <div id="taxTypeDiv" style="display:none; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #e2e8f0;">
-                        <label style="font-size:12px; font-weight:bold;">${this.t('exp_tax_type')}</label>
+                        <label style="font-size:12px; font-weight:bold;">نوع الضريبة</label>
                         <select id="taxCategory" class="select-box" style="margin-bottom:0;" onchange="app.handleTaxCategoryChange()">
-                            <option value="">-- ${this.t('exp_tax_type')} --</option>
-                            <option value="الضريبة على صافي الأرباح">${this.t('tax_net')}</option>
-                            <option value="الضريبة على القيمة المضافة (TVA)">${this.t('tax_vat')}</option>
-                            <option value="الضريبة على التحويلات البنكية">${this.t('tax_bank')}</option>
-                            <option value="أخرى">${this.t('exp_other')}</option>
+                            <option value="">-- اختر نوع الضريبة --</option>
+                            <option value="الضريبة على صافي الأرباح">الضريبة على صافي الأرباح</option>
+                            <option value="الضريبة على القيمة المضافة (TVA)">الضريبة على القيمة المضافة (TVA)</option>
+                            <option value="الضريبة على التحويلات البنكية">الضريبة على التحويلات البنكية</option>
+                            <option value="أخرى">أخرى</option>
                         </select>
                     </div>
 
                     <div id="otherExpNameDiv" style="display:none;">
-                        <label style="font-size:12px; font-weight:bold;">${this.t('exp_other_name')}</label>
-                        <input id="otherExpName" class="inp" placeholder="${this.t('exp_other_name')}">
+                        <label style="font-size:12px; font-weight:bold;">اسم المصروف / الضريبة</label>
+                        <input id="otherExpName" class="inp" placeholder="اكتب الاسم هنا">
                     </div>
 
                     <input type="number" id="expAmount" class="inp" placeholder="${this.t('prompt_amount')}">
                     <input id="expNote" class="inp" placeholder="${this.t('prompt_note')}">
 
-                    <label style="font-size:12px; font-weight:bold;">${this.t('pay_method')}</label>
+                    <label style="font-size:12px; font-weight:bold;">طريقة الدفع</label>
                     <select id="expMethod" class="select-box" onchange="document.getElementById('expBankDiv').style.display = this.value==='bank'?'block':'none'">
                         <option value="cash">${this.t('cash')}</option>
                         <option value="bank">${this.t('bank')}</option>
@@ -1164,7 +1194,7 @@
                     </div>
                 `;
 
-                this.showModal(this.t('exp_new'), html, async () => {
+                this.showModal("إضافة مصروف جديد", html, async () => {
                     const cat = document.getElementById('expCategory').value;
                     const taxCat = document.getElementById('taxCategory').value;
                     const otherName = document.getElementById('otherExpName').value;
@@ -1173,8 +1203,8 @@
                     const bid = document.getElementById('expBank').value;
                     const note = document.getElementById('expNote').value;
 
-                    if(!cat || !amt) return alert(this.t('err_exp_fields'));
-                    if(cat === 'الضريبة' && !taxCat) return alert(this.t('err_tax_fields'));
+                    if(!cat || !amt) return alert("يرجى إدخال نوع المصروف والمبلغ!");
+                    if(cat === 'الضريبة' && !taxCat) return alert("يرجى اختيار نوع الضريبة!");
 
                     let finalName = cat;
                     if(cat === 'الضريبة') {
@@ -1267,39 +1297,39 @@
 
             bankTransferModal: async function() {
                 const banks = await this.getData('banks');
-                if(banks.length < 2) return alert(this.t('err_bank_min'));
+                if(banks.length < 2) return alert("عذراً، يجب أن يكون لديك بنكين على الأقل لإجراء تحويل داخلي.");
                 
-                let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`;
+                let bOpts = `<option value="">-- اختر البنك --</option>`;
                 banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`);
 
                 const html = `
                     <div style="background:#f1f5f9; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                        <label style="color:var(--danger); font-weight:bold;">${this.t('tr_bank_from')}</label>
+                        <label style="color:var(--danger); font-weight:bold;">من بنك (المرسل - يُخصم منه)</label>
                         <select id="trFromBank" class="select-box" style="margin-bottom:10px;">${bOpts}</select>
                         
-                        <label style="color:var(--success); font-weight:bold;">${this.t('tr_bank_to')}</label>
+                        <label style="color:var(--success); font-weight:bold;">إلى بنك (المستلم - يُضاف إليه)</label>
                         <select id="trToBank" class="select-box" style="margin-bottom:0;">${bOpts}</select>
                     </div>
-                    <label>${this.t('tr_bank_amt')}</label>
+                    <label>المبلغ المراد تحويله</label>
                     <input type="number" id="trAmount" class="inp" placeholder="${this.t('prompt_amount')}">
-                    <label>${this.t('prompt_note')}</label>
-                    <input id="trNote" class="inp" placeholder="${this.t('prompt_note')}">
+                    <label>ملاحظات</label>
+                    <input id="trNote" class="inp" placeholder="مثال: تغذية حساب">
                 `;
 
-                this.showModal(this.t('tr_bank_title'), html, async () => {
+                this.showModal("تحويل أموال بين البنوك", html, async () => {
                     const fromId = document.getElementById('trFromBank').value;
                     const toId = document.getElementById('trToBank').value;
                     const amt = Number(document.getElementById('trAmount').value);
-                    const note = document.getElementById('trNote').value || this.t('tr_bank_title');
+                    const note = document.getElementById('trNote').value || 'تحويل داخلي بين البنوك';
 
-                    if(!fromId || !toId || !amt) return alert(this.t('err_exp_fields'));
-                    if(fromId === toId) return alert(this.t('err_bank_same'));
-                    if(amt <= 0) return alert(this.t('err_amt_zero'));
+                    if(!fromId || !toId || !amt) return alert("يرجى تعبئة جميع الحقول!");
+                    if(fromId === toId) return alert("لا يمكن التحويل لنفس البنك!");
+                    if(amt <= 0) return alert("المبلغ يجب أن يكون أكبر من صفر.");
 
                     const fromBank = banks.find(b => b.id === fromId);
                     const toBank = banks.find(b => b.id === toId);
 
-                    if(!fromBank || fromBank.balance < amt) return alert(this.t('err_insufficient_bank'));
+                    if(!fromBank || fromBank.balance < amt) return alert(`رصيد البنك المرسل غير كافٍ. (الرصيد: ${fromBank ? fromBank.balance : 0})`);
 
                     const batch = db.batch();
                     const now = new Date().toISOString();
@@ -1307,16 +1337,15 @@
                     batch.update(db.collection('banks').doc(fromId), { balance: firebase.firestore.FieldValue.increment(-amt) });
                     batch.update(db.collection('banks').doc(toId), { balance: firebase.firestore.FieldValue.increment(amt) });
 
-                    // تسجيل الصادر من البنك الأول
-                    const tRefOut = db.collection('transactions').doc();
-                    batch.set(tRefOut, {
-                        companyId: this.state.cid, type: 'bank_transfer_out', bankId: fromId, bankAmount: amt, amount: amt, note: `تحويل إلى بنك: ${toBank.name} - ${note}`, createdAt: now
-                    });
-                    
-                    // تسجيل الوارد للبنك الثاني
-                    const tRefIn = db.collection('transactions').doc();
-                    batch.set(tRefIn, {
-                        companyId: this.state.cid, type: 'bank_transfer_in', bankId: toId, bankAmount: amt, amount: amt, note: `تحويل من بنك: ${fromBank.name} - ${note}`, createdAt: now
+                    const tRef = db.collection('transactions').doc();
+                    batch.set(tRef, {
+                        companyId: this.state.cid,
+                        type: 'bank_transfer',
+                        fromBankId: fromId,
+                        toBankId: toId,
+                        amount: amt,
+                        note: `${note} (من ${fromBank.name} إلى ${toBank.name})`,
+                        createdAt: now
                     });
 
                     await batch.commit();
@@ -1325,7 +1354,6 @@
                     this.nav('banks');
                 });
             },
-
             addSalaryModal: async function() { this.showModal(this.t('sal_new'), `<input id="empName" class="inp" placeholder="${this.t('th_name')}"><input type="number" id="empSalary" class="inp" placeholder="${this.t('sal_fixed')}"><label style="font-size:12px;font-weight:bold;">${this.t('sal_method')}</label><select id="empMethod" class="select-box"><option value="cash">${this.t('pay_cash')}</option><option value="bank">${this.t('pay_bank')}</option></select>`, async () => { const name = document.getElementById('empName').value; const salary = Number(document.getElementById('empSalary').value); const method = document.getElementById('empMethod').value; if(!name || !salary) return alert("يرجى إدخال الاسم والراتب"); const batch = db.batch(); const now = new Date().toISOString(); const empRef = db.collection('salaries').doc(); batch.set(empRef, { companyId: this.state.cid, name: name, baseSalary: salary, defaultMethod: method, totalPaid: 0, createdAt: now }); batch.commit().catch(e=>console.error(e)); this.clearCache('salaries'); this.nav('salaries'); }); },
             viewEmployeeFile: async function(empId, empName, baseSalary) { const ws = document.getElementById('workspace'); ws.innerHTML = '<div class="spinner"></div>'; try { const snaps = await db.collection('transactions').where('companyId', '==', this.state.cid).where('type', '==', 'salary_payment').where('refId', '==', empId).get(); let history = snaps.docs.map(d => d.data()); history.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); let totalPaid = 0; let rows = ''; history.forEach(h => { totalPaid += h.amount; let date = new Date(h.createdAt).toLocaleDateString('en-GB'); let methodTxt = h.method === 'cash' ? this.t('pay_cash') : (h.method === 'bank' ? this.t('pay_bank') : this.t('mixed')); rows += `<tr><td>${date}</td><td>${(h.amount || 0).toLocaleString()}</td><td>${methodTxt}</td><td style="font-size:11px; color:#666;">${h.note || '-'}</td></tr>`; }); const html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><div><button onclick="app.nav('salaries')" class="btn btn-sec" style="width:auto; padding:5px 15px; font-size:12px; margin-bottom:5px;">&larr; ${this.t('sal_back')}</button><h2 style="margin:0; color:var(--primary);">${empName}</h2><small style="color:#666;">${this.t('sal_fixed')}: ${(baseSalary || 0).toLocaleString()}</small></div><div style="text-align:left;"><span style="display:block; font-size:12px;">${this.t('sal_total')}</span><span style="font-weight:bold; font-size:18px; color:green;">${totalPaid.toLocaleString()}</span></div></div><div style="display:flex; gap:10px; margin-bottom:20px;"><button onclick="app.payEmployeeModal('${empId}', '${empName}', ${baseSalary})" class="btn btn-prim"><i class="fa-solid fa-hand-holding-dollar"></i> ${this.t('sal_pay_btn')}</button><button onclick="app.downloadEmpPdf('${empName}', ${baseSalary}, '${encodeURIComponent(JSON.stringify(history))}')" class="btn btn-sec" style="background:#dc2626;"><i class="fa-solid fa-file-pdf"></i> ${this.t('sal_pdf')}</button></div><div class="card"><h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">${this.t('sal_rec')}</h3><div class="table-scroll"><table style="width:100%;"><thead><tr style="background:#f9f9f9;"><th>${this.t('sal_date')}</th><th>${this.t('sal_amount')}</th><th>${this.t('sal_method')}</th><th>${this.t('sal_note')}</th></tr></thead><tbody>${rows || `<tr><td colspan="4" style="text-align:center;">${this.t('sal_none')}</td></tr>`}</tbody></table></div></div>`; ws.innerHTML = html; } catch(e) { console.error(e); ws.innerHTML = `<p style="color:red; text-align:center;">حدث خطأ في تحميل البيانات.</p><button onclick="app.nav('salaries')" class="btn btn-sec">عودة</button>`; } },
             payEmployeeModal: async function(empId, empName, baseSalary) { const banks = await this.getData('banks'); let bOpts = `<option value="">-- ${this.t('select_bank')} --</option>`; banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`); this.showModal(`${this.t('sal_pay_btn')}: ${empName}`, `<label>${this.t('sal_amount')}</label><input type="number" id="payAmount" class="inp" value="${baseSalary}"><label>${this.t('pay_method')}</label><select id="payMethod" class="select-box" onchange="app.toggleSalaryInputs()"><option value="cash">${this.t('pay_cash')}</option><option value="bank">${this.t('bank')}</option><option value="mixed">${this.t('mixed')}</option></select><div id="payDetails"><div id="cashDiv"><input id="pCash" type="number" class="inp" placeholder="${this.t('pay_cash')}" value="${baseSalary}"></div><div id="bankDiv" style="display:none;"><input id="pBank" type="number" class="inp" placeholder="${this.t('pay_bank')}" value="0"><select id="pBankId" class="select-box">${bOpts}</select></div></div><input id="payNote" class="inp" placeholder="${this.t('sal_note')}">`, async () => { const total = Number(document.getElementById('payAmount').value); const method = document.getElementById('payMethod').value; const note = document.getElementById('payNote').value; let cashAmt = 0, bankAmt = 0, bankId = null; if (method === 'cash') { cashAmt = total; } else if (method === 'bank') { bankAmt = total; bankId = document.getElementById('pBankId').value; if(!bankId) return alert(this.t('select_bank')); } else { cashAmt = Number(document.getElementById('pCash').value); bankAmt = Number(document.getElementById('pBank').value); bankId = document.getElementById('pBankId').value; if(cashAmt + bankAmt !== total) return alert("Total mismatch"); if(!bankId && bankAmt > 0) return alert(this.t('select_bank')); } if (bankAmt > 0 && bankId) { const selectedBank = banks.find(b => b.id === bankId); if(selectedBank && selectedBank.balance < bankAmt) return alert(this.t('err_insufficient_bank')); } const batch = db.batch(); const now = new Date().toISOString(); try { if (cashAmt > 0) { await this.processCashTransaction(batch, cashAmt, 'out', `Salary Payment`, empId, empName); } } catch(e) { return alert(e.message); } const tRef = db.collection('transactions').doc(); batch.set(tRef, { companyId: this.state.cid, type: 'salary_payment', refId: empId, employeeName: empName, amount: total, cashAmount: cashAmt, bankAmount: bankAmt, bankId: bankId, method: method, note: note, createdAt: now }); if (bankAmt > 0 && bankId) { batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bankAmt) }); } batch.update(db.collection('salaries').doc(empId), { totalPaid: firebase.firestore.FieldValue.increment(total) }); batch.commit().catch(e=>console.error(e)); this.clearCache('transactions'); this.clearCache('banks'); this.clearCache('salaries'); this.viewEmployeeFile(empId, empName, baseSalary); }); },
