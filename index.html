@@ -1776,39 +1776,53 @@
                 this.hideLoader();
             },
 
-            admin: async function(div) { 
-                // إضافة مربعات الإحصائيات لصفحة المشرف
-                div.innerHTML = `
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <div class="stat-box" style="flex:1; border-color:var(--primary); background:#eff6ff;"><span class="stat-lbl" style="color:var(--primary);font-weight:bold;">الشركات المسجلة</span><span id="admCompCount" class="stat-val">...</span></div>
-                    <div class="stat-box" style="flex:1; border-color:#28a745; background:#f0fdf4;"><span class="stat-lbl" style="color:#28a745;font-weight:bold;">طلبات الدفع</span><span id="admReqCount" class="stat-val">...</span></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                    <button onclick="app.adminViewCodes()" class="btn btn-prim" style="flex:1; min-width:100px;">${this.t('adm_mng_codes')}</button>
-                    <button onclick="app.adminPaymentRequests()" class="btn btn-sec" style="flex:1; background:#28a745; color:white; border:none; min-width:100px;"><i class="fa-solid fa-bell"></i> ${this.t('adm_pay_reqs')}</button>
-                    <button onclick="app.adminViewPromoCodes()" class="btn btn-sec" style="flex:1; background:#8b5cf6; color:white; border:none; min-width:100px;"><i class="fa-solid fa-tags"></i> ${this.t('adm_promos')}</button>
-                </div>
-                <div id="adminWorkArea"></div>
-                `; 
-                
-                // جلب عدد الشركات من قاعدة البيانات
-                db.collection('companies').get().then(snap => {
-                    document.getElementById('admCompCount').innerText = snap.size;
-                }).catch(e => console.log(e));
+          admin: async function(div) { 
+                // إظهار حالة تحميل مؤقتة ريثما يتم جلب الأرقام الدقيقة
+                div.innerHTML = `<div style="text-align:center; padding:50px;"><div class="spinner"></div><p style="margin-top:10px; color:var(--primary); font-weight:bold;">جاري جلب الإحصائيات الدقيقة...</p></div>`;
 
-                // جلب عدد طلبات الدفع من Supabase
-                const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
-                const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
-                if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' }).then(({data, error}) => {
-                    if(!error && data) { document.getElementById('admReqCount').innerText = data.length; }
-                    else { document.getElementById('admReqCount').innerText = '0'; }
-                });
+                try {
+                    // 1. جلب العدد الفعلي والدقيق للشركات (الأكواد الموجودة حالياً فقط ولم يتم حذفها)
+                    const codesSnap = await db.collection('activation_codes').get();
+                    const exactCompaniesCount = codesSnap.size;
 
-                this.adminViewCodes();
+                    // 2. جلب العدد الدقيق لطلبات الدفع المعلقة من Supabase
+                    let exactRequestsCount = 0;
+                    const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
+                    const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
+                    if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+                    const { data, error } = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
+                    if (!error && data) {
+                        exactRequestsCount = data.length;
+                    }
+
+                    // 3. رسم الواجهة مع الأرقام الحقيقية
+                    div.innerHTML = `
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <div style="flex:1; background:white; border:1px solid var(--border); border-radius:10px; padding:15px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                            <h4 style="margin:0 0 5px 0; color:var(--text-light); font-size:14px; font-weight:bold;">الشركات المسجلة</h4>
+                            <span style="font-size:26px; font-weight:900; color:var(--primary);">${exactCompaniesCount}</span>
+                        </div>
+                        <div style="flex:1; background:white; border:1px solid var(--border); border-radius:10px; padding:15px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                            <h4 style="margin:0 0 5px 0; color:var(--text-light); font-size:14px; font-weight:bold;">طلبات الدفع</h4>
+                            <span style="font-size:26px; font-weight:900; color:#10b981;">${exactRequestsCount}</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+                        <button onclick="app.adminViewCodes()" class="btn btn-prim" style="flex:1; min-width:100px;">${this.t('adm_mng_codes')}</button>
+                        <button onclick="app.adminPaymentRequests()" class="btn btn-sec" style="flex:1; background:#28a745; color:white; border:none; min-width:100px;"><i class="fa-solid fa-bell"></i> ${this.t('adm_pay_reqs')}</button>
+                        <button onclick="app.adminViewPromoCodes()" class="btn btn-sec" style="flex:1; background:#8b5cf6; color:white; border:none; min-width:100px;"><i class="fa-solid fa-tags"></i> ${this.t('adm_promos')}</button>
+                    </div>
+                    <div id="adminWorkArea"></div>
+                    `; 
+                    
+                    this.adminViewCodes();
+
+                } catch (e) {
+                    div.innerHTML = `<div style="padding:20px; text-align:center; color:red;">حدث خطأ في تحميل لوحة التحكم: ${e.message}</div>`;
+                }
             },
-
            adminViewPromoCodes: async function() {
                 const area = document.getElementById('adminWorkArea');
                 area.innerHTML = `
