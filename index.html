@@ -74,6 +74,67 @@
         .promo-input { flex:1; padding:10px; border:1px solid #ccc; border-radius:5px; }
         .promo-btn { padding:10px 15px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer; }
     </style>
+    <!-- Modern SaaS theme overlay + Dark Mode (loaded last to override) -->
+    <link rel="stylesheet" href="modern.css">
+    <script>
+      // Theme bootstrap (runs before paint to avoid flash)
+      (function(){
+        try{
+          var t = localStorage.getItem('teyssir_theme') || 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        }catch(e){}
+      })();
+      window.addEventListener('DOMContentLoaded', function(){
+        var btn = document.createElement('button');
+        btn.className = 'theme-toggle';
+        btn.title = 'تبديل المظهر';
+        btn.setAttribute('aria-label','Toggle theme');
+        var apply = function(){
+          var cur = document.documentElement.getAttribute('data-theme') || 'light';
+          btn.innerHTML = cur === 'dark'
+            ? '<i class="fa-solid fa-sun"></i>'
+            : '<i class="fa-solid fa-moon"></i>';
+        };
+        btn.onclick = function(){
+          var cur = document.documentElement.getAttribute('data-theme') || 'light';
+          var next = cur === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          try{ localStorage.setItem('teyssir_theme', next); }catch(e){}
+          apply();
+        };
+        apply();
+        document.body.appendChild(btn);
+      });
+    </script>
+    <!-- EmailJS: إشعارات تلقائية لطلبات الاشتراك والتجديد -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+      window.TEYSSIR_EMAILJS = {
+        publicKey: 'RcUnzSQiwvgraCtvx',
+        serviceId: 'service_61ncv1i',
+        templateId: 'template_ajxrx1r'
+      };
+      (function(){
+        try { emailjs.init({ publicKey: window.TEYSSIR_EMAILJS.publicKey }); } catch(e) { console.warn('EmailJS init failed', e); }
+      })();
+      // مرسل موحّد لإشعارات طلبات الاشتراك/التجديد إلى teyssirerp@gmail.com
+      window.sendTeyssirEmail = function(payload){
+        try {
+          var now = new Date();
+          var dt = now.toLocaleString('ar-EG', { hour12: false });
+          var params = {
+            user_name: payload.user_name || '',
+            user_email: payload.user_email || '',
+            user_phone: payload.user_phone || '',
+            request_type: payload.request_type || '',
+            request_datetime: dt,
+            to_email: 'teyssirerp@gmail.com'
+          };
+          return emailjs.send(window.TEYSSIR_EMAILJS.serviceId, window.TEYSSIR_EMAILJS.templateId, params)
+            .catch(function(err){ console.warn('EmailJS send failed', err); });
+        } catch(e) { console.warn('sendTeyssirEmail error', e); }
+      };
+    </script>
 </head>
 <body>
     <div id="mainLoader"><div class="spinner"></div><p style="color:var(--primary);font-weight:bold;">Loading...</p></div>
@@ -3933,6 +3994,20 @@
                             currentUsage: firebase.firestore.FieldValue.increment(1)
                         });
                     }
+
+                    // إرسال إشعار تلقائي عبر EmailJS إلى teyssirerp@gmail.com
+                    try {
+                      if (window.sendTeyssirEmail) {
+                        window.sendTeyssirEmail({
+                          user_name: name,
+                          user_email: '',
+                          user_phone: (wa ? ('WhatsApp: ' + wa + ' | ') : '') + 'Tel: ' + phone,
+                          request_type: (reqCategory === 'renew' ? 'تجديد اشتراك' : 'اشتراك جديد')
+                            + ' — ' + (type === 'year' ? 'سنوي' : 'شهري')
+                            + ' — المبلغ: ' + total + ' MRU'
+                        });
+                      }
+                    } catch(e) { console.warn(e); }
 
                     alert("✅ تم إرسال طلبك بنجاح! سيتم مراجعته والتواصل معك عبر الواتساب قريباً.");
                     document.getElementById('genericModal').style.display = 'none'; 
