@@ -1,22 +1,24 @@
 /* =========================================================
-   Teyssir ERP — Modern SaaS Theme Overlay
-   Loaded AFTER inline styles. Uses same class names & vars
-   so all existing JS keeps working. Includes Dark Mode.
+   Teyssir ERP — Modern SaaS Theme + Pro Dark Mode
+   Loaded after style.css. Overrides via existing class names.
    ========================================================= */
 
-/* ---- Design Tokens (light) ---- */
+/* ---------- Light tokens ---------- */
 :root {
-  --primary: #4f46e5;          /* indigo 600 */
-  --primary-600: #4338ca;
-  --primary-50: #eef2ff;
-  --accent: #f59e0b;            /* amber */
-  --accent-2: #06b6d4;          /* cyan */
+  --primary: #1a4585;
+  --primary-600: #15366b;
+  --primary-50: #eef2fb;
+  --accent: #dcb14a;
+  --accent-2: #06b6d4;
   --bg: #f6f7fb;
   --surface: #ffffff;
+  --surface-2: #f9fafb;
   --white: #ffffff;
   --text-dark: #0f172a;
   --text-light: #64748b;
+  --text-muted: #94a3b8;
   --border: #e5e7eb;
+  --border-strong: #cbd5e1;
   --danger: #ef4444;
   --success: #10b981;
   --warning: #f59e0b;
@@ -25,74 +27,97 @@
   --radius-lg: 20px;
   --shadow-sm: 0 1px 2px rgba(15,23,42,.06), 0 1px 1px rgba(15,23,42,.04);
   --shadow-md: 0 6px 20px -8px rgba(15,23,42,.18), 0 2px 6px rgba(15,23,42,.06);
-  --shadow-lg: 0 24px 60px -20px rgba(79,70,229,.35);
-  --grad-primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #06b6d4 100%);
-  --grad-soft: linear-gradient(135deg, #eef2ff 0%, #ecfeff 100%);
+  --shadow-lg: 0 24px 60px -20px rgba(26,69,133,.30);
+  --grad-primary: linear-gradient(135deg, #1a4585 0%, #2c5aa0 60%, #06b6d4 100%);
+  --grad-soft: linear-gradient(135deg, #eef2fb 0%, #ecfeff 100%);
   --header-h: 64px;
 }
 
-/* ---- Dark Mode ---- */
+/* ---------- Dark tokens (ERP-grade, high contrast) ---------- */
 html[data-theme="dark"], body.dark-mode {
-  --bg: #0b1020;
-  --surface: #131a2e;
-  --white: #131a2e;
-  --text-dark: #e2e8f0;
-  --text-light: #94a3b8;
-  --border: #1f2a44;
-  --primary-50: #1e1b4b;
-  --grad-soft: linear-gradient(135deg, #131a2e 0%, #0b1020 100%);
-  --shadow-md: 0 6px 20px -8px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.4);
+  --bg:        #0b0f1a;   /* canvas */
+  --surface:   #121826;   /* cards, header */
+  --surface-2: #1a2233;   /* zebra rows, inputs */
+  --white:     #121826;
+  --text-dark: #f1f5f9;   /* primary text */
+  --text-light:#cbd5e1;   /* secondary text */
+  --text-muted:#94a3b8;
+  --border:        #243049;
+  --border-strong: #334063;
+  --primary:     #6da4ff; /* lighter blue for legibility on dark */
+  --primary-600: #4f86e6;
+  --primary-50:  #1a2540;
+  --accent:      #f0c46b;
+  --grad-soft:   linear-gradient(135deg, #121826 0%, #0b0f1a 100%);
+  --grad-primary:linear-gradient(135deg, #1f3a6b 0%, #2c5aa0 60%, #0ea5b7 100%);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+  --shadow-md: 0 6px 20px -8px rgba(0,0,0,.7), 0 2px 6px rgba(0,0,0,.5);
+  --shadow-lg: 0 24px 60px -20px rgba(0,0,0,.8);
   color-scheme: dark;
 }
 
-/* ---- Base ---- */
-html, body { background: var(--bg) !important; color: var(--text-dark) !important; }
-body { font-family: 'Tajawal', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
-       font-feature-settings: "ss01","cv11"; -webkit-font-smoothing: antialiased; }
+/* ---------- Smooth theme switch ---------- */
+html { transition: background-color .3s ease, color .3s ease; }
+body, .card, .top-header, .sidebar, .modal-box, .auth-card, .stat-box,
+.chart-box, .filters-bar, input, select, textarea, th, td {
+  transition: background-color .25s ease, color .25s ease,
+              border-color .25s ease, box-shadow .25s ease;
+}
 
-/* Soft animated backdrop */
+/* ---------- Base ---------- */
+html, body { background: var(--bg) !important; color: var(--text-dark) !important; }
+body {
+  font-family: 'Tajawal', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle backdrop (lighter in dark to avoid noise) */
 body::before{
   content:""; position:fixed; inset:-20%; z-index:-1; pointer-events:none;
   background:
-    radial-gradient(40rem 40rem at 10% 0%, rgba(99,102,241,.10), transparent 60%),
-    radial-gradient(35rem 35rem at 100% 10%, rgba(6,182,212,.10), transparent 60%),
-    radial-gradient(30rem 30rem at 50% 100%, rgba(245,158,11,.08), transparent 60%);
-  animation: floatBg 18s ease-in-out infinite alternate;
+    radial-gradient(40rem 40rem at 10% 0%,   rgba(26,69,133,.10), transparent 60%),
+    radial-gradient(35rem 35rem at 100% 10%, rgba(6,182,212,.08), transparent 60%);
 }
-@keyframes floatBg { from{transform:translateY(-10px)} to{transform:translateY(10px)} }
+html[data-theme="dark"] body::before{
+  background:
+    radial-gradient(40rem 40rem at 10% 0%,   rgba(109,164,255,.06), transparent 60%),
+    radial-gradient(35rem 35rem at 100% 10%, rgba(14,165,183,.05), transparent 60%);
+}
 
-/* ---- Loader ---- */
-#mainLoader { background: var(--grad-soft) !important; }
-.spinner { border-top-color: var(--primary) !important;
-           box-shadow: 0 0 30px rgba(79,70,229,.3); }
+/* ---------- Loader ---------- */
+#mainLoader { background: var(--bg) !important; }
+.spinner    { border-top-color: var(--primary) !important; }
 
-/* ---- Buttons ---- */
-.btn { border-radius: 12px !important; font-weight: 700 !important;
-       letter-spacing: .2px; transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
-       box-shadow: var(--shadow-sm); }
-.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); filter: brightness(1.03); }
+/* ---------- Buttons ---------- */
+.btn {
+  border-radius: 12px !important; font-weight: 700 !important;
+  transition: transform .15s ease, box-shadow .2s ease, filter .2s ease, background .2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover  { transform: translateY(-1px); box-shadow: var(--shadow-md); filter: brightness(1.04); }
 .btn:active { transform: translateY(0) scale(.98); }
-.btn-prim { background: var(--grad-primary) !important; color:#fff !important; border:none; }
-.btn-sec  { background: linear-gradient(135deg, #f59e0b, #f97316) !important; color:#fff !important; }
-.btn-dan  { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; }
-.btn-success { background: linear-gradient(135deg, #10b981, #059669) !important; }
-.btn-warn { background: linear-gradient(135deg, #f59e0b, #d97706) !important; }
+.btn-prim    { background: var(--grad-primary) !important; color:#fff !important; border:none; }
+.btn-sec     { background: linear-gradient(135deg,#f59e0b,#f97316) !important; color:#fff !important; }
+.btn-dan     { background: linear-gradient(135deg,#ef4444,#b91c1c) !important; color:#fff !important; }
+.btn-success { background: linear-gradient(135deg,#10b981,#059669) !important; color:#fff !important; }
+.btn-warn    { background: linear-gradient(135deg,#f59e0b,#d97706) !important; color:#fff !important; }
 
-/* ---- Inputs ---- */
+/* ---------- Inputs ---------- */
 .inp, .select-box, input, select, textarea {
-  background: var(--surface) !important; color: var(--text-dark) !important;
+  background: var(--surface-2) !important; color: var(--text-dark) !important;
   border: 1px solid var(--border) !important; border-radius: 12px !important;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
+.inp::placeholder, input::placeholder, textarea::placeholder { color: var(--text-muted) !important; }
 .inp:focus, .select-box:focus, input:focus, select:focus, textarea:focus {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 18%, transparent) !important;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 22%, transparent) !important;
   outline: none !important;
 }
+html[data-theme="dark"] select option { background: var(--surface); color: var(--text-dark); }
 
-/* ---- Header / Sidebar ---- */
+/* ---------- Header / Sidebar ---------- */
 .top-header {
-  background: color-mix(in oklab, var(--surface) 85%, transparent) !important;
+  background: color-mix(in oklab, var(--surface) 92%, transparent) !important;
   backdrop-filter: saturate(160%) blur(10px);
   -webkit-backdrop-filter: saturate(160%) blur(10px);
   border-bottom: 1px solid var(--border) !important;
@@ -102,111 +127,155 @@ body::before{
 .header-title {
   background: var(--grad-primary); -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent !important;
-  font-weight: 800 !important; letter-spacing: .3px;
+  font-weight: 800 !important;
 }
 .menu-btn { color: var(--primary) !important; }
 
-.sidebar { background: var(--surface) !important; border-color: var(--border) !important;
-           box-shadow: 0 30px 60px -30px rgba(15,23,42,.25); }
-.nav-item { border-radius: 10px; margin: 4px 10px; padding: 12px 16px !important;
-            color: var(--text-light) !important; transition: all .15s ease; }
-.nav-item:hover { background: var(--primary-50) !important; color: var(--primary) !important;
-                  transform: translateX(-2px); }
-html[dir="ltr"] .nav-item:hover { transform: translateX(2px); }
-.nav-item.active {
-  background: var(--grad-primary) !important; color: #fff !important;
-  box-shadow: var(--shadow-lg);
-  border-color: transparent !important;
+.sidebar {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 30px 60px -30px rgba(0,0,0,.5);
 }
-.nav-item.active i { color: #fff !important; }
+.nav-item {
+  border-radius: 10px; margin: 4px 10px; padding: 12px 16px !important;
+  color: var(--text-light) !important;
+}
+.nav-item:hover {
+  background: var(--primary-50) !important;
+  color: var(--primary) !important;
+}
+.nav-item.active {
+  background: var(--grad-primary) !important; color:#fff !important;
+  box-shadow: var(--shadow-lg); border-color: transparent !important;
+}
+.nav-item.active i { color:#fff !important; }
 
-/* ---- Cards / Tables ---- */
+/* ---------- Cards / Tables ---------- */
 .card {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-md) !important;
-  transition: transform .2s ease, box-shadow .2s ease;
+  color: var(--text-dark) !important;
 }
-.card:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -20px rgba(15,23,42,.25); }
+.card h1, .card h2, .card h3, .card h4 { color: var(--text-dark) !important; }
 
 .table-scroll { border-radius: var(--radius) !important; border-color: var(--border) !important; }
-table { background: var(--surface); }
-th { background: var(--primary-50) !important; color: var(--primary) !important;
-     text-transform: uppercase; font-size: 12px !important; letter-spacing: .5px; }
+table { background: var(--surface) !important; color: var(--text-dark) !important; }
+th {
+  background: var(--primary-50) !important; color: var(--primary) !important;
+  font-size: 12px !important; letter-spacing:.5px;
+  border-bottom: 1px solid var(--border) !important;
+}
 td { color: var(--text-dark) !important; border-color: var(--border) !important; }
-tbody tr { transition: background .15s ease; }
-tbody tr:hover { background: color-mix(in oklab, var(--primary) 6%, transparent); }
+tbody tr:nth-child(even) td { background: var(--surface-2); }
+tbody tr:hover td { background: color-mix(in oklab, var(--primary) 12%, transparent) !important; }
 
-/* ---- Stats / Treasury ---- */
+/* ---------- Stats / Treasury / Charts ---------- */
 .stat-box, .chart-box {
   background: var(--surface) !important; border:1px solid var(--border) !important;
   border-radius: var(--radius) !important; box-shadow: var(--shadow-sm);
+  color: var(--text-dark) !important;
 }
 .stat-val { color: var(--primary) !important; }
+.stat-lbl { color: var(--text-light) !important; }
+.chart-box h4 { color: var(--primary) !important; }
+
 .treasury-card {
   background: var(--grad-primary) !important;
   box-shadow: var(--shadow-lg) !important;
   border-radius: var(--radius-lg) !important;
+  color:#fff !important;
+}
+.treasury-card * { color:#fff !important; }
+
+/* ---------- Filters / misc surfaces ---------- */
+.filters-bar, .tr-filter-wrap, .promo-box, .perm-grid, .rep-prod-item, .perm-item, .inv-warn-box {
+  background: var(--surface-2) !important; color: var(--text-dark) !important;
+  border:1px solid var(--border) !important; border-radius: var(--radius) !important;
+}
+.inv-warn-box { background: color-mix(in oklab, var(--warning) 18%, var(--surface)) !important;
+                color: var(--text-dark) !important; border-color: color-mix(in oklab, var(--warning) 35%, var(--border)) !important; }
+
+/* ---------- Home cards ---------- */
+.home-card {
+  background: var(--surface) !important; color: var(--text-dark) !important;
+  border:1px solid var(--border) !important; box-shadow: var(--shadow-sm) !important;
+}
+.home-card i { color: var(--primary) !important; }
+.home-card h3 { color: var(--text-dark) !important; }
+.home-card.full-width { background: var(--grad-primary) !important; border:none !important; }
+.home-card.full-width i, .home-card.full-width h3 { color:#fff !important; }
+
+/* ---------- Autocomplete dropdown ---------- */
+.ac-list { background: var(--surface) !important; border-color: var(--border) !important; }
+.ac-item { color: var(--text-dark) !important; border-color: var(--border) !important; }
+.ac-item:hover { background: var(--primary-50) !important; color: var(--primary) !important; }
+
+/* ---------- Modals ---------- */
+.modal-overlay { background: rgba(2,6,16,.65) !important; backdrop-filter: blur(6px); }
+.modal-box, .welcome-content {
+  background: var(--surface) !important; color: var(--text-dark) !important;
+  border-radius: 20px !important; border: 1px solid var(--border) !important;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.6) !important;
 }
 
-/* ---- Filters Bar ---- */
-.filters-bar { background: var(--grad-soft) !important; border:1px solid var(--border);
-               border-radius: var(--radius) !important; }
-
-/* ---- Auth ---- */
+/* ---------- Auth ---------- */
 .auth-wrap { background: var(--grad-soft) !important; }
 .auth-card {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 24px !important;
-  box-shadow: 0 30px 80px -30px rgba(79,70,229,.35) !important;
-  backdrop-filter: blur(12px);
+  background: var(--surface) !important; border:1px solid var(--border) !important;
+  border-radius: 24px !important; box-shadow: var(--shadow-lg) !important;
 }
 
-/* ---- Modals ---- */
-.modal-overlay { background: rgba(15,23,42,.55) !important; backdrop-filter: blur(6px); }
-.modal-box, .welcome-content {
-  background: var(--surface) !important; color: var(--text-dark);
-  border-radius: 20px !important; border: 1px solid var(--border);
-  box-shadow: 0 30px 80px -20px rgba(15,23,42,.45) !important;
-}
+/* ---------- Status / badges ---------- */
+.conn-online  { background: linear-gradient(135deg,#10b981,#059669) !important; color:#fff !important; }
+.conn-offline { background: linear-gradient(135deg,#ef4444,#b91c1c) !important; color:#fff !important; }
+.stock-ok     { background: color-mix(in oklab, var(--success) 25%, var(--surface)) !important; color: var(--success) !important; }
+.stock-no     { background: color-mix(in oklab, var(--danger)  25%, var(--surface)) !important; color: var(--danger)  !important; }
 
-/* ---- Status / Misc ---- */
-.conn-online  { background: linear-gradient(135deg,#10b981,#059669) !important; }
-.conn-offline { background: linear-gradient(135deg,#ef4444,#b91c1c) !important; }
-.status-badge { box-shadow: var(--shadow-sm); }
-
-/* ---- Home FAB ---- */
-.home-float-btn {
-  background: var(--grad-primary) !important; box-shadow: var(--shadow-lg) !important;
-  width: 56px !important; height: 56px !important;
-}
-
-/* ---- Theme toggle (auto-injected via JS below) ---- */
-.theme-toggle {
-  position: fixed; top: 15px; z-index: 20000;
-  width: 40px; height: 40px; border-radius: 12px; border:none; cursor:pointer;
-  background: var(--surface); color: var(--primary); box-shadow: var(--shadow-md);
-  display:flex; align-items:center; justify-content:center; font-size:18px;
-  transition: transform .15s ease;
-}
-.theme-toggle:hover { transform: scale(1.05); }
-html[dir="rtl"] .theme-toggle { left: 115px; }
-html[dir="ltr"] .theme-toggle { right: 115px; }
-
-/* ---- Scrollbar ---- */
+/* ---------- Scrollbar ---------- */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--primary) 35%, transparent);
-                              border-radius: 10px; }
+*::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--primary) 40%, transparent); border-radius: 10px; }
 *::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-/* ---- Subtle entrance animations ---- */
-.card, .auth-card, .modal-box, .welcome-content { animation: rise .35s cubic-bezier(.2,.7,.2,1) both; }
+/* ---------- Theme toggle button (repositioned: bottom-corner FAB) ----------
+   Anchored to the bottom corner opposite to the home FAB so it never
+   overlaps stats, forms, tables, action buttons, charts, or mobile content.
+*/
+.theme-toggle {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 44px; height: 44px; border-radius: 50%;
+  border:none; cursor:pointer; z-index: 9998;
+  background: var(--surface); color: var(--primary);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+  transition: transform .25s ease, background .25s ease, color .25s ease, box-shadow .2s ease;
+}
+.theme-toggle:hover  { transform: scale(1.08) rotate(12deg); box-shadow: var(--shadow-lg), 0 0 0 1px var(--primary); }
+.theme-toggle:active { transform: scale(.95); }
+.theme-toggle i { transition: transform .35s ease; }
+html[data-theme="dark"] .theme-toggle i { transform: rotate(180deg); }
+
+/* RTL: place opposite to the home FAB which sits at left in RTL */
+html[dir="rtl"] .theme-toggle { right: 20px; }
+html[dir="ltr"] .theme-toggle { left: 20px; }
+
+/* Push it above the bottom-nav / FAB clusters on small screens */
+@media (max-width: 768px) {
+  .theme-toggle { bottom: calc(90px + env(safe-area-inset-bottom, 0px)); width: 42px; height: 42px; }
+}
+
+/* ---------- Entrance animation ---------- */
+.card, .auth-card, .modal-box, .welcome-content {
+  animation: rise .3s cubic-bezier(.2,.7,.2,1) both;
+}
 @keyframes rise { from{opacity:0; transform: translateY(8px)} to{opacity:1; transform:none} }
 
-/* ---- Print: keep existing behavior ---- */
+/* ---------- Print ---------- */
 @media print {
   body::before, .theme-toggle { display:none !important; }
+  body { background:#fff !important; color:#000 !important; }
+  .card { box-shadow:none !important; border:1px solid #ddd !important; }
 }

@@ -184,7 +184,43 @@
             if (e.ctrlKey && e.keyCode == 85) { e.preventDefault(); return false; } 
         });
 
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW failed', err));
+        if ('serviceWorker' in navigator) {
+          (function setupSWUpdate(){
+            let reloading = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (reloading) return;
+              reloading = true;
+              window.location.reload();
+            });
+            function showUpdateBanner(worker){
+              if (document.getElementById('swUpdateBanner')) return;
+              const bar = document.createElement('div');
+              bar.id = 'swUpdateBanner';
+              bar.setAttribute('dir','rtl');
+              bar.style.cssText = 'position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#1a4585,#2563eb);color:#fff;padding:12px 18px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-family:Tajawal,system-ui,sans-serif;display:flex;align-items:center;gap:14px;max-width:92vw;';
+              bar.innerHTML = '<span style="font-weight:600"><i class="fa-solid fa-cloud-arrow-down"></i> تحديث جديد متاح للتطبيق</span>' +
+                              '<button id="swUpdateBtn" style="background:#fff;color:#1a4585;border:0;padding:8px 16px;border-radius:10px;font-weight:700;cursor:pointer">تحديث الآن</button>' +
+                              '<button id="swUpdateLater" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:8px 12px;border-radius:10px;cursor:pointer">لاحقًا</button>';
+              document.body.appendChild(bar);
+              document.getElementById('swUpdateBtn').onclick = () => {
+                document.getElementById('swUpdateBtn').textContent = 'جارٍ التحديث...';
+                worker.postMessage({ type: 'SKIP_WAITING' });
+              };
+              document.getElementById('swUpdateLater').onclick = () => bar.remove();
+            }
+            navigator.serviceWorker.register('./service-worker.js').then((reg) => {
+              if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting);
+              reg.addEventListener('updatefound', () => {
+                const nw = reg.installing;
+                if (!nw) return;
+                nw.addEventListener('statechange', () => {
+                  if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner(nw);
+                });
+              });
+              setInterval(() => reg.update().catch(()=>{}), 60 * 60 * 1000);
+            }).catch(err => console.log('SW failed', err));
+          })();
+        }
         let deferredPrompt; window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; const btn=document.getElementById('installBtn'); if(btn) btn.style.display = 'block'; });
         const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
         const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);

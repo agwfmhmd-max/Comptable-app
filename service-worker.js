@@ -1,64 +1,120 @@
-const CACHE_NAME = 'teyssir-erp-v1';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './style.css',
-  './logo.png',
-  './manifest.json',
-  
-  // مكتبات Firebase
-  'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js',
-  'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js',
-  
-  // مكتبات التصميم والخطوط
-  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  
-  // الخط العربي (مهم للـ PDF)
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-Regular.ttf'
+/* Teyssir ERP — Service Worker (offline-first)
+   Strategy:
+   - Shell (HTML/CSS/JS/icons): cache-first with background revalidation.
+   - CDN libs (fonts, font-awesome, chart.js, pdfmake, firebase SDK): cache-first.
+   - Navigation requests (HTML): network-first, fallback to cached index.
+   - Firestore / Firebase APIs / EmailJS: bypass SW entirely (Firebase handles
+     its own offline persistence & sync via IndexedDB).
+*/
+const VERSION       = 'teyssir-v3-2026-06-11';
+const SHELL_CACHE   = `shell-${VERSION}`;
+const RUNTIME_CACHE = `runtime-${VERSION}`;
+const SCOPE_PREFIX  = '/erp/';
+
+const SHELL = [
+  '/erp/',
+  '/erp/index.html',
+  '/erp/style.css',
+  '/erp/modern.css',
+  '/erp/script.js',
+  '/erp/manifest.json',
+  '/erp/logo.png',
+  '/erp/icon-192.png',
+  '/erp/icon-512.png',
 ];
 
-// 1. تثبيت التطبيق وتخزين الملفات
+const CDN_HOSTS = [
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdnjs.cloudflare.com',
+  'cdn.jsdelivr.net',
+  'www.gstatic.com',
+];
+
+// Hosts the SW must NEVER intercept (Firebase handles its own offline + sync).
+const BYPASS_HOSTS = [
+  'firestore.googleapis.com',
+  'firebase.googleapis.com',
+  'firebaseinstallations.googleapis.com',
+  'identitytoolkit.googleapis.com',
+  'securetoken.googleapis.com',
+  'api.emailjs.com',
+];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching assets...');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL).catch(() => {}))
   );
 });
 
-// 2. تفعيل الكاش وحذف القديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.filter((k) => k !== SHELL_CACHE && k !== RUNTIME_CACHE).map((k) => caches.delete(k))
       );
-    })
+      await self.clients.claim();
+    })()
   );
 });
 
-// 3. جلب الملفات (استخدام الكاش عند انقطاع النت)
+self.addEventListener('message', (e) => {
+  const data = e.data;
+  if (data === 'SKIP_WAITING' || (data && data.type === 'SKIP_WAITING')) self.skipWaiting();
+});
+
+function isBypass(url) {
+  return BYPASS_HOSTS.some((h) => url.hostname.endsWith(h));
+}
+function isCdn(url) {
+  return CDN_HOSTS.some((h) => url.hostname === h);
+}
+function isShellPath(url) {
+  return url.origin === self.location.origin && url.pathname.startsWith(SCOPE_PREFIX);
+}
+
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      // إذا وجد الملف في الكاش، استخدمه (Offline Mode)
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      // إذا لم يوجد، حاول جلبه من الإنترنت
-      return fetch(event.request).catch(() => {
-        // إذا فشل النت أيضاً، يمكن إرجاع صفحة خطأ مخصصة هنا (اختياري)
-      });
-    })
-  );
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  let url;
+  try { url = new URL(req.url); } catch { return; }
+
+  if (isBypass(url)) return; // let Firebase / EmailJS go to network directly
+
+  // Navigation → network-first, fallback to cached index
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const fresh = await fetch(req);
+          const cache = await caches.open(SHELL_CACHE);
+          cache.put('/erp/index.html', fresh.clone()).catch(() => {});
+          return fresh;
+        } catch {
+          const cache = await caches.open(SHELL_CACHE);
+          return (await cache.match(req)) || (await cache.match('/erp/index.html')) || Response.error();
+        }
+      })()
+    );
+    return;
+  }
+
+  // Shell + CDN assets → cache-first w/ background revalidation
+  if (isShellPath(url) || isCdn(url)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(isShellPath(url) ? SHELL_CACHE : RUNTIME_CACHE);
+        const cached = await cache.match(req);
+        const network = fetch(req).then((res) => {
+          if (res && res.status === 200 && (res.type === 'basic' || res.type === 'cors')) {
+            cache.put(req, res.clone()).catch(() => {});
+          }
+          return res;
+        }).catch(() => null);
+        return cached || (await network) || Response.error();
+      })()
+    );
+  }
 });
