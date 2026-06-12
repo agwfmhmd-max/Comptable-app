@@ -6,7 +6,7 @@
    - Firestore / Firebase APIs / EmailJS: bypass SW entirely (Firebase handles
      its own offline persistence & sync via IndexedDB).
 */
-const VERSION       = 'teyssir-v4-2026-06-11';
+const VERSION       = 'teyssir-v5-2026-06-12';
 const SHELL_CACHE   = `shell-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
 const SCOPE_PREFIX  = '/erp/';
@@ -16,6 +16,7 @@ const SHELL = [
   '/erp/index.html',
   '/erp/style.css',
   '/erp/modern.css',
+  '/erp/erp-enhancements.js',
   '/erp/script.js',
   '/erp/manifest.json',
   '/erp/logo.png',

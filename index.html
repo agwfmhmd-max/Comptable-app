@@ -143,7 +143,7 @@
     
     <div id="subAlertBox" class="sub-alert-box"><i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i><div class="sub-alert-text" data-key="msg_warn">اشتراكك ينتهي قريباً!</div><a href="https://wa.me/22224241012" class="sub-wa-btn" target="_blank"><i class="fa-brands fa-whatsapp"></i></a></div>
     
-    <div id="genericModal" class="modal-overlay"><div class="modal-box"><h3 id="modalTitle" style="margin-top:0; color:var(--primary);">عنوان</h3><div id="modalContent"></div><div style="display:flex; gap:10px; margin-top:20px;"><button id="modalActionBtn" class="btn btn-prim">حفظ</button><button onclick="document.getElementById('genericModal').style.display='none'" class="btn btn-sec" style="background:#ccc; color:#333">إغلاق</button></div></div></div>
+    <div id="genericModal" class="modal-overlay" style="z-index:100000;"><div class="modal-box"><h3 id="modalTitle" style="margin-top:0; color:var(--primary);">عنوان</h3><div id="modalContent"></div><div style="display:flex; gap:10px; margin-top:20px;"><button id="modalActionBtn" class="btn btn-prim">حفظ</button><button onclick="document.getElementById('genericModal').style.display='none'" class="btn btn-sec" style="background:#ccc; color:#333">إغلاق</button></div></div></div>
     
     <div id="welcomeModal" class="welcome-modal"><div class="welcome-content"><img src="logo.png" style="width:100px; margin-bottom:15px; border-radius:15px;"><h2 style="color:var(--primary); margin-top:0;" data-key="w_title">أهلاً بك في Teyssir ERP</h2><p style="color:#666; font-size:16px;">النظام المالي المتكامل.</p><a href="https://wa.me/22224241012" class="wa-link" style="margin-bottom:20px; justify-content:center;"><i class="fa-brands fa-whatsapp"></i> <span data-key="cont">تواصل للتفعيل</span></a><button onclick="app.closeWelcome()" class="btn btn-prim" style="width:100%;" data-key="w_btn">ابدأ الآن</button></div></div>
     
@@ -1832,34 +1832,46 @@
                 banks.forEach(b => bOpts += `<option value="${b.id}">${b.name}</option>`); 
                 this.showModal(this.t('pay_supp'), 
                     `<p>Supplier: <b>${sname}</b></p>
-                    <input type="number" id="psAmount" class="inp" placeholder="${this.t('prompt_amount')}">
-                    <select id="psMethod" class="select-box" onchange="document.getElementById('psBankDiv').style.display = this.value==='bank'?'block':'none'">
+                    <input type="number" id="psAmount" class="inp" placeholder="${this.t('prompt_amount')}" oninput="(function(){var m=document.getElementById('psMethod').value;if(m==='cash'){document.getElementById('psCash').value=this.value;}else if(m==='bank'){document.getElementById('psBank2').value=this.value;}}).call(this)">
+                    <label>${this.t('pay_method') || 'طريقة الدفع'}</label>
+                    <select id="psMethod" class="select-box" onchange="app.togglePsInputs()">
                         <option value="cash">${this.t('cash')}</option>
                         <option value="bank">${this.t('bank')}</option>
+                        <option value="mixed">${this.t('mixed') || 'مختلط'}</option>
                     </select>
-                    <div id="psBankDiv" style="display:none;"><select id="psBank" class="select-box">${bOpts}</select></div>`, 
+                    <div id="psCashDiv"><input id="psCash" type="number" class="inp" placeholder="${this.t('cash')}" value="0"></div>
+                    <div id="psBankDiv" style="display:none;">
+                        <input id="psBank2" type="number" class="inp" placeholder="${this.t('bank')}" value="0">
+                        <select id="psBank" class="select-box">${bOpts}</select>
+                    </div>`, 
                     async () => { 
                         const amt = Number(document.getElementById('psAmount').value); 
                         const method = document.getElementById('psMethod').value; 
-                        const bid = document.getElementById('psBank').value; 
+                        const bid = document.getElementById('psBank').value;
+                        let cAmt = 0, bAmt = 0;
+                        if(method === 'cash') { cAmt = amt; }
+                        else if(method === 'bank') { bAmt = amt; }
+                        else {
+                            cAmt = Number(document.getElementById('psCash').value) || 0;
+                            bAmt = Number(document.getElementById('psBank2').value) || 0;
+                            if (cAmt + bAmt !== amt) return alert("مجموع النقد والبنك يجب أن يساوي المبلغ الكلي");
+                        }
                         if(!amt) return; 
-                        if(method==='bank' && !bid) return alert(this.t('select_bank')); 
+                        if((method==='bank' || (method==='mixed' && bAmt>0)) && !bid) return alert(this.t('select_bank'));
                         const suppliers = await this.getData('suppliers'); 
                         const supplier = suppliers.find(s => s.id === sid); 
                         if(supplier && amt > Number(supplier.balance || 0)) { 
                             return alert(this.t('err_excess_supp_debt') + " (" + supplier.balance + ")"); 
                         } 
-                        if(method === 'bank' && bid) { 
+                        if(bAmt > 0 && bid) { 
                             const selectedBank = banks.find(b => b.id === bid); 
-                            if(selectedBank && selectedBank.balance < amt) return alert(this.t('err_insufficient_bank')); 
+                            if(selectedBank && selectedBank.balance < bAmt) return alert(this.t('err_insufficient_bank')); 
                         } 
                         const batch = db.batch(); 
                         const now = new Date().toISOString(); 
-                        let cAmt = method === 'cash' ? amt : 0; 
-                        let bAmt = method === 'bank' ? amt : 0; 
                         try { 
-                            if (method === 'cash') { 
-                                await this.processCashTransaction(batch, amt, 'out', `Supplier Payment`, null, sname); 
+                            if (cAmt > 0) { 
+                                await this.processCashTransaction(batch, cAmt, 'out', `Supplier Payment`, null, sname); 
                             } 
                         } catch(e) { return alert(e.message); } 
                         batch.set(db.collection('transactions').doc(), { 
@@ -1870,14 +1882,14 @@
                             cashAmount: cAmt, 
                             bankAmount: bAmt, 
                             method, 
-                            bankId: bid, 
+                            bankId: bAmt > 0 ? bid : null, 
                             createdAt: now 
                         }); 
                         batch.update(db.collection('suppliers').doc(sid), { 
                             balance: firebase.firestore.FieldValue.increment(-amt) 
                         }); 
-                        if(method==='bank') batch.update(db.collection('banks').doc(bid), { 
-                            balance: firebase.firestore.FieldValue.increment(-amt) 
+                        if(bAmt > 0 && bid) batch.update(db.collection('banks').doc(bid), { 
+                            balance: firebase.firestore.FieldValue.increment(-bAmt) 
                         }); 
                         batch.commit().catch(e=>console.error(e)); 
                         this.clearCache('suppliers'); 
@@ -1885,6 +1897,15 @@
                         this.clearCache('banks'); 
                         this.nav('suppliers'); 
                     }); 
+            },
+            togglePsInputs: function() {
+                const m = document.getElementById('psMethod').value;
+                const c = document.getElementById('psCashDiv');
+                const b = document.getElementById('psBankDiv');
+                const amt = document.getElementById('psAmount').value || 0;
+                if(m === 'cash') { c.style.display='block'; b.style.display='none'; document.getElementById('psCash').value = amt; document.getElementById('psBank2').value = 0; }
+                else if(m === 'bank') { c.style.display='none'; b.style.display='block'; document.getElementById('psCash').value = 0; document.getElementById('psBank2').value = amt; }
+                else { c.style.display='block'; b.style.display='block'; }
             },
 
             // ====== دوال نقطة البيع =======
@@ -2288,10 +2309,15 @@
                         </div>
                         <div id="directPayDiv" style="display:block;">
                             <label style="font-size:12px;font-weight:bold;">طريقة الدفع (شراء مباشر)</label>
-                            <select id="npDirectMethod" class="select-box" onchange="document.getElementById('npDirectBankDiv').style.display = this.value==='bank'?'block':'none'">
+                            <select id="npDirectMethod" class="select-box" onchange="app.toggleDirectPurchaseInputs()">
                                 <option value="cash">كاش (نقدي)</option>
                                 <option value="bank">بنك</option>
+                                <option value="mixed">مختلط (كاش + بنك)</option>
                             </select>
+                            <div id="npDirectSplitDiv" style="display:none; gap:10px;">
+                                <input type="number" id="npDirectCash" class="inp" placeholder="المبلغ النقدي" value="0" min="0">
+                                <input type="number" id="npDirectBank" class="inp" placeholder="المبلغ البنكي" value="0" min="0">
+                            </div>
                             <div id="npDirectBankDiv" style="display:none;">
                                 <div class="ac-wrap">
                                     <input id="npDirectBankName" class="inp" placeholder="بحث عن بنك..." autocomplete="off">
@@ -2378,16 +2404,17 @@
                     let printData = null;
                     if(!suppId) { 
                         const method = document.getElementById('npDirectMethod').value; 
-                        const bankId = document.getElementById('npDirectBankId').value; 
-                        if(method === 'bank' && !bankId) return alert("اختر البنك"); 
-                        if(method === 'bank' && bankId) { 
+                        const bankId = document.getElementById('npDirectBankId').value;
+                        const cashAmt = method === 'cash' ? totalCost : (method === 'mixed' ? Number(document.getElementById('npDirectCash').value) : 0);
+                        const bankAmt = method === 'bank' ? totalCost : (method === 'mixed' ? Number(document.getElementById('npDirectBank').value) : 0);
+                        if(cashAmt < 0 || bankAmt < 0 || Math.abs((cashAmt + bankAmt) - totalCost) > 0.001) return alert("Le total espèces + banque doit être égal au coût total.");
+                        if(bankAmt > 0 && !bankId) return alert("اختر البنك"); 
+                        if(bankAmt > 0 && bankId) { 
                             const selectedBank = banks.find(b => b.id === bankId); 
-                            if(selectedBank && selectedBank.balance < totalCost) return alert(this.t('err_insufficient_bank')); 
+                            if(selectedBank && selectedBank.balance < bankAmt) return alert(this.t('err_insufficient_bank')); 
                         } 
-                        let cashAmt = method === 'cash' ? totalCost : 0; 
-                        let bankAmt = method === 'bank' ? totalCost : 0; 
                         try { 
-                            if (method === 'cash') await this.processCashTransaction(batch, totalCost, 'out', `Purch ${n}`, null, 'Direct Purchase'); 
+                            if (cashAmt > 0) await this.processCashTransaction(batch, cashAmt, 'out', `Purch ${n}`, null, 'Direct Purchase'); 
                         } catch(e) { return alert(e.message); } 
                         batch.set(db.collection('transactions').doc(), { 
                             companyId: this.state.cid, 
@@ -2401,8 +2428,8 @@
                             note: `Direct Purchase: ${n}`, 
                             createdAt: now 
                         }); 
-                        if(method === 'bank' && bankId) { 
-                            batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-totalCost) }); 
+                        if(bankAmt > 0 && bankId) { 
+                            batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bankAmt) }); 
                         } 
                         printData = { type: 'direct', name: n, qty: q, total: totalCost, paid: totalCost, debt: 0, suppName: '-' }; 
                     } else { 
@@ -2531,6 +2558,17 @@
                     b.style.display='block'; 
                     bd.style.display='block'; 
                 } 
+            },
+            toggleDirectPurchaseInputs: function() {
+                const method = document.getElementById('npDirectMethod').value;
+                const split = document.getElementById('npDirectSplitDiv');
+                const bank = document.getElementById('npDirectBankDiv');
+                split.style.display = method === 'mixed' ? 'flex' : 'none';
+                bank.style.display = method === 'bank' || method === 'mixed' ? 'block' : 'none';
+                if(method !== 'mixed') {
+                    document.getElementById('npDirectCash').value = 0;
+                    document.getElementById('npDirectBank').value = 0;
+                }
             },
             quickAddSupplier: async function() { 
                 const n = prompt(this.t('prompt_name')); 
@@ -3164,17 +3202,31 @@
                 this.showModal(this.t('pay_debt'), 
                     `<p>Customer: <b>${cname}</b></p>
                     <input type="number" id="pdAmount" class="inp" placeholder="${this.t('prompt_amount')}">
-                    <select id="pdMethod" class="select-box" onchange="document.getElementById('pdBankDiv').style.display = this.value==='bank'?'block':'none'">
+                    <label>${this.t('pay_method') || 'طريقة الدفع'}</label>
+                    <select id="pdMethod" class="select-box" onchange="app.togglePdInputs()">
                         <option value="cash">${this.t('cash')}</option>
                         <option value="bank">${this.t('bank')}</option>
+                        <option value="mixed">${this.t('mixed') || 'مختلط'}</option>
                     </select>
-                    <div id="pdBankDiv" style="display:none;"><select id="pdBank" class="select-box">${bOpts}</select></div>`, 
+                    <div id="pdCashDiv"><input id="pdCash" type="number" class="inp" placeholder="${this.t('cash')}" value="0"></div>
+                    <div id="pdBankDiv" style="display:none;">
+                        <input id="pdBank2" type="number" class="inp" placeholder="${this.t('bank')}" value="0">
+                        <select id="pdBank" class="select-box">${bOpts}</select>
+                    </div>`, 
                     async () => { 
                         const amt = Number(document.getElementById('pdAmount').value); 
                         const method = document.getElementById('pdMethod').value; 
-                        const bid = document.getElementById('pdBank').value; 
+                        const bid = document.getElementById('pdBank').value;
+                        let cAmt = 0, bAmt = 0;
+                        if(method === 'cash') { cAmt = amt; }
+                        else if(method === 'bank') { bAmt = amt; }
+                        else {
+                            cAmt = Number(document.getElementById('pdCash').value) || 0;
+                            bAmt = Number(document.getElementById('pdBank2').value) || 0;
+                            if (cAmt + bAmt !== amt) return alert("مجموع النقد والبنك يجب أن يساوي المبلغ الكلي");
+                        }
                         if(!amt) return; 
-                        if(method==='bank' && !bid) return alert(this.t('select_bank')); 
+                        if((method==='bank' || (method==='mixed' && bAmt>0)) && !bid) return alert(this.t('select_bank'));
                         const customers = await this.getData('customers'); 
                         const customer = customers.find(c => c.id === cid); 
                         if(customer && amt > Number(customer.balance || 0)) { 
@@ -3182,10 +3234,8 @@
                         } 
                         const batch = db.batch(); 
                         const now = new Date().toISOString(); 
-                        let cAmt = method === 'cash' ? amt : 0; 
-                        let bAmt = method === 'bank' ? amt : 0; 
-                        if (method === 'cash') { 
-                            await this.processCashTransaction(batch, amt, 'in', `Debt Payment`, null, cname); 
+                        if (cAmt > 0) { 
+                            await this.processCashTransaction(batch, cAmt, 'in', `Debt Payment`, null, cname); 
                         } 
                         const tRef = db.collection('transactions').doc(); 
                         batch.set(tRef, { 
@@ -3196,17 +3246,26 @@
                             cashAmount: cAmt, 
                             bankAmount: bAmt, 
                             method, 
-                            bankId: bid, 
+                            bankId: bAmt > 0 ? bid : null, 
                             createdAt: now 
                         }); 
                         batch.update(db.collection('customers').doc(cid), { balance: firebase.firestore.FieldValue.increment(-amt) }); 
-                        if(method==='bank') batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(amt) }); 
+                        if(bAmt > 0 && bid) batch.update(db.collection('banks').doc(bid), { balance: firebase.firestore.FieldValue.increment(bAmt) }); 
                         batch.commit().catch(e => console.error(e)); 
                         this.clearCache('customers'); 
                         this.clearCache('transactions'); 
                         this.clearCache('banks'); 
                         this.nav('customers'); 
                     }); 
+            },
+            togglePdInputs: function() {
+                const m = document.getElementById('pdMethod').value;
+                const c = document.getElementById('pdCashDiv');
+                const b = document.getElementById('pdBankDiv');
+                const amt = document.getElementById('pdAmount').value || 0;
+                if(m === 'cash') { c.style.display='block'; b.style.display='none'; document.getElementById('pdCash').value = amt; document.getElementById('pdBank2').value = 0; }
+                else if(m === 'bank') { c.style.display='none'; b.style.display='block'; document.getElementById('pdCash').value = 0; document.getElementById('pdBank2').value = amt; }
+                else { c.style.display='block'; b.style.display='block'; }
             },
 
             // ====== دوال كشف الحساب =======
@@ -3865,6 +3924,30 @@
                 });
                 
                 document.getElementById('modalActionBtn').innerText = this.t('dp_submit_btn');
+
+                // Auto-fill data for existing/expired users (renewal)
+                try {
+                    let sess = null;
+                    try { sess = JSON.parse(localStorage.getItem('mda_session') || 'null'); } catch(_) {}
+                    const hasCompany = this.state.cid && this.state.cid !== 'ADMIN';
+                    const code = (sess && sess.code) ? sess.code : '';
+                    const isTrial = code && code.indexOf('TRIAL-') === 0;
+                    if (hasCompany) {
+                        const sel = document.getElementById('dpReqCategory');
+                        // For trial users → "new" (need a real code). For paid users → "renew"
+                        sel.value = isTrial ? 'new' : 'renew';
+                        this.toggleRenewInput();
+                        const fName = document.getElementById('dpName');
+                        const fPhone = document.getElementById('dpPhone');
+                        const fWa = document.getElementById('dpWa');
+                        const fCode = document.getElementById('dpExistingCode');
+                        if (fName && this.state.name) fName.value = this.state.name;
+                        if (fPhone && this.state.phone) fPhone.value = this.state.phone;
+                        if (fWa && this.state.phone) fWa.value = this.state.phone;
+                        if (fCode && code && !isTrial) fCode.value = code;
+                    }
+                } catch(e) { console.warn('auto-fill renewal failed', e); }
+
                 this.calcDirectPay(); 
             },
 
@@ -4805,6 +4888,8 @@
         };
         window.onload = function() { app.init(); };
     </script>
+
+    <script src="erp-enhancements.js"></script>
 
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

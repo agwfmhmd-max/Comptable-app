@@ -115,6 +115,37 @@ html[data-theme="dark"] body::before{
 }
 html[data-theme="dark"] select option { background: var(--surface); color: var(--text-dark); }
 
+/* ---------- Reliability, reminders and subscription lock ---------- */
+.conn-syncing, .conn-synced { background: var(--primary) !important; color:#fff !important; }
+.erp-reminders { display:grid; gap:10px; margin-bottom:16px; }
+.erp-reminder { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 16px; border-radius:14px; border:1px solid var(--border); background:var(--surface); box-shadow:var(--shadow-sm); }
+.erp-reminder strong, .erp-reminder span, .erp-reminder p { display:block; margin:0; }
+.erp-reminder span, .erp-reminder p { color:var(--text-light); font-size:13px; margin-top:3px; }
+.erp-reminder button { border:0; border-radius:10px; padding:10px 14px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; white-space:nowrap; }
+.erp-reminder.priority { border-inline-start:5px solid var(--warning); }
+.erp-reminder.urgent { border-inline-start:5px solid var(--danger); background:color-mix(in oklab, var(--danger) 7%, var(--surface)); }
+.erp-reminder.urgent button { background:var(--danger); }
+.erp-reminder.salary { border-inline-start:5px solid var(--success); }
+.salary-reminder-tools { display:flex; align-items:center; gap:8px; padding:12px 14px; margin-bottom:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
+.salary-reminder-tools > div { flex:1; }
+.salary-reminder-tools strong, .salary-reminder-tools span { display:block; }
+.salary-reminder-tools span { color:var(--text-light); font-size:12px; margin-top:2px; }
+.salary-reminder-tools button { border:1px solid var(--border); border-radius:9px; padding:8px 11px; background:var(--surface-2); color:var(--text-dark); cursor:pointer; font-weight:700; }
+.block-screen { background:radial-gradient(circle at top, #7f1d1d, #250606 70%) !important; padding:20px; }
+.block-card { max-width:620px !important; padding:32px !important; border:1px solid rgba(255,255,255,.18) !important; box-shadow:0 30px 80px rgba(0,0,0,.45) !important; }
+.block-details { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:20px 0; }
+.block-details span { padding:12px; border-radius:10px; background:color-mix(in oklab, var(--danger) 8%, var(--surface)); font-size:13px; }
+.block-details b { display:block; color:var(--danger); margin-bottom:4px; }
+.activation-box { margin-top:18px; padding-top:18px; border-top:1px solid var(--border); text-align:start; }
+.activation-box label { display:block; font-weight:700; margin-bottom:7px; }
+.activation-box > div { display:flex; gap:8px; }
+.activation-box .inp { margin:0 !important; }
+.activation-box .btn { width:auto !important; white-space:nowrap; }
+@media (max-width:640px) {
+  .erp-reminder, .activation-box > div, .salary-reminder-tools { align-items:stretch; flex-direction:column; }
+  .block-details { grid-template-columns:1fr; }
+}
+
 /* ---------- Header / Sidebar ---------- */
 .top-header {
   background: color-mix(in oklab, var(--surface) 92%, transparent) !important;
