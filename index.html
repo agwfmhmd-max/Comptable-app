@@ -442,10 +442,157 @@
             charts: {}, 
             reportData: { transactions: [], productStats: {}, aggregatedSales: {} },
 
+            // ====== إعدادات التطبيق (الأسعار وأرقام البنوك) — يعدّلها المشرف من لوحة التحكم =======
+            appConfig: null,
+            defaultAppConfig: {
+                monthlyPrice: 200,
+                yearlyPrice: 2000,
+                supportPhone: "46154399",
+                supportWhatsapp: "46154399",
+                announcement: "",
+                announcementActive: false,
+                banks: [
+                    { name: "بنكيلي", number: "20479962" },
+                    { name: "السداد", number: "20479962" },
+                    { name: "مصرفي", number: "20479962" },
+                    { name: "كليك", number: "20479962" },
+                    { name: "Bimbank", number: "20479962" },
+                    { name: "غزة أبي", number: "20479962" },
+                    { name: "رصيدي", number: "20479962" },
+                    { name: "أمانتي", number: "20479962" },
+                    { name: "Mouripost", number: "20479962" },
+                    { name: "Moov money", number: "46154399" },
+                    { name: "BCI PAY", number: "46154399" }
+                ]
+            },
+            getAppConfig: function() {
+                if (this.appConfig) return this.appConfig;
+                try {
+                    const cached = localStorage.getItem('teyssir_app_config');
+                    if (cached) { this.appConfig = JSON.parse(cached); return this.appConfig; }
+                } catch(_){}
+                return JSON.parse(JSON.stringify(this.defaultAppConfig));
+            },
+            // تحويل بيانات Firestore الخام إلى إعدادات صالحة للاستعمال
+            normalizeAppConfig: function(data) {
+                data = data || {};
+                return {
+                    monthlyPrice: Number(data.monthlyPrice) > 0 ? Number(data.monthlyPrice) : this.defaultAppConfig.monthlyPrice,
+                    yearlyPrice: Number(data.yearlyPrice) > 0 ? Number(data.yearlyPrice) : this.defaultAppConfig.yearlyPrice,
+                    banks: (Array.isArray(data.banks) && data.banks.length) ? data.banks.filter(b => b && b.name) : this.defaultAppConfig.banks,
+                    supportPhone: data.supportPhone || (this.defaultAppConfig.supportPhone || ''),
+                    supportWhatsapp: data.supportWhatsapp || (this.defaultAppConfig.supportWhatsapp || ''),
+                    announcement: typeof data.announcement === 'string' ? data.announcement : '',
+                    announcementActive: data.announcementActive === true,
+                    updatedAt: data.updatedAt || null
+                };
+            },
+            applyAppConfig: function(data) {
+                const cfg = this.normalizeAppConfig(data);
+                const changed = JSON.stringify(cfg) !== JSON.stringify(this.appConfig);
+                this.appConfig = cfg;
+                try { localStorage.setItem('teyssir_app_config', JSON.stringify(cfg)); } catch(_){}
+                if (changed) {
+                    try { this.refreshAppConfigUI(); } catch(e) { console.warn('refreshAppConfigUI', e); }
+                    try { window.dispatchEvent(new CustomEvent('appconfig:changed', { detail: cfg })); } catch(_){}
+                }
+                return cfg;
+            },
+            // اشتراك لحظي (Realtime) على app_config/main — يعمل في كل صفحات العملاء
+            subscribeAppConfig: function() {
+                if (this._appConfigUnsub) return;   // اشتراك واحد فقط
+                try {
+                    this._appConfigUnsub = db.collection('app_config').doc('main')
+                        .onSnapshot({ includeMetadataChanges: false }, (doc) => {
+                            if (!doc.exists) return;
+                            this.applyAppConfig(doc.data());
+                        }, (err) => {
+                            console.warn('app_config listener error', err);
+                            this._appConfigUnsub = null;
+                            // إعادة المحاولة تلقائيا بعد فترة قصيرة
+                            clearTimeout(this._appConfigRetry);
+                            this._appConfigRetry = setTimeout(() => this.subscribeAppConfig(), 8000);
+                        });
+                } catch(e) { console.warn('subscribeAppConfig failed', e); }
+            },
+            loadAppConfig: async function() {
+                // populate from cache immediately
+                this.getAppConfig();
+                // ابدأ الاستماع اللحظي (مرة واحدة) حتى تصل أي تعديلات فورا
+                this.subscribeAppConfig();
+                try {
+                    const doc = await db.collection('app_config').doc('main').get();
+                    if (doc.exists) this.applyAppConfig(doc.data());
+                } catch(e) { console.warn('loadAppConfig failed', e); }
+                return this.getAppConfig();
+            },
+            // تحديث الواجهات المفتوحة فورا عند تغير الإعدادات
+            refreshAppConfigUI: function() {
+                const cfg = this.getAppConfig();
+                const isAr = this.state.lang === 'ar';
+
+                // 1) نافذة الدفع المباشر إن كانت مفتوحة
+                const dpType = document.getElementById('dpType');
+                if (dpType) {
+                    const monthLbl = isAr ? `شهري (${cfg.monthlyPrice} MRU)` : `Mensuel (${cfg.monthlyPrice} MRU)`;
+                    const yearLbl  = isAr ? `سنوي (${cfg.yearlyPrice} MRU)` : `Annuel (${cfg.yearlyPrice} MRU)`;
+                    const opts = dpType.options;
+                    for (let i = 0; i < opts.length; i++) {
+                        if (opts[i].value === 'month') opts[i].text = monthLbl;
+                        if (opts[i].value === 'year') opts[i].text = yearLbl;
+                    }
+                    try { this.calcDirectPay(); } catch(_){}
+                }
+                const dpBank = document.getElementById('dpBank');
+                if (dpBank) {
+                    const current = dpBank.value;
+                    dpBank.innerHTML = `<option value="">-- ${this.t('select_bank')} --</option>` +
+                        (cfg.banks || []).map(b => `<option value="${b.name}">${b.name}</option>`).join('');
+                    if ((cfg.banks || []).some(b => b.name === current)) {
+                        dpBank.value = current;
+                        try { this.showBankNumber(); } catch(_){}
+                    } else {
+                        const info = document.getElementById('dpBankInfo');
+                        if (info) info.style.display = 'none';
+                    }
+                }
+
+                // 2) شريط الإعلان العام في كل الصفحات
+                this.renderAppAnnouncement();
+
+                // 3) صفحة إعدادات المشرف إن كانت مفتوحة ولم يكن هناك تعديل جارٍ
+                const cfgMonthly = document.getElementById('cfgMonthly');
+                if (cfgMonthly && !this._cfgEditing) {
+                    try { this.adminAppSettings(); } catch(_){}
+                }
+            },
+            // شريط إعلان يظهر لكل العملاء ويتحدث فورا من Firestore
+            renderAppAnnouncement: function() {
+                const cfg = this.getAppConfig();
+                let bar = document.getElementById('appAnnouncementBar');
+                const show = cfg.announcementActive && (cfg.announcement || '').trim();
+                if (!show) { if (bar) bar.remove(); return; }
+                if (!bar) {
+                    bar = document.createElement('div');
+                    bar.id = 'appAnnouncementBar';
+                    bar.className = 'app-announcement-bar';
+                    const ws = document.getElementById('workspace');
+                    if (ws && ws.parentNode) ws.parentNode.insertBefore(bar, ws);
+                    else document.body.appendChild(bar);
+                }
+                bar.innerHTML = `<i class="fa-solid fa-bullhorn"></i> <span>${cfg.announcement}</span>`;
+            },
+            saveAppConfig: async function(cfg) {
+                const payload = Object.assign({}, cfg, { updatedAt: new Date().toISOString() });
+                await db.collection('app_config').doc('main').set(payload, { merge: true });
+                this.applyAppConfig(Object.assign({}, this.getAppConfig(), payload));
+            },
+
             init: function() {
                 this.showLoader(); 
                 updateStatus(); 
                 auth.signInAnonymously().catch((error) => { console.error("Auth Error", error); });
+                this.loadAppConfig();
                 if (!localStorage.getItem('welcomeSeen')) document.getElementById('welcomeModal').style.display = 'flex';
                 if (deferredPrompt) deferredPrompt.prompt(); 
                 this.loadArabicFont();
@@ -965,6 +1112,7 @@
                             case 'users': await this.users(ws); break;
                             case 'admin': await this.admin(ws); break;
                         }
+                        try { this.renderAppAnnouncement(); } catch(_){}
                     } catch (error) {
                         console.error("Navigation Error:", error);
                         ws.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger)"><h3>حدث خطأ في تحميل الصفحة</h3><p>${error.message}</p><button onclick="app.nav('${page}')" class="btn btn-sec" style="width:auto; margin-top:10px;">إعادة المحاولة</button></div>`;
@@ -1936,16 +2084,28 @@
                                     <button onclick="app.quickAddCustomer()" class="btn btn-sec" style="width:auto; height: 46px;"><i class="fa-solid fa-plus"></i></button>
                                 </div>
                                 <label style="font-size:12px; font-weight:bold;">${this.t('pay_method')}</label>
-                                <select id="posPayMethod" class="select-box" onchange="app.togglePosInputs()">
-                                    <option value="cash">${this.t('cash')}</option>
-                                    <option value="bank">${this.t('bank')}</option>
-                                    <option value="mixed">${this.t('mixed')}</option>
+                                <div class="pay-method-seg" id="posPayMethodSeg">
+                                    <button type="button" data-m="cash" class="pm-btn pm-cash active" onclick="app.setPosMethod('cash')"><i class="fa-solid fa-money-bill-wave"></i> ${this.t('cash')}</button>
+                                    <button type="button" data-m="bank" class="pm-btn pm-bank" onclick="app.setPosMethod('bank')"><i class="fa-solid fa-building-columns"></i> ${this.t('bank')}</button>
+                                    <button type="button" data-m="mixed" class="pm-btn pm-mixed" onclick="app.setPosMethod('mixed')"><i class="fa-solid fa-code-branch"></i> ${this.t('mixed')}</button>
+                                </div>
+                                <select id="posPayMethod" onchange="app.togglePosInputs()" style="display:none;">
+                                    <option value="cash">cash</option>
+                                    <option value="bank">bank</option>
+                                    <option value="mixed">mixed</option>
                                 </select>
                                 <div style="display:flex; gap:10px; margin-bottom:5px;">
-                                    <input type="number" id="payCash" class="inp" placeholder="${this.t('pay_cash')}" value="0">
-                                    <input type="number" id="payBank" class="inp" placeholder="${this.t('pay_bank')}" value="0" style="display:none;">
+                                    <div class="pay-field pay-field-cash" id="payCashWrap">
+                                        <span class="pay-field-label"><i class="fa-solid fa-money-bill-wave"></i> ${this.t('pay_cash')}</span>
+                                        <input type="number" id="payCash" class="inp pay-input" placeholder="0" value="0">
+                                    </div>
+                                    <div class="pay-field pay-field-bank" id="payBankWrap" style="display:none;">
+                                        <span class="pay-field-label"><i class="fa-solid fa-building-columns"></i> ${this.t('pay_bank')}</span>
+                                        <input type="number" id="payBank" class="inp pay-input" placeholder="0" value="0">
+                                    </div>
                                 </div>
                                 <div id="bankSelectDiv" style="display:none; margin-bottom:10px;">
+                                    <label style="font-size:11px; color:var(--text-light); font-weight:bold;"><i class="fa-solid fa-building-columns"></i> ${this.t('select_bank')}</label>
                                     <div class="ac-wrap">
                                         <input id="posBankName" class="inp" placeholder="بحث عن بنك..." autocomplete="off">
                                         <input type="hidden" id="posBankId">
@@ -1977,23 +2137,33 @@
                 const m = document.getElementById('posPayMethod').value; 
                 const cInp = document.getElementById('payCash'); 
                 const bInp = document.getElementById('payBank'); 
+                const cWrap = document.getElementById('payCashWrap') || cInp; 
+                const bWrap = document.getElementById('payBankWrap') || bInp; 
                 const bDiv = document.getElementById('bankSelectDiv'); 
                 if(m === 'cash') { 
-                    cInp.style.display='block'; 
-                    bInp.style.display='none'; 
+                    cWrap.style.display=''; 
+                    bWrap.style.display='none'; 
                     bDiv.style.display='none'; 
-                    bInp.value=0; 
+                    if(bInp) bInp.value=0; 
                 } else if (m === 'bank') { 
-                    cInp.style.display='none'; 
-                    bInp.style.display='block'; 
+                    cWrap.style.display='none'; 
+                    bWrap.style.display=''; 
                     bDiv.style.display='block'; 
-                    cInp.value=0; 
+                    if(cInp) cInp.value=0; 
                 } else { 
-                    cInp.style.display='block'; 
-                    bInp.style.display='block'; 
+                    cWrap.style.display=''; 
+                    bWrap.style.display=''; 
                     bDiv.style.display='block'; 
                 } 
                 this.calcDebt(); 
+            },
+            setPosMethod: function(m) {
+                const sel = document.getElementById('posPayMethod');
+                if (sel) sel.value = m;
+                document.querySelectorAll('#posPayMethodSeg .pm-btn').forEach(el => {
+                    el.classList.toggle('active', el.dataset.m === m);
+                });
+                this.togglePosInputs();
             },
             searchProduct: function(q) { 
                 const res = document.getElementById('searchResults'); 
@@ -3019,6 +3189,9 @@
                 }); 
                 h += '</div>'; 
                 div.innerHTML = h; 
+                // تنبيه استحقاق رواتب الموظفين — الضغط عليه ينقل إلى صفحة الرواتب
+                this.renderSalaryDueAlert(div);
+                try { this.renderAppAnnouncement(); } catch(_){}
             },
 
             setupAutocomplete: function(inpId, hiddenId, data, key) {
@@ -3386,6 +3559,9 @@
                     `<input id="empName" class="inp" placeholder="${this.t('th_name')}">
                     <input id="empPhone" class="inp" placeholder="رقم الواتساب (اختياري)">
                     <input type="number" id="empSalary" class="inp" placeholder="${this.t('sal_fixed')}">
+                    <label style="font-size:12px;font-weight:bold;">تاريخ استحقاق الراتب</label>
+                    <input type="date" id="empPayDate" class="inp" value="${this.defaultNextPayDate()}">
+                    <small style="display:block; color:var(--text-light); margin:-5px 0 10px; font-size:11px;">عند حلول هذا التاريخ سيظهر تنبيه في الصفحة الرئيسية، ويتجدد تلقائيا كل شهر بعد الدفع.</small>
                     <label style="font-size:12px;font-weight:bold;">${this.t('sal_method')}</label>
                     <select id="empMethod" class="select-box">
                         <option value="cash">${this.t('pay_cash')}</option>
@@ -3396,6 +3572,7 @@
                         const phone = document.getElementById('empPhone').value;
                         const salary = Number(document.getElementById('empSalary').value); 
                         const method = document.getElementById('empMethod').value; 
+                        const payDate = (document.getElementById('empPayDate').value || '').trim();
                         if(!name || !salary) return alert("يرجى إدخال الاسم والراتب"); 
                         const batch = db.batch(); 
                         const now = new Date().toISOString(); 
@@ -3406,6 +3583,9 @@
                             phone: phone||'', 
                             baseSalary: salary, 
                             defaultMethod: method, 
+                            payDate: payDate || null,
+                            lastPaidFor: null,
+                            lastPaidAt: null,
                             totalPaid: 0, 
                             createdAt: now 
                         }); 
@@ -3413,6 +3593,93 @@
                         this.clearCache('salaries'); 
                         this.nav('salaries'); 
                     }); 
+            },
+
+            // ====== تنبيهات استحقاق رواتب الموظفين =======
+            defaultNextPayDate: function() {
+                const now = new Date();
+                const d = new Date(now.getFullYear(), now.getMonth() + 1, 0); // آخر يوم من الشهر الحالي
+                return this.toDateInput(d);
+            },
+            toDateInput: function(d) {
+                const dt = (d instanceof Date) ? d : new Date(d);
+                if (isNaN(dt.getTime())) return '';
+                return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+            },
+            addOneMonth: function(dateStr) {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '';
+                const day = d.getDate();
+                const target = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+                const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+                target.setDate(Math.min(day, lastDay));
+                return this.toDateInput(target);
+            },
+            isSalaryDue: function(emp) {
+                if (!emp || emp.active === false) return false;
+                const pd = emp.payDate;
+                if (!pd) return false;
+                if (emp.lastPaidFor && emp.lastPaidFor === pd) return false; // تم الدفع لهذه الدورة
+                const due = new Date(pd + 'T00:00:00');
+                if (isNaN(due.getTime())) return false;
+                const today = new Date();
+                today.setHours(23,59,59,999);
+                return due.getTime() <= today.getTime();
+            },
+            getDueSalaries: async function() {
+                if (!this.state.cid || this.state.cid === 'ADMIN') return [];
+                if (!this.checkPermission('salaries')) return [];
+                let docs = [];
+                try { docs = await this.getData('salaries'); } catch(_) { return []; }
+                return (docs || []).filter(d => this.isSalaryDue(d));
+            },
+            renderSalaryDueAlert: async function(div) {
+                try {
+                    const due = await this.getDueSalaries();
+                    const host = div || document.getElementById('workspace');
+                    if (!host) return;
+                    const old = host.querySelector('#salaryDueAlert');
+                    if (old) old.remove();
+                    if (!due.length) return;
+                    const total = due.reduce((sum, e) => sum + Number(e.baseSalary || 0), 0);
+                    const names = due.slice(0, 3).map(e => e.name).join('، ') + (due.length > 3 ? ` +${due.length - 3}` : '');
+                    const html = `<div id="salaryDueAlert" class="salary-due-alert" onclick="app.nav('salaries')" role="button" tabindex="0">
+                        <div class="sda-icon"><i class="fa-solid fa-money-check-dollar"></i></div>
+                        <div class="sda-body">
+                            <strong>حان موعد دفع رواتب الموظفين (${due.length})</strong>
+                            <span>${names}</span>
+                            <span>الإجمالي المستحق: ${total.toLocaleString()} MRU</span>
+                        </div>
+                        <div class="sda-go"><i class="fa-solid fa-arrow-left"></i> الرواتب</div>
+                    </div>`;
+                    host.insertAdjacentHTML('afterbegin', html);
+                } catch(e) { console.warn('renderSalaryDueAlert', e); }
+            },
+            editEmployeeModal: async function(empId) {
+                const docs = await this.getData('salaries');
+                const emp = (docs || []).find(d => d.id === empId);
+                if (!emp) return alert('الموظف غير موجود');
+                this.showModal(`تعديل: ${emp.name}`,
+                    `<input id="edEmpName" class="inp" placeholder="${this.t('th_name')}" value="${(emp.name||'').replace(/"/g,'&quot;')}">
+                    <input id="edEmpPhone" class="inp" placeholder="رقم الواتساب (اختياري)" value="${(emp.phone||'').replace(/"/g,'&quot;')}">
+                    <input type="number" id="edEmpSalary" class="inp" placeholder="${this.t('sal_fixed')}" value="${Number(emp.baseSalary||0)}">
+                    <label style="font-size:12px;font-weight:bold;">تاريخ استحقاق الراتب</label>
+                    <input type="date" id="edEmpPayDate" class="inp" value="${emp.payDate || ''}">
+                    <small style="display:block; color:var(--text-light); margin:-5px 0 10px; font-size:11px;">اتركه فارغا لإيقاف التنبيه لهذا الموظف.</small>`,
+                    async () => {
+                        const name = document.getElementById('edEmpName').value.trim();
+                        const phone = document.getElementById('edEmpPhone').value.trim();
+                        const salary = Number(document.getElementById('edEmpSalary').value);
+                        const payDate = (document.getElementById('edEmpPayDate').value || '').trim();
+                        if (!name || !salary) return alert('يرجى إدخال الاسم والراتب');
+                        const update = { name: name, phone: phone, baseSalary: salary, payDate: payDate || null };
+                        if (payDate && emp.lastPaidFor === payDate) update.lastPaidFor = null;
+                        try {
+                            await db.collection('salaries').doc(empId).update(update);
+                        } catch(e) { return alert('خطأ أثناء الحفظ: ' + e.message); }
+                        this.clearCache('salaries');
+                        this.nav('salaries');
+                    });
             },
 
             viewEmployeeFile: async function(empId, empName, baseSalary, phone) { 
@@ -3572,7 +3839,17 @@
                         if (bankAmt > 0 && bankId) { 
                             batch.update(db.collection('banks').doc(bankId), { balance: firebase.firestore.FieldValue.increment(-bankAmt) }); 
                         } 
-                        batch.update(db.collection('salaries').doc(empId), { totalPaid: firebase.firestore.FieldValue.increment(total) }); 
+                        const empDoc = ((await this.getData('salaries')) || []).find(e => e.id === empId) || {};
+                        const salUpdate = { totalPaid: firebase.firestore.FieldValue.increment(total) };
+                        if (empDoc.payDate) {
+                            salUpdate.lastPaidFor = empDoc.payDate;
+                            salUpdate.lastPaidAt = now;
+                            const next = this.addOneMonth(empDoc.payDate);
+                            if (next) salUpdate.payDate = next;   // تجديد الموعد تلقائيا للشهر القادم
+                        } else {
+                            salUpdate.lastPaidAt = now;
+                        }
+                        batch.update(db.collection('salaries').doc(empId), salUpdate); 
                         batch.commit().catch(e=>console.error(e)); 
                         this.clearCache('transactions'); 
                         this.clearCache('banks'); 
@@ -3714,7 +3991,7 @@
                                 <div class="table-scroll">
                                     <table id="lst">
                                         <thead>
-                                            <tr><th>${this.t('th_name')}</th><th>الهاتف</th><th>${this.t('sal_fixed')}</th><th>${this.t('sal_total')}</th><th>${this.t('adm_act')}</th></tr>
+                                            <tr><th>${this.t('th_name')}</th><th>الهاتف</th><th>${this.t('sal_fixed')}</th><th>تاريخ الاستحقاق</th><th>${this.t('sal_total')}</th><th>${this.t('adm_act')}</th></tr>
                                         </thead>
                                         <tbody id="empListBody"></tbody>
                                     </table>
@@ -3723,20 +4000,26 @@
                         `; 
                         const tbody = div.querySelector('#empListBody'); 
                         if (docs.length === 0) { 
-                            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">-</td></tr>'; 
+                            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">-</td></tr>'; 
                         } else { 
                             let rows = ''; 
                             docs.forEach(d => { 
                                 const safeName = (d.name || '').replace(/'/g, "\\'"); 
                                 const salary = d.baseSalary ? Number(d.baseSalary) : 0; 
                                 const paid = d.totalPaid ? Number(d.totalPaid) : 0; 
-                                rows += `<tr>
+                                const isDue = this.isSalaryDue(d);
+                                const dateCell = d.payDate
+                                    ? `<span class="pay-date-chip ${isDue ? 'due' : ''}">${d.payDate}${isDue ? ' <i class="fa-solid fa-bell"></i>' : ''}</span>`
+                                    : '<span style="color:var(--text-light);">-</span>';
+                                rows += `<tr class="${isDue ? 'row-salary-due' : ''}">
                                     <td style="font-weight:bold;">${d.name}</td>
                                     <td>${d.phone||'-'}</td>
                                     <td>${salary.toLocaleString()}</td>
+                                    <td>${dateCell}</td>
                                     <td style="color:green;">${paid.toLocaleString()}</td>
                                     <td>
                                         <button onclick="app.viewEmployeeFile('${d.id}', '${safeName}', ${salary}, '${d.phone||''}')" class="btn btn-prim" style="padding:5px 10px; font-size:12px;">ملف الموظف</button> 
+                                        <button onclick="app.editEmployeeModal('${d.id}')" class="btn btn-sec" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-pen"></i></button>
                                         <button onclick="app.del('${d.id}', 'salaries')" class="btn btn-dan" style="padding:5px 10px; font-size:12px; display:inline-block; width:auto;"><i class="fa-solid fa-trash"></i></button>
                                     </td>
                                 </tr>`; 
@@ -3854,20 +4137,14 @@
             directPayModal: function() {
                 this.state.currentPromo = null; 
                 
-                const banksOpt = `
-                    <option value="">-- ${this.t('select_bank')} --</option>
-                    <option value="بنكيلي">بنكيلي</option>
-                    <option value="السداد">السداد</option>
-                    <option value="مصرفي">مصرفي</option>
-                    <option value="كليك">كليك (Click)</option>
-                    <option value="Bimbank">Bimbank</option>
-                    <option value="غزة أبي">غزة أبي</option>
-                    <option value="رصيدي">رصيدي</option>
-                    <option value="أمانتي">أمانتي</option>
-                    <option value="Mouripost">Mouripost</option>
-                    <option value="Moov money">Moov money</option>
-                    <option value="BCI PAY">BCI PAY</option>
-                `;
+                // trigger fresh fetch (async) — falls back to cached/defaults immediately
+                this.loadAppConfig();
+                const cfg = this.getAppConfig();
+                const isAr = this.state.lang === 'ar';
+                const banksOpt = `<option value="">-- ${this.t('select_bank')} --</option>` +
+                    cfg.banks.map(b => `<option value="${b.name}">${b.name}</option>`).join('');
+                const monthLbl = isAr ? `شهري (${cfg.monthlyPrice} MRU)` : `Mensuel (${cfg.monthlyPrice} MRU)`;
+                const yearLbl  = isAr ? `سنوي (${cfg.yearlyPrice} MRU)` : `Annuel (${cfg.yearlyPrice} MRU)`;
                 
                 const html = `
                     <div style="text-align:${this.state.lang==='ar'?'right':'left'};">
@@ -3890,8 +4167,8 @@
                         
                         <label>${this.t('dp_sub_type')}</label>
                         <select id="dpType" class="select-box" onchange="app.calcDirectPay()">
-                            <option value="month">${this.t('dp_month')}</option>
-                            <option value="year">${this.t('dp_year')}</option>
+                            <option value="month">${monthLbl}</option>
+                            <option value="year">${yearLbl}</option>
                         </select>
                         <label>${this.t('dp_users')}</label>
                         <input id="dpUsers" type="number" class="inp" value="3" min="1" oninput="app.calcDirectPay()">
@@ -4001,8 +4278,8 @@
             calcDirectPay: function() {
                 const type = document.getElementById('dpType').value;
                 const users = parseInt(document.getElementById('dpUsers').value) || 1;
-                
-                let base = type === 'year' ? 2000 : 200;
+                const cfg = this.getAppConfig();
+                let base = type === 'year' ? Number(cfg.yearlyPrice) : Number(cfg.monthlyPrice);
                 let userCost = 0;
                 
                 if (users >= 1 && users <= 3) userCost = 50;
@@ -4031,9 +4308,9 @@
                 const numDisplay = document.getElementById('dpBankNumber');
                 
                 if(!bank) { infoDiv.style.display = 'none'; return; }
-                
-                const group1 = ["بنكيلي", "السداد", "مصرفي", "كليك", "Bimbank", "غزة أبي", "رصيدي", "أمانتي", "Mouripost"];
-                if(group1.includes(bank)) { numDisplay.innerText = "20479962"; } else { numDisplay.innerText = "46154399"; }
+                const cfg = this.getAppConfig();
+                const found = (cfg.banks || []).find(b => b.name === bank);
+                numDisplay.innerText = (found && found.number) ? found.number : "20479962";
                 infoDiv.style.display = 'block';
             },
 
@@ -4168,6 +4445,7 @@
                             <button onclick="app.adminViewCodes()" class="btn btn-prim" style="flex:1; min-width:100px;">${this.t('adm_mng_codes')}</button>
                             <button onclick="app.adminPaymentRequests()" class="btn btn-sec" style="flex:1; background:#28a745; color:white; border:none; min-width:100px;"><i class="fa-solid fa-bell"></i> ${this.t('adm_pay_reqs')}</button>
                             <button onclick="app.adminViewPromoCodes()" class="btn btn-sec" style="flex:1; background:#8b5cf6; color:white; border:none; min-width:100px;"><i class="fa-solid fa-tags"></i> ${this.t('adm_promos')}</button>
+                            <button onclick="app.adminAppSettings()" class="btn btn-sec" style="flex:1; background:#0ea5e9; color:white; border:none; min-width:100px;"><i class="fa-solid fa-sliders"></i> الأسعار والبنوك</button>
                         </div>
                         <div id="adminWorkArea"></div>
                     `; 
@@ -4177,6 +4455,95 @@
                 } catch (e) {
                     div.innerHTML = `<div style="padding:20px; text-align:center; color:red;">حدث خطأ في تحميل لوحة التحكم: ${e.message}</div>`;
                 }
+            },
+
+            // ====== إدارة الأسعار وأرقام البنوك (المشرف فقط) =======
+            adminAppSettings: async function() {
+                const area = document.getElementById('adminWorkArea');
+                area.innerHTML = `<div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="margin-top:10px;">جاري تحميل الإعدادات...</p></div>`;
+                await this.loadAppConfig();
+                const cfg = this.getAppConfig();
+                area.innerHTML = `
+                    <div class="card">
+                        <h3 style="margin:0 0 15px; color:var(--primary);"><i class="fa-solid fa-tags"></i> أسعار الاشتراك (MRU)</h3>
+                        <label style="font-size:12px; font-weight:bold;">السعر الشهري</label>
+                        <input id="cfgMonthly" type="number" min="0" class="inp" value="${cfg.monthlyPrice}">
+                        <label style="font-size:12px; font-weight:bold;">السعر السنوي</label>
+                        <input id="cfgYearly" type="number" min="0" class="inp" value="${cfg.yearlyPrice}">
+                    </div>
+                    <div class="card">
+                        <h3 style="margin:0 0 15px; color:var(--primary);"><i class="fa-solid fa-building-columns"></i> بنوك الدفع وأرقامها</h3>
+                        <p style="font-size:12px; color:var(--text-light); margin-top:0;">هذه البنوك تظهر للعملاء في نافذة الدفع المباشر مع رقم الحساب المرتبط بكل بنك.</p>
+                        <div id="cfgBanksList"></div>
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <input id="cfgNewBankName" class="inp" placeholder="اسم البنك" style="flex:2; margin:0;">
+                            <input id="cfgNewBankNumber" class="inp" placeholder="رقم الحساب" style="flex:2; margin:0;">
+                            <button onclick="app.adminAddBankRow()" class="btn btn-prim" style="width:auto; margin:0;"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <button onclick="app.adminSaveAppSettings()" class="btn btn-prim" style="background:#16a34a; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات</button>
+                `;
+                this.adminRenderBanksList(cfg.banks);
+            },
+            adminRenderBanksList: function(banks) {
+                const wrap = document.getElementById('cfgBanksList');
+                if (!wrap) return;
+                if (!banks || !banks.length) { wrap.innerHTML = `<p style="color:var(--text-light); text-align:center;">لا توجد بنوك مضافة.</p>`; return; }
+                let h = `<div class="table-scroll"><table><thead><tr><th>اسم البنك</th><th>رقم الحساب</th><th>حذف</th></tr></thead><tbody>`;
+                banks.forEach((b, i) => {
+                    h += `<tr>
+                        <td><input class="inp cfg-bank-name" data-idx="${i}" value="${(b.name||'').replace(/"/g,'&quot;')}" style="margin:0;"></td>
+                        <td><input class="inp cfg-bank-num" data-idx="${i}" value="${(b.number||'').replace(/"/g,'&quot;')}" style="margin:0;"></td>
+                        <td><button onclick="app.adminRemoveBankRow(${i})" class="btn btn-dan" style="padding:5px 10px; width:auto;"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+                h += `</tbody></table></div>`;
+                wrap.innerHTML = h;
+                // stash current working list
+                this._cfgBanksWorking = banks.slice();
+            },
+            adminAddBankRow: function() {
+                this.adminCollectBanksFromDom();
+                const nm = (document.getElementById('cfgNewBankName').value || '').trim();
+                const nu = (document.getElementById('cfgNewBankNumber').value || '').trim();
+                if (!nm || !nu) { alert('يرجى إدخال اسم البنك ورقم الحساب.'); return; }
+                this._cfgBanksWorking = this._cfgBanksWorking || [];
+                this._cfgBanksWorking.push({ name: nm, number: nu });
+                document.getElementById('cfgNewBankName').value = '';
+                document.getElementById('cfgNewBankNumber').value = '';
+                this.adminRenderBanksList(this._cfgBanksWorking);
+            },
+            adminRemoveBankRow: function(idx) {
+                this.adminCollectBanksFromDom();
+                this._cfgBanksWorking.splice(idx, 1);
+                this.adminRenderBanksList(this._cfgBanksWorking);
+            },
+            adminCollectBanksFromDom: function() {
+                const names = document.querySelectorAll('.cfg-bank-name');
+                const nums = document.querySelectorAll('.cfg-bank-num');
+                const list = [];
+                names.forEach((el, i) => {
+                    const nm = (el.value || '').trim();
+                    const nu = (nums[i] && nums[i].value || '').trim();
+                    if (nm) list.push({ name: nm, number: nu });
+                });
+                this._cfgBanksWorking = list;
+            },
+            adminSaveAppSettings: async function() {
+                this.adminCollectBanksFromDom();
+                const monthly = Number(document.getElementById('cfgMonthly').value);
+                const yearly = Number(document.getElementById('cfgYearly').value);
+                if (!(monthly > 0) || !(yearly > 0)) return alert('الرجاء إدخال أسعار صحيحة أكبر من صفر.');
+                const banks = this._cfgBanksWorking || [];
+                if (!banks.length) return alert('يجب إضافة بنك واحد على الأقل.');
+                this.showLoader();
+                try {
+                    await this.saveAppConfig({ monthlyPrice: monthly, yearlyPrice: yearly, banks: banks });
+                    alert('✅ تم حفظ الإعدادات بنجاح. سيراها العملاء عند فتح نافذة الدفع.');
+                } catch(e) {
+                    alert('خطأ أثناء الحفظ: ' + e.message);
+                }
+                this.hideLoader();
             },
 
             adminViewPromoCodes: async function() {
@@ -4351,16 +4718,31 @@
                 } catch(e) { console.error(e); }
             },
 
-            adminPaymentRequests: async function() {
+            adminPaymentRequests: async function(statusFilter) {
+                // القيمة الافتراضية: طلبات معلقة
+                const status = statusFilter || 'pending';
                 const area = document.getElementById('adminWorkArea');
+
+                const tabBtn = (val, label, color) => {
+                    const active = status === val;
+                    return `<button onclick="app.adminPaymentRequests('${val}')" class="btn" style="flex:1; min-width:110px; padding:8px; font-size:13px; font-weight:bold; border:none; background:${active?color:'#e5e7eb'}; color:${active?'#fff':'#374151'};">${label}</button>`;
+                };
+
+                const titles = { pending: this.t('req_pend_title'), approved: 'أرشيف الطلبات المقبولة ✅', rejected: 'أرشيف الطلبات المرفوضة ❌' };
+
                 area.innerHTML = `
-                    <h3>${this.t('req_pend_title')}</h3>
+                    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                        ${tabBtn('pending', 'المعلقة', '#f59e0b')}
+                        ${tabBtn('approved', 'المقبولة (أرشيف)', '#16a34a')}
+                        ${tabBtn('rejected', 'المرفوضة (أرشيف)', '#dc2626')}
+                    </div>
+                    <h3>${titles[status]}</h3>
                     <div class="card">
                         <div class="table-scroll">
                             <table id="reqTable">
                                 <thead>
                                     <tr>
-                                        <th>${this.t('th_date')}</th>
+                                        <th>${this.t('th_date')} (الوقت الدقيق)</th>
                                         <th>${this.t('th_req_type')}</th>
                                         <th>${this.t('adm_comp')}</th>
                                         <th>${this.t('adm_phone')}</th>
@@ -4370,7 +4752,7 @@
                                         <th>${this.t('th_disc')}</th>
                                         <th>${this.t('th_dur_usr')}</th>
                                         <th>${this.t('th_receipt')}</th>
-                                        <th>${this.t('adm_act')}</th>
+                                        <th>${status === 'pending' ? this.t('adm_act') : 'الحالة'}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="reqBody"><tr><td colspan="11" style="text-align:center">${this.t('wait')}</td></tr></tbody>
@@ -4378,32 +4760,60 @@
                         </div>
                     </div>
                 `;
-                
+
                 const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
                 const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
                 if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
                 try {
-                    const { data, error } = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
-                    if(error) throw error;
-                    
+                    // نحاول أولاً تمرير الفلتر إلى الـ RPC؛ إذا لم يكن مدعوماً نجلب الكل ونصفّي محلياً
+                    let data = null, error = null;
+                    try {
+                        const res = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!', status_filter: status });
+                        data = res.data; error = res.error;
+                        if (error) throw error;
+                    } catch(_e1) {
+                        const res2 = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
+                        if (res2.error) throw res2.error;
+                        data = res2.data;
+                    }
+
+                    // تصفية محلية احترازية حسب الحالة
+                    const filtered = (data || []).filter(r => {
+                        const s = (r.status || 'pending').toLowerCase();
+                        return s === status;
+                    });
+
                     const tbody = document.getElementById('reqBody');
-                    if(data.length === 0) { 
-                        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center">${this.t('req_empty')}</td></tr>`; 
-                        return; 
+                    if(filtered.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center">${status==='pending' ? this.t('req_empty') : 'لا توجد طلبات في الأرشيف'}</td></tr>`;
+                        return;
                     }
 
                     let rows = '';
-                    data.forEach(r => {
-                        const date = new Date(r.created_at).toLocaleDateString(); 
+                    filtered.forEach(r => {
+                        // عرض التوقيت الدقيق (تاريخ + ساعة + دقيقة + ثانية)
+                        const dateStr = this.formatDate(r.created_at);
                         const sub = r.sub_type === 'year' ? 'Yearly' : 'Monthly';
-                        const reqCatStr = r.request_category === 'renew' ? 
-                            `<span style="color:#d97706; font-weight:bold; font-size:11px; background:#fef3c7; padding:2px 5px; border-radius:4px;">Renew<br><small>${r.existing_code||'-'}</small></span>` : 
+                        const reqCatStr = r.request_category === 'renew' ?
+                            `<span style="color:#d97706; font-weight:bold; font-size:11px; background:#fef3c7; padding:2px 5px; border-radius:4px;">Renew<br><small>${r.existing_code||'-'}</small></span>` :
                             `<span style="color:#166534; font-weight:bold; font-size:11px; background:#dcfce7; padding:2px 5px; border-radius:4px;">New</span>`;
                         const promoStr = r.promo_applied ? `<span style="color:var(--primary); font-size:10px; font-weight:bold;">${r.promo_applied}%</span>` : '-';
 
+                        let actionCell = '';
+                        if (status === 'pending') {
+                            actionCell = `
+                                <button onclick="app.approvePayment('${r.id}', '${(r.company_name||'').replace(/'/g,"\\'")}', '${r.phone}', '${r.whatsapp}', '${r.sub_type}', ${r.users_count}, '${r.request_category || 'new'}', '${r.existing_code || ''}')" class="btn btn-prim" style="padding:5px; font-size:11px; width:auto; margin-bottom:2px;">${this.t('req_btn_acc')}</button>
+                                <button onclick="app.rejectPayment('${r.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;">${this.t('req_btn_rej')}</button>
+                            `;
+                        } else if (status === 'approved') {
+                            actionCell = `<span style="color:#16a34a; font-weight:bold;">✅ مقبول</span>`;
+                        } else {
+                            actionCell = `<span style="color:#dc2626; font-weight:bold;">❌ مرفوض</span>`;
+                        }
+
                         rows += `<tr>
-                            <td style="font-size:11px;">${date}</td>
+                            <td style="font-size:11px; white-space:nowrap;">${dateStr}</td>
                             <td>${reqCatStr}</td>
                             <td style="font-weight:bold">${r.company_name}</td>
                             <td>${r.phone}</td>
@@ -4413,10 +4823,7 @@
                             <td>${promoStr}</td>
                             <td style="font-size:12px;">${sub} / ${r.users_count}</td>
                             <td><a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline; font-size:12px;">View</a></td>
-                            <td>
-                                <button onclick="app.approvePayment('${r.id}', '${r.company_name}', '${r.phone}', '${r.whatsapp}', '${r.sub_type}', ${r.users_count}, '${r.request_category || 'new'}', '${r.existing_code || ''}')" class="btn btn-prim" style="padding:5px; font-size:11px; width:auto; margin-bottom:2px;">${this.t('req_btn_acc')}</button> 
-                                <button onclick="app.rejectPayment('${r.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;">${this.t('req_btn_rej')}</button>
-                            </td>
+                            <td>${actionCell}</td>
                         </tr>`;
                     });
                     tbody.innerHTML = rows;
@@ -4616,19 +5023,57 @@
                 } 
             },
 
-            renewCompany: async function(id, type) { 
-                const newType = document.getElementById('adur').value; 
-                if(!confirm("Confirm Renew? ("+newType+")")) return; 
-                const doc = await db.collection('activation_codes').doc(id).get(); 
-                const data = doc.data(); 
-                let baseDate = new Date(); 
-                if(data.expiryDate && new Date(data.expiryDate) > baseDate) { 
-                    baseDate = new Date(data.expiryDate); 
-                } 
-                const newExpiry = this.addDuration(baseDate, newType); 
-                await db.collection('activation_codes').doc(id).update({ expiryDate: newExpiry }); 
-                alert("Renewed"); 
-                this.nav('admin'); 
+            renewCompany: async function(id, type) {
+                // فتح مودال لاختيار مدة التجديد قبل التنفيذ
+                const html = `
+                    <p style="margin:0 0 10px; color:var(--text-light); font-size:13px;">اختر مدة التجديد التي تريد إضافتها إلى تاريخ الانتهاء:</p>
+                    <label style="font-size:12px; font-weight:bold;">مدة التجديد</label>
+                    <select id="renewDurSel" class="select-box inp" style="width:100%; margin-bottom:10px;">
+                        <option value="week">أسبوع (7 أيام)</option>
+                        <option value="month" selected>شهر</option>
+                        <option value="year">سنة</option>
+                        <option value="day">يوم واحد</option>
+                        <option value="custom">مدة مخصصة (بالأيام)</option>
+                    </select>
+                    <div id="renewCustomWrap" style="display:none;">
+                        <label style="font-size:12px; font-weight:bold;">عدد الأيام</label>
+                        <input id="renewCustomDays" type="number" min="1" class="inp" placeholder="مثال: 15" style="width:100%;">
+                    </div>
+                `;
+                this.showModal("تجديد الاشتراك", html, async () => {
+                    const sel = document.getElementById('renewDurSel');
+                    const newType = sel.value;
+                    let customDays = 0;
+                    if (newType === 'custom') {
+                        customDays = parseInt(document.getElementById('renewCustomDays').value, 10);
+                        if (!customDays || customDays < 1) throw new Error("يرجى إدخال عدد أيام صحيح");
+                    }
+                    const doc = await db.collection('activation_codes').doc(id).get();
+                    const data = doc.data();
+                    let baseDate = new Date();
+                    if (data.expiryDate && new Date(data.expiryDate) > baseDate) {
+                        baseDate = new Date(data.expiryDate);
+                    }
+                    let newExpiryIso;
+                    if (newType === 'custom') {
+                        const d = new Date(baseDate);
+                        d.setDate(d.getDate() + customDays);
+                        newExpiryIso = d.toISOString();
+                    } else {
+                        newExpiryIso = this.addDuration(baseDate, newType);
+                    }
+                    await db.collection('activation_codes').doc(id).update({ expiryDate: newExpiryIso });
+                    alert("✅ تم التجديد بنجاح حتى: " + new Date(newExpiryIso).toLocaleDateString());
+                    this.nav('admin');
+                });
+                // إظهار/إخفاء حقل المدة المخصصة
+                setTimeout(() => {
+                    const sel = document.getElementById('renewDurSel');
+                    const wrap = document.getElementById('renewCustomWrap');
+                    if (sel && wrap) {
+                        sel.onchange = () => { wrap.style.display = sel.value === 'custom' ? 'block' : 'none'; };
+                    }
+                }, 50);
             },
 
             toggleStatus: async function(id, st) { 

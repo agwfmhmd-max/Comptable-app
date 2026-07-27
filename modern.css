@@ -310,3 +310,45 @@ html[dir="ltr"] .theme-toggle { left: 20px; }
   body { background:#fff !important; color:#000 !important; }
   .card { box-shadow:none !important; border:1px solid #ddd !important; }
 }
+
+/* ===== تنبيه استحقاق رواتب الموظفين ===== */
+.salary-due-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #b45309, #f59e0b);
+  box-shadow: 0 8px 20px rgba(180, 83, 9, .25);
+  animation: salaryDuePulse 2.4s ease-in-out infinite;
+}
+.salary-due-alert:hover { filter: brightness(1.05); }
+.salary-due-alert .sda-icon { font-size: 26px; opacity: .95; }
+.salary-due-alert .sda-body { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.salary-due-alert .sda-body strong { font-size: 15px; }
+.salary-due-alert .sda-body span { font-size: 12px; opacity: .92; }
+.salary-due-alert .sda-go {
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+  background: rgba(255,255,255,.2); padding: 8px 12px; border-radius: 10px;
+}
+@keyframes salaryDuePulse {
+  0%, 100% { box-shadow: 0 8px 20px rgba(180, 83, 9, .25); }
+  50% { box-shadow: 0 8px 28px rgba(245, 158, 11, .55); }
+}
+tr.row-salary-due { background: rgba(245, 158, 11, .12); }
+.pay-date-chip {
+  display: inline-block; padding: 3px 8px; border-radius: 8px;
+  font-size: 12px; background: rgba(100,116,139,.12); color: #334155;
+}
+.pay-date-chip.due { background: #f59e0b; color: #fff; font-weight: 700; }
+
+/* ===== شريط الإعلان العام (app_config/main) ===== */
+.app-announcement-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 12px; padding: 10px 14px;
+  border-radius: 12px; font-size: 13px; font-weight: 600;
+  color: #0c4a6e; background: #e0f2fe; border: 1px solid #bae6fd;
+}

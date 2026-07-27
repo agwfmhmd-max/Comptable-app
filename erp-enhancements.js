@@ -53,6 +53,8 @@
   }
 
   async function salaryReminderHtml() {
+    // التنبيه الجديد المعتمد على تاريخ استحقاق كل موظف يتكفل بذلك (تفادي التكرار)
+    if (typeof app.getDueSalaries === "function") return "";
     const config = safeJson(REMINDER_KEY, { enabled: true, day: "last" });
     if (!config.enabled || !app.state.cid || app.state.cid === "ADMIN") return "";
     const salaries = await app.getData("salaries");
