@@ -1,10 +1,10 @@
 {
-  "id": "/erp/",
+  "id": "./",
   "name": "Teyssir ERP",
   "short_name": "Teyssir",
   "description": "رفيقك في التسيير",
-  "start_url": "/erp/index.html",
-  "scope": "/erp/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#0b1020",
