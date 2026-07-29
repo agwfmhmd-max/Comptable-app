@@ -822,6 +822,17 @@
                 const d = new Date(isoString); 
                 return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`; 
             },
+            reqStatusOverrides: function() {
+                try { return JSON.parse(localStorage.getItem('teyssir_req_status_overrides') || '{}') || {}; }
+                catch(e) { return {}; }
+            },
+            setReqStatusOverride: function(reqId, status) {
+                try {
+                    const m = this.reqStatusOverrides();
+                    m[String(reqId)] = status;
+                    localStorage.setItem('teyssir_req_status_overrides', JSON.stringify(m));
+                } catch(e) { console.log('override store failed', e); }
+            },
             randomStr: function(l) { 
                 const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%'; 
                 let r=''; 
@@ -4694,7 +4705,7 @@
                         const v=d.data(); 
                         const comp = v.actualName || v.targetCompanyName || '-'; 
                         const ph = v.actualPhone || v.targetPhone || '-'; 
-                        const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; 
+                        const expDate = v.expiryDate ? this.formatDate(v.expiryDate) : '-'; 
                         const stopBtnText = v.status === 'active' ? 'Disable' : 'Enable'; 
                         const maxE = v.maxEmployees || 5; 
                         
@@ -4761,9 +4772,17 @@
                 const normStatus = (v) => {
                     const s = (v == null ? '' : String(v)).trim().toLowerCase();
                     if (s === '' || s === 'null' || s === 'undefined') return 'pending';
-                    if (s === 'accept' || s === 'accepted' || s === 'approve') return 'approved';
-                    if (s === 'reject' || s === 'refused' || s === 'refuse' || s === 'denied') return 'rejected';
+                    if (s === 'accept' || s === 'accepted' || s === 'approve' || s === 'active' || s === 'done' || s === 'ok' || s === 'valide' || s === 'accepte' || s === 'true' || s === '1') return 'approved';
+                    if (s === 'reject' || s === 'rejet' || s === 'refused' || s === 'refuse' || s === 'denied' || s === 'declined' || s === 'cancel' || s === 'canceled' || s === 'cancelled' || s === 'false' || s === '0') return 'rejected';
+                    if (s === 'wait' || s === 'waiting' || s === 'en attente' || s === 'attente' || s === 'new' || s === 'pending') return 'pending';
                     return s;
+                };
+                // الحالة النهائية لأي طلب: نأخذ بعين الاعتبار القرارات المحفوظة محلياً (لضمان دقة الأرشيف حتى للطلبات القديمة)
+                const overrides = this.reqStatusOverrides();
+                const finalStatus = (r) => {
+                    const ov = r && r.id != null ? overrides[String(r.id)] : null;
+                    if (ov === 'approved' || ov === 'rejected' || ov === 'pending') return ov;
+                    return normStatus(r ? r.status : null);
                 };
 
                 try {
@@ -4775,7 +4794,7 @@
                     // حساب أعداد دقيقة لكل حالة
                     const counts = { pending: 0, approved: 0, rejected: 0 };
                     all.forEach(r => {
-                        const s = normStatus(r.status);
+                        const s = finalStatus(r);
                         if (counts[s] === undefined) counts[s] = 0;
                         counts[s]++;
                     });
@@ -4798,7 +4817,7 @@
 
                     // فلترة دقيقة حسب الحالة الحالية + ترتيب تنازلي حسب التاريخ
                     const filtered = all
-                        .filter(r => normStatus(r.status) === status)
+                        .filter(r => finalStatus(r) === status)
                         .sort((a, b) => {
                             const ta = a && a.created_at ? new Date(a.created_at).getTime() : 0;
                             const tb = b && b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -4904,8 +4923,11 @@
                     });
                     if(error) throw error;
 
+                    // تسجيل القرار محلياً لضمان نقل الطلب فوراً إلى أرشيف المقبولة
+                    this.setReqStatusOverride(reqId, 'approved');
+
                     window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
-                    this.adminPaymentRequests();
+                    this.adminPaymentRequests('approved');
                 } catch(e) { 
                     alert("خطأ: " + e.message); 
                 }
@@ -4916,12 +4938,17 @@
                 if(!confirm("هل أنت متأكد من رفض وحذف هذا الطلب؟")) return;
                 this.showLoader();
                 try {
-                    await window.supabaseClient.rpc('admin_update_request', { 
+                    const { error } = await window.supabaseClient.rpc('admin_update_request', { 
                         secret_pass: 'TeyssirSecure99!', 
                         req_id: reqId, 
                         new_status: 'rejected' 
                     });
-                    this.adminPaymentRequests();
+                    if(error) throw error;
+
+                    // تسجيل القرار محلياً لضمان نقل الطلب فوراً إلى أرشيف المرفوضة
+                    this.setReqStatusOverride(reqId, 'rejected');
+
+                    this.adminPaymentRequests('rejected');
                 } catch(e) { alert("خطأ: " + e.message); }
                 this.hideLoader();
             },
