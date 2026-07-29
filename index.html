@@ -4723,20 +4723,12 @@
                 const status = statusFilter || 'pending';
                 const area = document.getElementById('adminWorkArea');
 
-                const tabBtn = (val, label, color) => {
-                    const active = status === val;
-                    return `<button onclick="app.adminPaymentRequests('${val}')" class="btn" style="flex:1; min-width:110px; padding:8px; font-size:13px; font-weight:bold; border:none; background:${active?color:'#e5e7eb'}; color:${active?'#fff':'#374151'};">${label}</button>`;
-                };
-
                 const titles = { pending: this.t('req_pend_title'), approved: 'أرشيف الطلبات المقبولة ✅', rejected: 'أرشيف الطلبات المرفوضة ❌' };
 
+                // هيكل أولي مع مؤشر تحميل
                 area.innerHTML = `
-                    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-                        ${tabBtn('pending', 'المعلقة', '#f59e0b')}
-                        ${tabBtn('approved', 'المقبولة (أرشيف)', '#16a34a')}
-                        ${tabBtn('rejected', 'المرفوضة (أرشيف)', '#dc2626')}
-                    </div>
-                    <h3>${titles[status]}</h3>
+                    <div id="reqTabsBar" style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;"></div>
+                    <h3 id="reqTitle">${titles[status]}</h3>
                     <div class="card">
                         <div class="table-scroll">
                             <table id="reqTable">
@@ -4765,24 +4757,53 @@
                 const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
                 if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-                try {
-                    // نحاول أولاً تمرير الفلتر إلى الـ RPC؛ إذا لم يكن مدعوماً نجلب الكل ونصفّي محلياً
-                    let data = null, error = null;
-                    try {
-                        const res = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!', status_filter: status });
-                        data = res.data; error = res.error;
-                        if (error) throw error;
-                    } catch(_e1) {
-                        const res2 = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
-                        if (res2.error) throw res2.error;
-                        data = res2.data;
-                    }
+                // تطبيع قيمة الحالة القادمة من الخادم لتفادي أي فوارق (حساسية الحروف/مسافات/قيم فارغة)
+                const normStatus = (v) => {
+                    const s = (v == null ? '' : String(v)).trim().toLowerCase();
+                    if (s === '' || s === 'null' || s === 'undefined') return 'pending';
+                    if (s === 'accept' || s === 'accepted' || s === 'approve') return 'approved';
+                    if (s === 'reject' || s === 'refused' || s === 'refuse' || s === 'denied') return 'rejected';
+                    return s;
+                };
 
-                    // تصفية محلية احترازية حسب الحالة
-                    const filtered = (data || []).filter(r => {
-                        const s = (r.status || 'pending').toLowerCase();
-                        return s === status;
+                try {
+                    // نجلب دائماً كل الطلبات مرة واحدة ثم نصفّي محلياً لضمان دقّة الأرشيف
+                    const resAll = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
+                    if (resAll.error) throw resAll.error;
+                    const all = Array.isArray(resAll.data) ? resAll.data.slice() : [];
+
+                    // حساب أعداد دقيقة لكل حالة
+                    const counts = { pending: 0, approved: 0, rejected: 0 };
+                    all.forEach(r => {
+                        const s = normStatus(r.status);
+                        if (counts[s] === undefined) counts[s] = 0;
+                        counts[s]++;
                     });
+
+                    // إعادة رسم شريط التبويبات مع الأعداد الحقيقية
+                    const tabBtn = (val, label, color) => {
+                        const active = status === val;
+                        const c = counts[val] || 0;
+                        return `<button onclick="app.adminPaymentRequests('${val}')" class="btn" style="flex:1; min-width:110px; padding:8px; font-size:13px; font-weight:bold; border:none; background:${active?color:'#e5e7eb'}; color:${active?'#fff':'#374151'};">${label} <span style="display:inline-block; min-width:22px; margin-inline-start:4px; padding:1px 6px; border-radius:10px; background:${active?'rgba(255,255,255,0.25)':'#fff'}; color:${active?'#fff':color}; font-size:12px;">${c}</span></button>`;
+                    };
+                    const tabsBar = document.getElementById('reqTabsBar');
+                    if (tabsBar) {
+                        tabsBar.innerHTML =
+                            tabBtn('pending', 'المعلقة', '#f59e0b') +
+                            tabBtn('approved', 'المقبولة (أرشيف)', '#16a34a') +
+                            tabBtn('rejected', 'المرفوضة (أرشيف)', '#dc2626');
+                    }
+                    const titleEl = document.getElementById('reqTitle');
+                    if (titleEl) titleEl.textContent = `${titles[status]} — (${counts[status] || 0})`;
+
+                    // فلترة دقيقة حسب الحالة الحالية + ترتيب تنازلي حسب التاريخ
+                    const filtered = all
+                        .filter(r => normStatus(r.status) === status)
+                        .sort((a, b) => {
+                            const ta = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+                            const tb = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+                            return tb - ta;
+                        });
 
                     const tbody = document.getElementById('reqBody');
                     if(filtered.length === 0) {
