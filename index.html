@@ -822,31 +822,49 @@
                 const d = new Date(isoString); 
                 return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`; 
             },
-            reqStatusOverrides: function() {
-                try { return JSON.parse(localStorage.getItem('teyssir_req_status_overrides') || '{}') || {}; }
-                catch(e) { return {}; }
+            paymentDb: function() {
+                const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
+                const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
+                if (!window.supabase) throw new Error('قاعدة بيانات الطلبات لم تكتمل جاهزيتها، أعد المحاولة بعد ثوانٍ.');
+                if (!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                return window.supabaseClient;
             },
-            setReqStatusOverride: function(reqId, status) {
-                try {
-                    const m = this.reqStatusOverrides();
-                    m[String(reqId)] = status;
-                    localStorage.setItem('teyssir_req_status_overrides', JSON.stringify(m));
-                } catch(e) { console.log('override store failed', e); }
+            fetchAllPaymentRequests: async function() {
+                const client = this.paymentDb();
+                const all = [];
+                const pageSize = 1000;
+
+                for (let from = 0; from < 20000; from += pageSize) {
+                    const { data, error } = await client
+                        .from('payment_requests')
+                        .select('id,created_at,company_name,phone,whatsapp,sub_type,users_count,bank_name,total_amount,receipt_url,status,request_category,existing_code,promo_applied')
+                        .order('created_at', { ascending: false })
+                        .range(from, from + pageSize - 1);
+
+                    if (error) throw error;
+                    const chunk = Array.isArray(data) ? data : [];
+                    all.push(...chunk);
+                    if (chunk.length < pageSize) break;
+                }
+
+                return all;
             },
-            reqArchive: function() {
-                try { return JSON.parse(localStorage.getItem('teyssir_req_archive') || '{}') || {}; }
-                catch(e) { return {}; }
-            },
-            setReqArchive: function(reqId, status, record) {
-                try {
-                    const m = this.reqArchive();
-                    const prev = m[String(reqId)] || {};
-                    const rec = Object.assign({}, prev.record || {}, record || {});
-                    rec.id = reqId;
-                    rec.status = status;
-                    m[String(reqId)] = { status: status, decided_at: new Date().toISOString(), record: rec };
-                    localStorage.setItem('teyssir_req_archive', JSON.stringify(m));
-                } catch(e) { console.log('archive store failed', e); }
+            updatePaymentRequestStatus: async function(reqId, newStatus) {
+                const client = this.paymentDb();
+                const { error } = await client
+                    .from('payment_requests')
+                    .update({ status: newStatus })
+                    .eq('id', reqId);
+
+                if (!error) return;
+
+                // احتياطي جذري: إن كانت صلاحية التحديث المباشر مقيدة، نستخدم دالة الإدارة الموجودة أصلاً لتحديث نفس السجل في قاعدة البيانات.
+                const rpcRes = await client.rpc('admin_update_request', {
+                    secret_pass: 'TeyssirSecure99!',
+                    req_id: reqId,
+                    new_status: newStatus
+                });
+                if (rpcRes.error) throw new Error(`${error.message} | ${rpcRes.error.message}`);
             },
             randomStr: function(l) { 
                 const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%'; 
@@ -4449,11 +4467,10 @@
                     const codesSnap = await db.collection('activation_codes').get(); 
                     const exactCompaniesCount = codesSnap.size; 
                     let exactRequestsCount = 0; 
-                    const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co'; 
-                    const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK'; 
-                    if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); 
-                    const { data, error } = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' }); 
-                    if (!error && data) { exactRequestsCount = data.length; }
+                    const reqCountRes = await this.paymentDb()
+                        .from('payment_requests')
+                        .select('id', { count: 'exact', head: true });
+                    if (!reqCountRes.error) { exactRequestsCount = reqCountRes.count || 0; }
 
                     div.innerHTML = `
                         <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -4779,56 +4796,28 @@
                     </div>
                 `;
 
-                const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
-                const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
-                if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
                 // تطبيع قيمة الحالة القادمة من الخادم لتفادي أي فوارق (حساسية الحروف/مسافات/قيم فارغة)
                 const normStatus = (v) => {
                     const s = (v == null ? '' : String(v)).trim().toLowerCase();
                     if (s === '' || s === 'null' || s === 'undefined') return 'pending';
-                    if (s === 'accept' || s === 'accepted' || s === 'approve' || s === 'active' || s === 'done' || s === 'ok' || s === 'valide' || s === 'accepte' || s === 'true' || s === '1') return 'approved';
-                    if (s === 'reject' || s === 'rejet' || s === 'refused' || s === 'refuse' || s === 'denied' || s === 'declined' || s === 'cancel' || s === 'canceled' || s === 'cancelled' || s === 'false' || s === '0') return 'rejected';
-                    if (s === 'wait' || s === 'waiting' || s === 'en attente' || s === 'attente' || s === 'new' || s === 'pending') return 'pending';
+                    if (s === 'accept' || s === 'accepted' || s === 'approve' || s === 'approved' || s === 'active' || s === 'done' || s === 'valid' || s === 'valide' || s === 'paid' || s === 'success') return 'approved';
+                    if (s === 'reject' || s === 'rejected' || s === 'refused' || s === 'refuse' || s === 'denied' || s === 'declined' || s === 'cancel' || s === 'cancelled' || s === 'canceled' || s === 'failed') return 'rejected';
+                    if (s === 'waiting' || s === 'wait' || s === 'new' || s === 'open' || s === 'in_review') return 'pending';
                     return s;
                 };
-                // الحالة النهائية لأي طلب: نأخذ بعين الاعتبار القرارات المحفوظة محلياً (لضمان دقة الأرشيف حتى للطلبات القديمة)
-                const overrides = this.reqStatusOverrides();
-                const finalStatus = (r) => {
-                    const ov = r && r.id != null ? overrides[String(r.id)] : null;
-                    if (ov === 'approved' || ov === 'rejected' || ov === 'pending') return ov;
-                    return normStatus(r ? r.status : null);
-                };
+
+                const safeText = (v) => String(v ?? '-').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+                const safeUrl = (v) => String(v || '#').replace(/"/g, '%22');
+                const jsArg = (v) => String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
 
                 try {
-                    // نجلب دائماً كل الطلبات مرة واحدة ثم نصفّي محلياً لضمان دقّة الأرشيف
-                    const resAll = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
-                    if (resAll.error) throw resAll.error;
-                    let all = Array.isArray(resAll.data) ? resAll.data.slice() : [];
-
-                    // دمج الأرشيف المحلي: يضمن بقاء الطلبات المقبولة/المرفوضة ظاهرة
-                    // حتى لو حذفها الخادم أو لم يُرجعها ضمن النتائج
-                    const archive = this.reqArchive();
-                    const byId = {};
-                    all.forEach(r => { if (r && r.id != null) byId[String(r.id)] = r; });
-                    Object.keys(archive).forEach(id => {
-                        const a = archive[id] || {};
-                        if (byId[id]) {
-                            byId[id].status = a.status || byId[id].status;
-                        } else if (a.record) {
-                            byId[id] = Object.assign({}, a.record, { status: a.status });
-                        }
-                    });
-                    all = Object.keys(byId).map(k => byId[k]);
-
-                    // ذاكرة مؤقتة للسجلات لاستعمالها عند القبول/الرفض
-                    this._reqCache = this._reqCache || {};
-                    all.forEach(r => { if (r && r.id != null) this._reqCache[String(r.id)] = r; });
+                    // نجلب كل الطلبات مباشرة من جدول قاعدة البيانات، وليس من دالة قد ترجع المعلقة فقط، حتى يظهر أرشيف الطلبات القديمة والجديدة بدقة.
+                    const all = await this.fetchAllPaymentRequests();
 
                     // حساب أعداد دقيقة لكل حالة
                     const counts = { pending: 0, approved: 0, rejected: 0 };
                     all.forEach(r => {
-                        const s = finalStatus(r);
+                        const s = normStatus(r.status);
                         if (counts[s] === undefined) counts[s] = 0;
                         counts[s]++;
                     });
@@ -4851,7 +4840,7 @@
 
                     // فلترة دقيقة حسب الحالة الحالية + ترتيب تنازلي حسب التاريخ
                     const filtered = all
-                        .filter(r => finalStatus(r) === status)
+                        .filter(r => normStatus(r.status) === status)
                         .sort((a, b) => {
                             const ta = a && a.created_at ? new Date(a.created_at).getTime() : 0;
                             const tb = b && b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -4877,7 +4866,7 @@
                         let actionCell = '';
                         if (status === 'pending') {
                             actionCell = `
-                                <button onclick="app.approvePayment('${r.id}', '${(r.company_name||'').replace(/'/g,"\\'")}', '${r.phone}', '${r.whatsapp}', '${r.sub_type}', ${r.users_count}, '${r.request_category || 'new'}', '${r.existing_code || ''}')" class="btn btn-prim" style="padding:5px; font-size:11px; width:auto; margin-bottom:2px;">${this.t('req_btn_acc')}</button>
+                                <button onclick="app.approvePayment('${jsArg(r.id)}', '${jsArg(r.company_name)}', '${jsArg(r.phone)}', '${jsArg(r.whatsapp)}', '${jsArg(r.sub_type || 'month')}', ${Number(r.users_count) || 1}, '${jsArg(r.request_category || 'new')}', '${jsArg(r.existing_code || '')}')" class="btn btn-prim" style="padding:5px; font-size:11px; width:auto; margin-bottom:2px;">${this.t('req_btn_acc')}</button>
                                 <button onclick="app.rejectPayment('${r.id}')" class="btn btn-dan" style="padding:5px; font-size:11px; width:auto;">${this.t('req_btn_rej')}</button>
                             `;
                         } else if (status === 'approved') {
@@ -4889,14 +4878,14 @@
                         rows += `<tr>
                             <td style="font-size:11px; white-space:nowrap;">${dateStr}</td>
                             <td>${reqCatStr}</td>
-                            <td style="font-weight:bold">${r.company_name || '-'}</td>
-                            <td>${r.phone || '-'}</td>
-                            <td>${r.whatsapp || '-'}</td>
-                            <td>${r.bank_name || '-'}</td>
+                            <td style="font-weight:bold">${safeText(r.company_name)}</td>
+                            <td>${safeText(r.phone)}</td>
+                            <td>${safeText(r.whatsapp)}</td>
+                            <td>${safeText(r.bank_name)}</td>
                             <td style="color:green;font-weight:bold">${r.total_amount || 0}</td>
                             <td>${promoStr}</td>
-                            <td style="font-size:12px;">${sub} / ${r.users_count}</td>
-                            <td>${r.receipt_url ? `<a href="${r.receipt_url}" target="_blank" style="color:blue; text-decoration:underline; font-size:12px;">View</a>` : '-'}</td>
+                            <td style="font-size:12px;">${sub} / ${Number(r.users_count) || 1}</td>
+                            <td><a href="${safeUrl(r.receipt_url)}" target="_blank" style="color:blue; text-decoration:underline; font-size:12px;">View</a></td>
                             <td>${actionCell}</td>
                         </tr>`;
                     });
@@ -4950,21 +4939,10 @@
                         msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل الجديد: ${newCode}\nرابط الدخول: ${window.location.href}`);
                     }
 
-                    // تسجيل القرار محلياً أولاً لضمان الانتقال للأرشيف مهما كانت نتيجة الخادم
-                    this.setReqStatusOverride(reqId, 'approved');
-                    this.setReqArchive(reqId, 'approved', ((this._reqCache||{})[String(reqId)]) || { id: reqId, company_name: name, phone: phone, whatsapp: wa, sub_type: type, users_count: users, request_category: reqCategory, existing_code: existingCode, created_at: new Date().toISOString() });
-
-                    try {
-                        const { error } = await window.supabaseClient.rpc('admin_update_request', {
-                            secret_pass: 'TeyssirSecure99!',
-                            req_id: reqId,
-                            new_status: 'approved'
-                        });
-                        if (error) console.warn('update status failed', error);
-                    } catch(errU) { console.warn('update status failed', errU); }
+                    await this.updatePaymentRequestStatus(reqId, 'approved');
 
                     window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
-                    this.adminPaymentRequests('approved');
+                    await this.adminPaymentRequests('approved');
                 } catch(e) { 
                     alert("خطأ: " + e.message); 
                 }
@@ -4975,20 +4953,8 @@
                 if(!confirm("هل أنت متأكد من رفض وحذف هذا الطلب؟")) return;
                 this.showLoader();
                 try {
-                    // تسجيل القرار محلياً أولاً لضمان الانتقال الفوري لأرشيف المرفوضة
-                    this.setReqStatusOverride(reqId, 'rejected');
-                    this.setReqArchive(reqId, 'rejected', ((this._reqCache||{})[String(reqId)]) || { id: reqId, created_at: new Date().toISOString() });
-
-                    try {
-                        const { error } = await window.supabaseClient.rpc('admin_update_request', {
-                            secret_pass: 'TeyssirSecure99!',
-                            req_id: reqId,
-                            new_status: 'rejected'
-                        });
-                        if (error) console.warn('update status failed', error);
-                    } catch(errU) { console.warn('update status failed', errU); }
-
-                    this.adminPaymentRequests('rejected');
+                    await this.updatePaymentRequestStatus(reqId, 'rejected');
+                    await this.adminPaymentRequests('rejected');
                 } catch(e) { alert("خطأ: " + e.message); }
                 this.hideLoader();
             },
