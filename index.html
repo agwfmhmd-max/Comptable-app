@@ -851,20 +851,27 @@
             },
             updatePaymentRequestStatus: async function(reqId, newStatus) {
                 const client = this.paymentDb();
-                const { error } = await client
+                // نطلب إرجاع الصفوف المتأثرة للتحقق من نجاح التحديث فعلياً (وليس فقط غياب الخطأ).
+                const { data, error } = await client
                     .from('payment_requests')
                     .update({ status: newStatus })
-                    .eq('id', reqId);
+                    .eq('id', reqId)
+                    .select('id,status');
 
-                if (!error) return;
+                const updatedOk = !error && Array.isArray(data) && data.length > 0;
+                if (updatedOk) return;
 
-                // احتياطي جذري: إن كانت صلاحية التحديث المباشر مقيدة، نستخدم دالة الإدارة الموجودة أصلاً لتحديث نفس السجل في قاعدة البيانات.
+                // احتياطي جذري: إن كانت صلاحية التحديث المباشر مقيدة (RLS) أو لم يتم تعديل أي صف،
+                // نستخدم دالة الإدارة الموجودة أصلاً لتحديث نفس السجل في قاعدة البيانات.
                 const rpcRes = await client.rpc('admin_update_request', {
                     secret_pass: 'TeyssirSecure99!',
                     req_id: reqId,
                     new_status: newStatus
                 });
-                if (rpcRes.error) throw new Error(`${error.message} | ${rpcRes.error.message}`);
+                if (rpcRes.error) {
+                    const baseMsg = error ? error.message : 'لم يتم تعديل أي صف (صلاحيات RLS).';
+                    throw new Error(`${baseMsg} | ${rpcRes.error.message}`);
+                }
             },
             randomStr: function(l) { 
                 const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%'; 
