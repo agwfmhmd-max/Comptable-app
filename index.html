@@ -910,7 +910,7 @@
                         if(!d.used) {
                             const r = await db.collection('companies').add({name:n, phone:p, code:c, maxEmployees: d.maxEmployees || 5, createdAt:new Date().toISOString()});
                             cid=r.id; 
-                            const expiry = d.expiryDate || this.addDuration(now, d.subscriptionType || 'month');
+                            const expiry = this.addDuration(now, d.subscriptionType || 'month');
                             await db.collection('activation_codes').doc(doc.id).update({ 
                                 used:true, 
                                 companyId:cid, 
@@ -4687,22 +4687,14 @@
                 `; 
                 
                 try {
-                    const s = await db.collection('activation_codes').get(); 
+                    const s = await db.collection('activation_codes').orderBy('createdAt','desc').limit(50).get(); 
                     let h=`<tr><th>${this.t('adm_time')}</th><th>${this.t('adm_code')}</th><th>${this.t('adm_comp')}</th><th>${this.t('adm_phone')}</th><th>Limit</th><th>Expires</th><th>${this.t('adm_act')}</th></tr>`, b=''; 
                     
-                    const docs = s.docs.slice().sort((a, b) => {
-                        const av = a.data();
-                        const bv = b.data();
-                        const at = new Date(av.lastPaymentAt || av.updatedAt || av.createdAt || 0).getTime() || 0;
-                        const bt = new Date(bv.lastPaymentAt || bv.updatedAt || bv.createdAt || 0).getTime() || 0;
-                        return bt - at;
-                    });
-
-                    docs.forEach(d=>{ 
+                    s.forEach(d=>{ 
                         const v=d.data(); 
                         const comp = v.actualName || v.targetCompanyName || '-'; 
                         const ph = v.actualPhone || v.targetPhone || '-'; 
-                        const expDate = v.expiryDate ? this.formatDate(v.expiryDate) : '-'; 
+                        const expDate = v.expiryDate ? new Date(v.expiryDate).toLocaleDateString() : '-'; 
                         const stopBtnText = v.status === 'active' ? 'Disable' : 'Enable'; 
                         const maxE = v.maxEmployees || 5; 
                         
@@ -4724,92 +4716,6 @@
                     document.querySelector('#at thead').innerHTML=h; 
                     document.querySelector('#at tbody').innerHTML=b; 
                 } catch(e) { console.error(e); }
-            },
-
-            getPaymentBackendConfig: function() {
-                return {
-                    url: 'https://fewfnebyadfinemadiqb.supabase.co',
-                    key: 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK'
-                };
-            },
-
-            ensurePaymentClient: function() {
-                const cfg = this.getPaymentBackendConfig();
-                if(!window.supabaseClient) window.supabaseClient = supabase.createClient(cfg.url, cfg.key);
-                return window.supabaseClient;
-            },
-
-            fetchPaymentRequestsAccurate: async function() {
-                const cfg = this.getPaymentBackendConfig();
-                this.ensurePaymentClient();
-
-                try {
-                    const direct = await window.supabaseClient
-                        .from('payment_requests')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-                    if (!direct.error && Array.isArray(direct.data)) return direct.data;
-                    if (direct.error) console.warn('Direct payment request fetch failed, trying REST fallback:', direct.error.message);
-                } catch(e) {
-                    console.warn('Direct payment request fetch failed, trying REST fallback:', e.message);
-                }
-
-                try {
-                    const rest = await fetch(`${cfg.url}/rest/v1/payment_requests?select=*&order=created_at.desc`, {
-                        headers: { apikey: cfg.key }
-                    });
-                    if (rest.ok) {
-                        const data = await rest.json();
-                        if (Array.isArray(data)) return data;
-                    } else {
-                        console.warn('REST payment request fetch failed, trying RPC fallback:', await rest.text());
-                    }
-                } catch(e) {
-                    console.warn('REST payment request fetch failed, trying RPC fallback:', e.message);
-                }
-
-                const rpc = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
-                if (rpc.error) throw rpc.error;
-                return Array.isArray(rpc.data) ? rpc.data : [];
-            },
-
-            updatePaymentRequestStatusAccurate: async function(reqId, newStatus) {
-                const cfg = this.getPaymentBackendConfig();
-                this.ensurePaymentClient();
-
-                try {
-                    const direct = await window.supabaseClient
-                        .from('payment_requests')
-                        .update({ status: newStatus })
-                        .eq('id', reqId);
-                    if (!direct.error) return;
-                    console.warn('Direct payment request status update failed, trying REST fallback:', direct.error.message);
-                } catch(e) {
-                    console.warn('Direct payment request status update failed, trying REST fallback:', e.message);
-                }
-
-                try {
-                    const rest = await fetch(`${cfg.url}/rest/v1/payment_requests?id=eq.${encodeURIComponent(String(reqId))}`, {
-                        method: 'PATCH',
-                        headers: {
-                            apikey: cfg.key,
-                            'Content-Type': 'application/json',
-                            Prefer: 'return=minimal'
-                        },
-                        body: JSON.stringify({ status: newStatus })
-                    });
-                    if (rest.ok) return;
-                    console.warn('REST payment request status update failed, trying RPC fallback:', await rest.text());
-                } catch(e) {
-                    console.warn('REST payment request status update failed, trying RPC fallback:', e.message);
-                }
-
-                const rpc = await window.supabaseClient.rpc('admin_update_request', { 
-                    secret_pass: 'TeyssirSecure99!', 
-                    req_id: reqId, 
-                    new_status: newStatus 
-                });
-                if(rpc.error) throw rpc.error;
             },
 
             adminPaymentRequests: async function(statusFilter) {
@@ -4847,7 +4753,9 @@
                     </div>
                 `;
 
-                this.ensurePaymentClient();
+                const SUPABASE_URL = 'https://fewfnebyadfinemadiqb.supabase.co';
+                const SUPABASE_KEY = 'sb_publishable_ZdB9p0uIsvb9En5oaTd0YQ_LTXOjoAK';
+                if(!window.supabaseClient) window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
                 // تطبيع قيمة الحالة القادمة من الخادم لتفادي أي فوارق (حساسية الحروف/مسافات/قيم فارغة)
                 const normStatus = (v) => {
@@ -4859,8 +4767,10 @@
                 };
 
                 try {
-                    // نجلب دائماً كل الطلبات من الجدول مباشرة ثم نصفّي محلياً لضمان دقّة الأرشيف حتى لو تعطلت الدالة الوسيطة
-                    const all = await this.fetchPaymentRequestsAccurate();
+                    // نجلب دائماً كل الطلبات مرة واحدة ثم نصفّي محلياً لضمان دقّة الأرشيف
+                    const resAll = await window.supabaseClient.rpc('admin_get_requests', { secret_pass: 'TeyssirSecure99!' });
+                    if (resAll.error) throw resAll.error;
+                    const all = Array.isArray(resAll.data) ? resAll.data.slice() : [];
 
                     // حساب أعداد دقيقة لكل حالة
                     const counts = { pending: 0, approved: 0, rejected: 0 };
@@ -4966,40 +4876,36 @@
 
                         await codesRef.doc(doc.id).update({
                             expiryDate: newExpiry,
-                            maxEmployees: users,
-                            subscriptionType: type,
-                            status: 'active',
-                            lastPaymentAt: new Date().toISOString(),
-                            lastPaymentRequestId: reqId
+                            maxEmployees: users
                         });
 
-                        msg = encodeURIComponent(`مرحباً بك مجدداً من Teyssir ERP\nتم استلام دفعتك وتجديد اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n⏳ تاريخ نهاية الاشتراك: ${this.formatDate(newExpiry)}\n🔑 الرمز الخاص بك كما هو: ${existingCode}\nرابط الدخول: ${window.location.href}`);
+                        msg = encodeURIComponent(`مرحباً بك مجدداً من Teyssir ERP\nتم استلام دفعتك وتجديد اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n⏳ تم تمديد صلاحية نظامك.\n🔑 الرمز الخاص بك كما هو: ${existingCode}\nرابط الدخول: ${window.location.href}`);
 
                     } else {
                         const newCode = this.randomStr(8);
-                        const now = new Date();
-                        const newExpiry = this.addDuration(now, type);
                         await db.collection('activation_codes').add({ 
                             code: newCode, 
                             targetCompanyName: name, 
                             targetPhone: phone, 
                             status: 'active', 
                             used: false, 
-                            createdAt: now.toISOString(), 
-                            expiryDate: newExpiry,
+                            createdAt: new Date().toISOString(), 
                             subscriptionType: type, 
-                            maxEmployees: users,
-                            paymentRequestId: reqId,
-                            lastPaymentAt: now.toISOString()
+                            maxEmployees: users 
                         });
 
-                        msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n⏳ تاريخ نهاية الاشتراك: ${this.formatDate(newExpiry)}\n🔑 كود التفعيل الجديد: ${newCode}\nرابط الدخول: ${window.location.href}`);
+                        msg = encodeURIComponent(`أهلاً بك في Teyssir ERP\nتم استلام دفعتك وتفعيل اشتراكك بنجاح ✅\n\n🏢 الشركة: ${name}\n🔑 كود التفعيل الجديد: ${newCode}\nرابط الدخول: ${window.location.href}`);
                     }
 
-                    await this.updatePaymentRequestStatusAccurate(reqId, 'approved');
+                    const { error } = await window.supabaseClient.rpc('admin_update_request', { 
+                        secret_pass: 'TeyssirSecure99!', 
+                        req_id: reqId, 
+                        new_status: 'approved' 
+                    });
+                    if(error) throw error;
 
                     window.open(`https://wa.me/222${wa}?text=${msg}`, '_blank');
-                    this.adminPaymentRequests('approved');
+                    this.adminPaymentRequests();
                 } catch(e) { 
                     alert("خطأ: " + e.message); 
                 }
@@ -5010,8 +4916,12 @@
                 if(!confirm("هل أنت متأكد من رفض وحذف هذا الطلب؟")) return;
                 this.showLoader();
                 try {
-                    await this.updatePaymentRequestStatusAccurate(reqId, 'rejected');
-                    this.adminPaymentRequests('rejected');
+                    await window.supabaseClient.rpc('admin_update_request', { 
+                        secret_pass: 'TeyssirSecure99!', 
+                        req_id: reqId, 
+                        new_status: 'rejected' 
+                    });
+                    this.adminPaymentRequests();
                 } catch(e) { alert("خطأ: " + e.message); }
                 this.hideLoader();
             },
